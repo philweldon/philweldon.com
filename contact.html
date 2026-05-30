@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Phil Weldon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf9f7;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2);
+      --text: #1a1916;
+      --muted: #6b6960;
+      --hint: #a09e96;
+      --accent: #2d5be3;
+      --accent-bg: #eef2fd;
+      --linkedin: #0a66c2;
+      --linkedin-bg: #e8f0f9;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(250,249,247,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+
+    /* ── Main layout ── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 7rem 2rem 4rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--hint);
+      margin-bottom: 1.25rem;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 5vw, 40px);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .intro {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Visitor type selector ── */
+    .type-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--hint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+
+    .type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .type-btn {
+      background: var(--surface);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .type-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .type-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .type-btn .type-icon { font-size: 16px; flex-shrink: 0; }
+    .type-btn .type-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* ── Context card ── */
+    .context-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      animation: fadeUp 0.2s ease;
+    }
+    .context-card.visible { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .context-card .context-msg {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+    }
+
+    .context-card .context-tip {
+      font-size: 12px;
+      color: var(--hint);
+      line-height: 1.6;
+      padding-top: 1rem;
+      border-top: 0.5px solid var(--border);
+      margin-top: 1rem;
+    }
+
+    /* ── LinkedIn button ── */
+    .li-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 0.9rem 1.5rem;
+      background: var(--linkedin);
+      color: white;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .li-btn:hover { opacity: 0.88; }
+
+    .li-btn svg { flex-shrink: 0; }
+
+    /* ── Default CTA (before type selected) ── */
+    .default-cta {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .default-note {
+      font-size: 12px;
+      color: var(--hint);
+      text-align: center;
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+
+    /* ── Response time note ── */
+    .response-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 1.5rem;
+      font-size: 13px;
+      color: var(--hint);
+    }
+    .response-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 12px;
+      color: var(--hint);
+      border-top: 0.5px solid var(--border);
+    }
+
+    @media (max-width: 500px) {
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { gap: 1.25rem; }
+      .type-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Phil Weldon</a>
+    <ul class="nav-links">
+      <li><a href="speaking.html">Speaking</a></li>
+      <li><a href="writing.html">Writing</a></li>
+      <li><a href="media.html">Media</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+
+      <p class="eyebrow">Contact</p>
+      <h1>Let's talk.</h1>
+      <p class="intro">The best conversations I have start with a simple message. Tell me what's on your mind — I read everything.</p>
+
+      <p class="type-label">What brings you here?</p>
+      <div class="type-grid">
+        <button class="type-btn" onclick="selectType('organizer')">
+          <span class="type-icon">🎤</span>
+          <span class="type-text">Planning an event</span>
+        </button>
+        <button class="type-btn" onclick="selectType('journalist')">
+          <span class="type-icon">📰</span>
+          <span class="type-text">Press & media</span>
+        </button>
+        <button class="type-btn" onclick="selectType('collaborator')">
+          <span class="type-icon">🤝</span>
+          <span class="type-text">Collaboration</span>
+        </button>
+        <button class="type-btn" onclick="selectType('curious')">
+          <span class="type-icon">✨</span>
+          <span class="type-text">Just curious</span>
+        </button>
+      </div>
+
+      <!-- Context cards per type -->
+      <div class="context-card" id="ctx-organizer">
+        <p class="context-msg">Great — I'd love to hear about your event. Drop me a message on LinkedIn with a quick note about the format, audience, and timing, and I'll get back to you promptly.</p>
+        <a href="https://www.linkedin.com/in/philipweldon/" target="_blank" class="li-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Message Phil on LinkedIn
+        </a>
+        <p class="context-tip">💡 It helps to include: event name, date, expected audience size, and the topic you have in mind. I'll respond within 48 hours.</p>
+      </div>
+
+      <div class="context-card" id="ctx-journalist">
+        <p class="context-msg">Happy to speak with press. I'm available for quotes, background conversations, and on-record interviews on AI, eDiscovery, and legal technology. Connect on LinkedIn and mention your publication and deadline.</p>
+        <a href="https://www.linkedin.com/in/philipweldon/" target="_blank" class="li-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Message Phil on LinkedIn
+        </a>
+        <p class="context-tip">💡 Tight deadline? Mention it upfront — I do my best to prioritize time-sensitive press requests.</p>
+      </div>
+
+      <div class="context-card" id="ctx-collaborator">
+        <p class="context-msg">I'm genuinely interested in working with thoughtful people on projects at the intersection of AI, law, and communication. Tell me what you're building or thinking about — I enjoy conversations that don't have a clear destination yet.</p>
+        <a href="https://www.linkedin.com/in/philipweldon/" target="_blank" class="li-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Message Phil on LinkedIn
+        </a>
+        <p class="context-tip">💡 No need for a polished pitch — a rough idea and a reason you think we should talk is plenty.</p>
+      </div>
+
+      <div class="context-card" id="ctx-curious">
+        <p class="context-msg">My favorite messages are from people who are genuinely thinking something through. Whether it's a question about AI, something you read, or just a thought you wanted to share — I read everything and respond when I can.</p>
+        <a href="https://www.linkedin.com/in/philipweldon/" target="_blank" class="li-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Message Phil on LinkedIn
+        </a>
+        <p class="context-tip">💡 No agenda needed — just say hi and what's on your mind.</p>
+      </div>
+
+      <!-- Default CTA shown before type selected -->
+      <div class="default-cta" id="default-cta">
+        <a href="https://www.linkedin.com/in/philipweldon/" target="_blank" class="li-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Message Phil on LinkedIn
+        </a>
+        <p class="default-note">Select what brings you here above for a more tailored message.</p>
+      </div>
+
+      <div class="response-note">
+        <span class="response-dot"></span>
+        <span>Typically responds within 48 hours on LinkedIn</span>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    philweldon.com &nbsp;·&nbsp; Built with care (and a little AI)
+  </footer>
+
+  <script>
+    const types = ['organizer', 'journalist', 'collaborator', 'curious'];
+
+    function selectType(type) {
+      types.forEach(t => {
+        document.getElementById('ctx-' + t).classList.remove('visible');
+        document.querySelectorAll('.type-btn').forEach((btn, i) => {
+          btn.classList.remove('selected');
+        });
+      });
+
+      document.getElementById('default-cta').style.display = 'none';
+      document.getElementById('ctx-' + type).classList.add('visible');
+
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        if (btn.getAttribute('onclick') === `selectType('${type}')`) {
+          btn.classList.add('selected');
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
