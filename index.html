@@ -275,49 +275,6 @@
     .restart-link:hover { color: var(--muted); }
 
     /* ── API Key Notice ── */
-    .api-notice {
-      background: #fffbeb;
-      border: 0.5px solid #f59e0b;
-      border-radius: var(--radius-sm);
-      padding: 1rem 1.25rem;
-      font-size: 13px;
-      color: #92400e;
-      margin-top: 1.5rem;
-      max-width: 560px;
-      line-height: 1.6;
-    }
-    .api-notice strong { font-weight: 500; }
-    .api-notice code {
-      background: rgba(0,0,0,0.06);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-family: monospace;
-    }
-    #api-key-input {
-      width: 100%;
-      margin-top: 0.75rem;
-      padding: 0.5rem 0.75rem;
-      border: 0.5px solid #f59e0b;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: monospace;
-      background: white;
-      color: var(--text);
-      outline: none;
-    }
-    #api-key-input:focus { border-color: var(--accent); }
-    .api-set-btn {
-      margin-top: 0.5rem;
-      padding: 0.4rem 1rem;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-    }
 
     /* ── Footer ── */
     footer {
@@ -375,15 +332,6 @@
         <span class="opt-hint">AI, ideas & writing</span>
       </button>
     </div>
-
-    <!-- API Key setup (needed for local use) -->
-    <div class="api-notice" id="api-notice">
-      <strong>🔑 One-time setup for local use</strong><br>
-      To generate live AI introductions, paste your <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:inherit">Anthropic API key</a> below.
-      It stays in your browser's memory only and is never sent anywhere except Anthropic's API directly.<br>
-      <input type="password" id="api-key-input" placeholder="sk-ant-..." />
-      <br><button class="api-set-btn" onclick="saveKey()">Save key</button>
-    </div>
   </div>
 
   <!-- Step 2: Tailored intro -->
@@ -424,61 +372,39 @@
   </footer>
 
   <script>
-    // ─── Config ───────────────────────────────────────────────
-    let ANTHROPIC_KEY = localStorage.getItem('pw_api_key') || '';
+    // ── ONLY LINE YOU NEED TO EDIT ────────────────────────────
+    // After deploying your Cloudflare Worker, replace the URL below
+    // with your Worker URL (e.g. https://philweldon-proxy.YOUR-NAME.workers.dev)
+    const WORKER_URL = 'https://philweldon-proxy.pbweldon-2ef.workers.dev';
+    // ─────────────────────────────────────────────────────────
 
-    if (ANTHROPIC_KEY) {
-      document.getElementById('api-notice').style.display = 'none';
-    }
-
-    function saveKey() {
-      const val = document.getElementById('api-key-input').value.trim();
-      if (!val.startsWith('sk-')) {
-        alert('That doesn\'t look like a valid Anthropic API key (should start with sk-)');
-        return;
-      }
-      ANTHROPIC_KEY = val;
-      localStorage.setItem('pw_api_key', val);
-      document.getElementById('api-notice').style.display = 'none';
-    }
-
-    // ─── Visitor type config ──────────────────────────────────
     const TYPES = {
       organizer: {
         badge: '🎤 Event organizer',
         action1: 'See speaking topics',
         action2: 'Download speaker kit',
-        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He speaks at panels and roundtables and is known for making complex AI topics feel approachable and thought-provoking.
-
-Write a warm, conversational 3-sentence introduction for someone who has arrived at the site because they are planning an event and are considering Phil as a speaker. Mention his passion for making AI understandable, his experience at panels and roundtables, and make them feel like they've come to the right place. Do not use hype or clichés. Write in first person as Phil.`
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He speaks at panels and roundtables and is known for making complex AI topics feel approachable and thought-provoking.\n\nWrite a warm, conversational 3-sentence introduction for someone who has arrived at the site because they are planning an event and are considering Phil as a speaker. Mention his passion for making AI understandable, his experience at panels and roundtables, and make them feel like they've come to the right place. Do not use hype or clichés. Write in first person as Phil.`
       },
       journalist: {
         badge: '📰 Journalist / media',
         action1: 'Read recent writing',
         action2: 'Download press kit',
-        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.
-
-Write a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.\n\nWrite a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
       },
       collaborator: {
         badge: '🤝 Potential collaborator',
         action1: 'See current projects',
         action2: 'Read my writing',
-        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.
-
-Write a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.\n\nWrite a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`
       },
       curious: {
         badge: '✨ Curious visitor',
         action1: 'Explore my ideas',
         action2: 'Read recent essays',
-        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He loves exploring ideas with anyone willing to think.
-
-Write a warm, conversational 3-sentence introduction for someone who has wandered in out of curiosity about AI, ideas, or Phil's writing. Be inviting and a little playful. Mention his belief that AI is one of the most interesting things happening right now, and that his favourite conversations happen with people who haven't made up their minds about it yet. Do not use hype or clichés. Write in first person as Phil.`
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He loves exploring ideas with anyone willing to think.\n\nWrite a warm, conversational 3-sentence introduction for someone who has wandered in out of curiosity about AI, ideas, or Phil's writing. Be inviting and a little playful. Mention his belief that AI is one of the most interesting things happening right now, and that his favourite conversations happen with people who haven't made up their minds about it yet. Do not use hype or clichés. Write in first person as Phil.`
       }
     };
 
-    // ─── Analytics (local session only) ──────────────────────
     const counts = { organizer: 0, journalist: 0, collaborator: 0, curious: 0 };
 
     function updateAnalytics() {
@@ -488,20 +414,9 @@ Write a warm, conversational 3-sentence introduction for someone who has wandere
         .map(([k, v]) => `${v} ${k}${v > 1 ? 's' : ''}`);
       document.getElementById('analytics-label').textContent =
         `Visit logged · ${total} visit${total !== 1 ? 's' : ''} this session: ${parts.join(', ')}`;
-
-      // 👉 To connect real analytics, replace this with:
-      // gtag('event', 'visitor_type', { type: key });  // Google Analytics 4
-      // plausible('visitor_type', { props: { type: key } });  // Plausible
     }
 
-    // ─── Main interaction ─────────────────────────────────────
     async function choose(type) {
-      if (!ANTHROPIC_KEY) {
-        document.getElementById('api-notice').scrollIntoView({ behavior: 'smooth' });
-        document.getElementById('api-key-input').focus();
-        return;
-      }
-
       document.getElementById('stage').style.display = 'none';
       const introEl = document.getElementById('intro-stage');
       introEl.style.display = 'flex';
@@ -523,16 +438,11 @@ Write a warm, conversational 3-sentence introduction for someone who has wandere
       bodyEl.appendChild(cursor);
 
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch(WORKER_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-haiku-4-5',
             max_tokens: 300,
             stream: true,
             messages: [{ role: 'user', content: config.prompt }]
@@ -540,8 +450,8 @@ Write a warm, conversational 3-sentence introduction for someone who has wandere
         });
 
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error?.message || 'API error');
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || `Error ${res.status}`);
         }
 
         const reader = res.body.getReader();
@@ -573,7 +483,7 @@ Write a warm, conversational 3-sentence introduction for someone who has wandere
 
       } catch (e) {
         cursor.remove();
-        bodyEl.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ ${e.message || 'Something went wrong — check your API key and try again.'}</span>`;
+        bodyEl.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ ${e.message || 'Something went wrong. Please try again.'}</span>`;
       }
     }
 
@@ -581,8 +491,7 @@ Write a warm, conversational 3-sentence introduction for someone who has wandere
       document.getElementById('intro-stage').style.display = 'none';
       document.getElementById('intro-body').innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
       document.getElementById('intro-actions').style.display = 'none';
-      const stage = document.getElementById('stage');
-      stage.style.display = 'flex';
+      document.getElementById('stage').style.display = 'flex';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
