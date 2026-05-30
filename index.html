@@ -1,191 +1,591 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Phil Weldon | eDiscovery, Legal AI & Litigation Technology</title>
-  <meta name="description" content="Phil Weldon is a nationally recognized eDiscovery and legal AI leader, speaker, and author focused on AI-assisted review, TAR, litigation technology, and legal innovation." />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phil Weldon — AI, Speaking & Writing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
-      --border: #1f2937;
+      --bg: #faf9f7;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2);
+      --text: #1a1916;
+      --muted: #6b6960;
+      --hint: #a09e96;
+      --accent: #2d5be3;
+      --accent-bg: #eef2fd;
+      --success-bg: #edf7f0;
+      --success: #1a7a3f;
+      --radius: 14px;
+      --radius-sm: 8px;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
       color: var(--text);
+      min-height: 100vh;
+      font-size: 16px;
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 64px 24px;
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(250,249,247,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border);
     }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
 
-    .hero {
-      margin-bottom: 48px;
+    /* ── Stage ── */
+    #stage {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 4rem;
+      text-align: center;
     }
 
     .eyebrow {
-      color: var(--accent);
-      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 500;
       letter-spacing: 0.12em;
-      font-size: 0.8rem;
-      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--hint);
+      margin-bottom: 1.75rem;
     }
 
-    h1 {
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      line-height: 1;
-      margin: 12px 0;
+    .question {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      max-width: 560px;
+      letter-spacing: -0.02em;
     }
 
-    h2 {
-      color: white;
-      margin-top: 0;
-    }
-
-    .subtitle {
-      max-width: 760px;
+    .sub {
+      font-size: 15px;
       color: var(--muted);
-      font-size: 1.15rem;
+      margin-bottom: 3rem;
+      font-weight: 300;
     }
 
-    .grid {
+    .options {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin: 32px 0;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 500px;
     }
 
-    .card {
-      background: rgba(17, 24, 39, 0.78);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    .opt-btn {
+      background: var(--surface);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.25rem 1rem;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+      font-family: inherit;
+    }
+    .opt-btn:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(45,91,227,0.1);
+    }
+    .opt-btn:active { transform: translateY(0); }
+
+    .opt-icon {
+      font-size: 22px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .opt-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      display: block;
+    }
+    .opt-hint {
+      font-size: 12px;
+      color: var(--hint);
+      margin-top: 3px;
+      display: block;
     }
 
-    .stat {
-      font-size: 2rem;
-      font-weight: 800;
+    /* ── Intro stage ── */
+    #intro-stage {
+      min-height: 100vh;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 4rem;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .visitor-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: 99px;
+      background: var(--accent-bg);
       color: var(--accent);
+      margin-bottom: 2rem;
+      letter-spacing: 0.01em;
     }
 
-    ul {
-      padding-left: 1.2rem;
+    .intro-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 5vw, 40px);
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+      line-height: 1.2;
     }
 
-    li {
-      margin-bottom: 0.65rem;
-    }
-
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    footer {
-      margin-top: 64px;
+    .intro-body {
+      font-size: 17px;
+      line-height: 1.8;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-weight: 300;
+      min-height: 90px;
+      max-width: 560px;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--hint);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.85s step-end infinite;
+    }
+
+    @keyframes bounce { 0%,80%,100%{transform:scaleY(1)} 40%{transform:scaleY(1.4)} }
+    .loading-dots { display: inline-flex; gap: 4px; align-items: center; height: 20px; }
+    .loading-dots span {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--hint);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    .intro-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 2.25rem;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      background: var(--surface);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 1.2rem;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text);
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .action-btn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+    .action-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    hr.divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      width: 100%;
+      margin: 2.5rem 0 1.5rem;
+    }
+
+    .analytics-bar {
+      width: 100%;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.7rem 1rem;
+      font-size: 12px;
+      color: var(--hint);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .analytics-bar svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--hint); }
+
+    .restart-link {
+      font-size: 12px;
+      color: var(--hint);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      margin-top: 1rem;
+      display: inline-block;
+      background: none;
+      border: none;
+      font-family: inherit;
+    }
+    .restart-link:hover { color: var(--muted); }
+
+    /* ── API Key Notice ── */
+    .api-notice {
+      background: #fffbeb;
+      border: 0.5px solid #f59e0b;
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      font-size: 13px;
+      color: #92400e;
+      margin-top: 1.5rem;
+      max-width: 560px;
+      line-height: 1.6;
+    }
+    .api-notice strong { font-weight: 500; }
+    .api-notice code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    #api-key-input {
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border: 0.5px solid #f59e0b;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+      background: white;
+      color: var(--text);
+      outline: none;
+    }
+    #api-key-input:focus { border-color: var(--accent); }
+    .api-set-btn {
+      margin-top: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 12px;
+      color: var(--hint);
+      border-top: 0.5px solid var(--border);
+    }
+
+    @media (max-width: 500px) {
+      .options { grid-template-columns: 1fr; }
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { gap: 1.25rem; }
     }
   </style>
 </head>
-
 <body>
-  <main class="container">
-    <section class="hero">
-      <div class="eyebrow">eDiscovery • Legal AI • Litigation Technology</div>
-      <h1>Phil Weldon</h1>
-      <p class="subtitle">
-        Nationally recognized eDiscovery and legal AI leader helping litigation teams turn
-        complex data, AI-assisted review, TAR, automation, and emerging technology into
-        practical legal advantage.
-      </p>
-      <p>
-        <a href="mailto:PBWeldon@gmail.com">PBWeldon@gmail.com</a> ·
-        <a href="https://www.linkedin.com/in/PhilipWeldon">LinkedIn</a>
-      </p>
-    </section>
 
-    <section class="grid">
-      <div class="card">
-        <div class="stat">2025–2026</div>
-        <p>Named to the Lawdragon 100 Leading Artificial Intelligence & Legal Tech Advisors list.</p>
-      </div>
-      <div class="card">
-        <div class="stat">25+ TB</div>
-        <p>Scaled active eDiscovery data operations across high-stakes litigation matters.</p>
-      </div>
-      <div class="card">
-        <div class="stat">Amateur Runner, Cyclist, and occassional Spartan</div>
-        <p></p>
-      </div>
-    </section>
+  <nav>
+    <a href="#" class="nav-logo">Phil Weldon</a>
+    <ul class="nav-links">
+      <li><a href="#">Speaking</a></li>
+      <li><a href="#">Writing</a></li>
+      <li><a href="#">Media</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </nav>
 
-    <section class="card">
-      <h2>About</h2>
-      <p>
-        Phil Weldon is a nationally recognized eDiscovery and legal AI leader, currently
-        serving as Senior Director of eDiscovery and AI Assisted Review at Hecker Fink LLP.
-        He founded and scaled the firm’s eDiscovery Technology Department, leads enterprise
-        AI strategy and review innovation, and has been named to the Lawdragon 100 Leading
-        Artificial Intelligence & Legal Tech Advisors list in both 2025 and 2026.
-      </p>
-      <p>
-        A frequent speaker at major legal technology forums including Legalweek, ILTA,
-        Relativity Fest, Microsoft, Google, and NYSBA/Perrin, Phil focuses on making
-        advanced AI, TAR, automation, and complex discovery workflows practical for
-        litigators, clients, and legal operations teams.
-      </p>
-    </section>
+  <!-- Step 1: Visitor question -->
+  <div id="stage">
+    <p class="eyebrow">Welcome</p>
+    <h1 class="question">What brings you here today?</h1>
+    <p class="sub">I'll tailor my introduction to you.</p>
 
-    <section class="card">
-      <h2>Selected Speaking Engagements</h2>
-      <ul>
-        <li><strong>2026</strong> — Legalweek 2026, “Artificial Intelligence Escape Room”</li>
-        <li><strong>2026</strong> — Private Google Event, Google St. John’s Terminal Office</li>
-        <li><strong>2026</strong> — Microsoft Technology Center, Chicago, “CoPilot Case Study”</li>
-        <li><strong>2025</strong> — ILTA Conference, “2025 E-Discovery & Litigation Support Roundtable: From TAR to Generative AI”</li>
-        <li><strong>2025</strong> — ILTA Evolve Artificial Intelligence & Security Conference, “The Dark Web”</li>
-        <li><strong>2025</strong> — NYSBA / Perrin Conferences, “Foundations of Artificial Intelligence”</li>
-        <li><strong>2024</strong> — Relativity Webinar, “How the Leanest Teams Are Using Generative AI”</li>
-        <li><strong>2023</strong> — Relativity AI Bootcamp, “The Rise of Generative AI: Staying Ahead of the Curve”</li>
-        <li><strong>2023</strong> — Relativity Fest, “Collaboration Tools: The Challenges and Opportunities Facing Law Firms”</li>
-        <li><strong>2023</strong> — Relativity Webinar, “On the Cutting Edge of Short Message Review: RSMF Slicing, Searching, and More!”</li>
-        <li><strong>2021</strong> — ALM Legalweek / LegalTechNY, “Anatomy of a Legal Hold”</li>
-        <li><strong>2020</strong> — ILTA Webinar, “E-Discovery Automation”</li>
-        <li><strong>2019</strong> — Relativity Fest, “Dangerous Data: Using Relativity to Succeed with Precarious Data Sets”</li>
-        <li><strong>2017</strong> — Relativity Fest, “Creative Cost Control in e-Discovery”</li>
-        <li><strong>2016</strong> — ILTA Conference, “Cyber Incident Response Tabletop Exercise”</li>
-      </ul>
-    </section>
+    <div class="options">
+      <button class="opt-btn" onclick="choose('organizer')">
+        <span class="opt-icon">🎤</span>
+        <span class="opt-label">Planning an event</span>
+        <span class="opt-hint">Speaker booking & topics</span>
+      </button>
+      <button class="opt-btn" onclick="choose('journalist')">
+        <span class="opt-icon">📰</span>
+        <span class="opt-label">Writing a story</span>
+        <span class="opt-hint">Press & media inquiries</span>
+      </button>
+      <button class="opt-btn" onclick="choose('collaborator')">
+        <span class="opt-icon">🤝</span>
+        <span class="opt-label">Exploring collaboration</span>
+        <span class="opt-hint">Projects & partnerships</span>
+      </button>
+      <button class="opt-btn" onclick="choose('curious')">
+        <span class="opt-icon">✨</span>
+        <span class="opt-label">Just curious</span>
+        <span class="opt-hint">AI, ideas & writing</span>
+      </button>
+    </div>
 
-    <section class="card">
-      <h2>Published Articles</h2>
-      <ul>
-        <li><strong>2020</strong> — NYSBA Inside Corporate Counsel, “Attention All Employees – Best Practices for Operations Security”</li>
-        <li><strong>2018</strong> — ILTA Whitepaper, “Beyond Excel: Overcoming Obstacles to Get BI You Need”</li>
-        <li><strong>2016</strong> — ILTA Peer to Peer Magazine, “Encryption Works”</li>
-      </ul>
-    </section>
+    <!-- API Key setup (needed for local use) -->
+    <div class="api-notice" id="api-notice">
+      <strong>🔑 One-time setup for local use</strong><br>
+      To generate live AI introductions, paste your <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:inherit">Anthropic API key</a> below.
+      It stays in your browser's memory only and is never sent anywhere except Anthropic's API directly.<br>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+      <br><button class="api-set-btn" onclick="saveKey()">Save key</button>
+    </div>
+  </div>
 
-    <footer>
-      © Phil Weldon. Built for GitHub Pages.
-    </footer>
-  </main>
+  <!-- Step 2: Tailored intro -->
+  <div id="intro-stage">
+    <div id="visitor-badge" class="visitor-badge"></div>
+    <h1 class="intro-name">Hi, I'm Phil Weldon.</h1>
+    <div class="intro-body" id="intro-body">
+      <span class="loading-dots"><span></span><span></span><span></span></span>
+    </div>
+
+    <div class="intro-actions" id="intro-actions" style="display:none">
+      <button class="action-btn" id="action1">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+        <span id="action1-label"></span>
+      </button>
+      <button class="action-btn" id="action2">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/></svg>
+        <span id="action2-label"></span>
+      </button>
+      <button class="action-btn" id="action3">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+        Get in touch
+      </button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="analytics-bar">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="9" width="3" height="6"/><rect x="6" y="5" width="3" height="10"/><rect x="11" y="1" width="3" height="14"/></svg>
+      <span id="analytics-label">Logging visit...</span>
+    </div>
+
+    <button class="restart-link" onclick="restart()">← Start over</button>
+  </div>
+
+  <footer>
+    philweldon.com &nbsp;·&nbsp; Built with care (and a little AI)
+  </footer>
+
+  <script>
+    // ─── Config ───────────────────────────────────────────────
+    let ANTHROPIC_KEY = localStorage.getItem('pw_api_key') || '';
+
+    if (ANTHROPIC_KEY) {
+      document.getElementById('api-notice').style.display = 'none';
+    }
+
+    function saveKey() {
+      const val = document.getElementById('api-key-input').value.trim();
+      if (!val.startsWith('sk-')) {
+        alert('That doesn\'t look like a valid Anthropic API key (should start with sk-)');
+        return;
+      }
+      ANTHROPIC_KEY = val;
+      localStorage.setItem('pw_api_key', val);
+      document.getElementById('api-notice').style.display = 'none';
+    }
+
+    // ─── Visitor type config ──────────────────────────────────
+    const TYPES = {
+      organizer: {
+        badge: '🎤 Event organizer',
+        action1: 'See speaking topics',
+        action2: 'Download speaker kit',
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He speaks at panels and roundtables and is known for making complex AI topics feel approachable and thought-provoking.
+
+Write a warm, conversational 3-sentence introduction for someone who has arrived at the site because they are planning an event and are considering Phil as a speaker. Mention his passion for making AI understandable, his experience at panels and roundtables, and make them feel like they've come to the right place. Do not use hype or clichés. Write in first person as Phil.`
+      },
+      journalist: {
+        badge: '📰 Journalist / media',
+        action1: 'Read recent writing',
+        action2: 'Download press kit',
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.
+
+Write a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
+      },
+      collaborator: {
+        badge: '🤝 Potential collaborator',
+        action1: 'See current projects',
+        action2: 'Read my writing',
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.
+
+Write a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`
+      },
+      curious: {
+        badge: '✨ Curious visitor',
+        action1: 'Explore my ideas',
+        action2: 'Read recent essays',
+        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He loves exploring ideas with anyone willing to think.
+
+Write a warm, conversational 3-sentence introduction for someone who has wandered in out of curiosity about AI, ideas, or Phil's writing. Be inviting and a little playful. Mention his belief that AI is one of the most interesting things happening right now, and that his favourite conversations happen with people who haven't made up their minds about it yet. Do not use hype or clichés. Write in first person as Phil.`
+      }
+    };
+
+    // ─── Analytics (local session only) ──────────────────────
+    const counts = { organizer: 0, journalist: 0, collaborator: 0, curious: 0 };
+
+    function updateAnalytics() {
+      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      const parts = Object.entries(counts)
+        .filter(([, v]) => v > 0)
+        .map(([k, v]) => `${v} ${k}${v > 1 ? 's' : ''}`);
+      document.getElementById('analytics-label').textContent =
+        `Visit logged · ${total} visit${total !== 1 ? 's' : ''} this session: ${parts.join(', ')}`;
+
+      // 👉 To connect real analytics, replace this with:
+      // gtag('event', 'visitor_type', { type: key });  // Google Analytics 4
+      // plausible('visitor_type', { props: { type: key } });  // Plausible
+    }
+
+    // ─── Main interaction ─────────────────────────────────────
+    async function choose(type) {
+      if (!ANTHROPIC_KEY) {
+        document.getElementById('api-notice').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('api-key-input').focus();
+        return;
+      }
+
+      document.getElementById('stage').style.display = 'none';
+      const introEl = document.getElementById('intro-stage');
+      introEl.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const config = TYPES[type];
+      document.getElementById('visitor-badge').textContent = config.badge;
+      document.getElementById('action1-label').textContent = config.action1;
+      document.getElementById('action2-label').textContent = config.action2;
+      document.getElementById('intro-actions').style.display = 'none';
+
+      counts[type]++;
+      updateAnalytics();
+
+      const bodyEl = document.getElementById('intro-body');
+      bodyEl.innerHTML = '';
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      bodyEl.appendChild(cursor);
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 300,
+            stream: true,
+            messages: [{ role: 'user', content: config.prompt }]
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error?.message || 'API error');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') continue;
+              try {
+                const json = JSON.parse(data);
+                if (json.type === 'content_block_delta' && json.delta?.text) {
+                  bodyEl.insertBefore(document.createTextNode(json.delta.text), cursor);
+                }
+              } catch {}
+            }
+          }
+        }
+
+        cursor.remove();
+        document.getElementById('intro-actions').style.display = 'flex';
+
+      } catch (e) {
+        cursor.remove();
+        bodyEl.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ ${e.message || 'Something went wrong — check your API key and try again.'}</span>`;
+      }
+    }
+
+    function restart() {
+      document.getElementById('intro-stage').style.display = 'none';
+      document.getElementById('intro-body').innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+      document.getElementById('intro-actions').style.display = 'none';
+      const stage = document.getElementById('stage');
+      stage.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
 </body>
 </html>
