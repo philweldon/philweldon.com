@@ -6,7 +6,7 @@
   <title>Phil Weldon — AI, Speaking & Writing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -290,6 +290,50 @@
       nav { padding: 1rem 1.25rem; }
       .nav-links { gap: 1.25rem; }
     }
+
+    /* ── Review Queue terminal button ── */
+    .opt-btn.terminal {
+      background: #020c04;
+      border: 1px solid #00aa2a;
+      color: #00ff41;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      box-shadow: 0 0 8px rgba(0,255,65,0.08), inset 0 0 12px rgba(0,255,65,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .opt-btn.terminal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.18) 0px,
+        rgba(0,0,0,0.18) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+    }
+    .opt-btn.terminal .opt-icon { filter: none; }
+    .opt-btn.terminal .opt-label {
+      color: #00ff41;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 6px rgba(0,255,65,0.5);
+    }
+    .opt-btn.terminal .opt-hint {
+      color: #00aa2a;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+    .opt-btn.terminal:hover {
+      border-color: #00ff41;
+      background: #031a07;
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px rgba(0,255,65,0.2), inset 0 0 16px rgba(0,255,65,0.06);
+    }
   </style>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YN259X7CNJ"></script>
@@ -328,10 +372,10 @@
         <span class="opt-label">Writing</span>
         <span class="opt-hint"></span>
       </button>
-      <button class="opt-btn" onclick="window.location.href='turing-testimony.html'">
+      <button class="opt-btn terminal" onclick="window.location.href='AI-Review.html'">
         <span class="opt-icon">⚖️</span>
-        <span class="opt-label">Turing Testimony (Text Game)</span>
-        <span class="opt-hint"></span>
+        <span class="opt-label">Review Queue (Text Game)</span>
+        <span class="opt-hint">eDiscovery simulator</span>
       </button>
       <button class="opt-btn" onclick="choose('curious')">
         <span class="opt-icon">✨</span>
@@ -403,9 +447,9 @@
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.\n\nWrite a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
       },
       collaborator: {
-        badge: '⚖️ Turing Testimony',
-        action1: 'Play Turing Testimony',
-        action1href: 'turing-testimony.html',
+        badge: '⚖️ Review Queue',
+        action1: 'Play Review Queue',
+        action1href: 'AI-Review.html',
         action2: 'Read my writing',
         action2href: 'writing.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.\n\nWrite a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`

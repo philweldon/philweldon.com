@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE REVIEW QUEUE CRISIS</title>
+<style>
+  /* ===== RETRO TERMINAL AESTHETIC ===== */
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+  :root {
+    --green: #00ff41;
+    --green-dim: #00aa2a;
+    --green-dark: #003a0f;
+    --green-glow: rgba(0,255,65,0.15);
+    --amber: #ffb000;
+    --red: #ff3131;
+    --bg: #020c04;
+    --scanline: rgba(0,0,0,0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      var(--scanline) 0px,
+      var(--scanline) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* CRT flicker */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+    z-index: 999;
+    animation: flicker 8s infinite;
+  }
+
+  @keyframes flicker {
+    0%,100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.85; }
+    94% { opacity: 1; }
+    97% { opacity: 0.9; }
+    98% { opacity: 1; }
+  }
+
+  #terminal {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  .header {
+    text-align: center;
+    border: 2px solid var(--green);
+    padding: 16px;
+    margin-bottom: 24px;
+    background: var(--green-dark);
+    box-shadow: 0 0 20px var(--green-glow), inset 0 0 20px var(--green-glow);
+  }
+
+  .title {
+    font-family: 'VT323', monospace;
+    font-size: clamp(28px, 6vw, 52px);
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green), 0 0 20px var(--green-dim);
+    letter-spacing: 4px;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--green-dim);
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
+
+  .screen {
+    border: 1px solid var(--green-dim);
+    padding: 20px;
+    margin-bottom: 16px;
+    background: rgba(0,255,65,0.03);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen-label {
+    font-size: 10px;
+    color: var(--green-dim);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--green-dark);
+    padding-bottom: 8px;
+  }
+
+  /* Partner speech box */
+  .partner-box {
+    border: 2px solid var(--green);
+    padding: 16px;
+    margin: 16px 0;
+    position: relative;
+    background: var(--green-dark);
+    box-shadow: 0 0 8px var(--green-glow);
+  }
+
+  .partner-box::before {
+    content: '[ SENIOR PARTNER ]';
+    position: absolute;
+    top: -9px;
+    left: 12px;
+    background: var(--bg);
+    padding: 0 6px;
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 2px;
+  }
+
+  .partner-text {
+    color: var(--amber);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .partner-ascii {
+    font-size: 10px;
+    color: var(--green-dim);
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+  }
+
+  /* Document card */
+  .doc-card {
+    border: 1px solid var(--green-dim);
+    padding: 12px;
+    margin: 10px 0;
+    background: rgba(0,255,65,0.02);
+    transition: border-color 0.2s;
+  }
+
+  .doc-card.relevant { border-color: var(--green); background: rgba(0,255,65,0.08); }
+  .doc-card.not-relevant { border-color: #333; opacity: 0.6; }
+  .doc-card.privileged { border-color: var(--amber); background: rgba(255,176,0,0.05); }
+  .doc-card.unsure { border-color: #888; }
+
+  .doc-meta {
+    font-size: 10px;
+    color: var(--green-dim);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .doc-snippet {
+    font-size: 12px;
+    color: var(--green);
+    line-height: 1.5;
+  }
+
+  .doc-icon {
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--green);
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0;
+  }
+
+  button {
+    background: var(--bg);
+    color: var(--green);
+    border: 1px solid var(--green-dim);
+    padding: 8px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+    text-align: left;
+  }
+
+  button:hover, button:focus {
+    background: var(--green-dark);
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 8px var(--green-glow);
+    outline: none;
+  }
+
+  button.primary {
+    border-color: var(--green);
+    background: var(--green-dark);
+    box-shadow: 0 0 6px var(--green-glow);
+  }
+
+  button.danger {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  button.amber {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* Coding buttons inline with doc */
+  .code-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .code-btns button {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .code-label {
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+
+  .code-label.rel { border-color: var(--green); color: var(--green); }
+  .code-label.nr  { border-color: #555; color: #555; }
+  .code-label.priv { border-color: var(--amber); color: var(--amber); }
+  .code-label.uns  { border-color: #888; color: #888; }
+
+  /* Metrics panel */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+  }
+
+  .metric-box {
+    border: 1px solid var(--green-dim);
+    padding: 10px 12px;
+    background: rgba(0,255,65,0.03);
+  }
+
+  .metric-label {
+    font-size: 9px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: var(--green);
+    text-shadow: 0 0 6px var(--green-dim);
+  }
+
+  .metric-sub {
+    font-size: 9px;
+    color: var(--green-dim);
+    margin-top: 2px;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 8px;
+    background: var(--green-dark);
+    border: 1px solid var(--green-dim);
+    margin: 6px 0;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    transition: width 0.5s ease;
+  }
+
+  /* Score / rank */
+  .rank-display {
+    text-align: center;
+    padding: 24px;
+    border: 2px solid var(--green);
+    margin: 20px 0;
+    background: var(--green-dark);
+    box-shadow: 0 0 30px var(--green-glow);
+  }
+
+  .rank-title {
+    font-family: 'VT323', monospace;
+    font-size: 48px;
+    color: var(--amber);
+    text-shadow: 0 0 12px var(--amber);
+  }
+
+  .rank-desc {
+    font-size: 12px;
+    color: var(--green-dim);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  /* Separator */
+  .sep {
+    color: var(--green-dim);
+    font-size: 11px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+
+  /* Alert/callout */
+  .callout {
+    border-left: 3px solid var(--amber);
+    padding: 8px 14px;
+    margin: 10px 0;
+    background: rgba(255,176,0,0.05);
+    font-size: 12px;
+    color: var(--amber);
+    line-height: 1.5;
+  }
+
+  .callout.red {
+    border-color: var(--red);
+    background: rgba(255,49,49,0.05);
+    color: var(--red);
+  }
+
+  .score-display {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: var(--green-dim);
+    text-align: right;
+    letter-spacing: 2px;
+  }
+
+  /* Summary list */
+  .summary-item {
+    padding: 8px 12px;
+    border-left: 2px solid var(--green-dim);
+    margin: 6px 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--green);
+  }
+
+  .summary-item strong {
+    color: var(--amber);
+  }
+
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .type-text {
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* mobile tweaks */
+  @media (max-width: 600px) {
+    #terminal { padding: 10px; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .btn-row { flex-direction: column; }
+    .btn-row button { width: 100%; }
+  }
+
+  .stage-indicator {
+    font-size: 10px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  pre { white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+<div id="terminal">
+  <div class="header">
+    <div class="title">THE REVIEW QUEUE CRISIS</div>
+    <div class="subtitle">AN EDISCOVERY SURVIVAL SIMULATOR &bull; TERMINAL v2.4.1</div>
+  </div>
+  <div id="game-area"></div>
+</div>
+
+<script>
+/* ========================================================
+   THE REVIEW QUEUE CRISIS
+   An eDiscovery / TAR educational game
+   Built to teach attorneys how AI-assisted review works,
+   why human judgment still matters, and how to make
+   defensible decisions under pressure.
+   ======================================================== */
+
+// ─── GAME STATE ───────────────────────────────────────────
+const state = {
+  score: 0,
+  stage: 0,
+  caseScenario: null,
+  seedChoice: null,
+  docCodings: {},       // docId -> coding
+  prioritizationChoice: null,
+  partnerAnswers: {},
+  mistakes: [],         // track bad decisions for final debrief
+  docCount: 500000,
+  reviewed: 0,
+  richness: 0,
+  confidence: 0,
+  precision: 0,
+  recall: 0,
+  overturnRate: 0,
+};
+
+// ─── CASE SCENARIOS ───────────────────────────────────────
+/* Educational purpose: Exposes players to a variety of
+   real-world case types where TAR is commonly used. Each
+   case has different "hot document" characteristics. */
+const CASES = [
+  {
+    type: "CONTRACT DISPUTE",
+    client: "Amalgamated Widget Corp.",
+    opponent: "NovaTech Supply LLC",
+    summary: "Client claims NovaTech fraudulently induced a 10-year widget supply agreement, then deliberately under-delivered to force renegotiation. NovaTech says performance issues were caused by supply chain disruptions. You need internal emails, contract drafts, and communications showing intent.",
+    hotDocs: ["emails discussing delivery targets", "contract redlines", "internal forecasts", "communications with sales team", "board memos re: NovaTech strategy"],
+    richness: 6,
+    icon: "📄"
+  },
+  {
+    type: "TRADE SECRET / IP THEFT",
+    client: "Photon Dynamics Inc.",
+    opponent: "Former employee Marcus Holt (now at RivalCorp)",
+    summary: "Former VP of Engineering departed with R&D files, allegedly copying proprietary laser calibration algorithms before his last day. You need forensic artifacts, file access logs, communications with RivalCorp, and any NDAs discussed.",
+    hotDocs: ["file access logs", "USB transfer records", "emails to personal accounts", "NDA correspondence", "communications mentioning RivalCorp"],
+    richness: 4,
+    icon: "💾"
+  },
+  {
+    type: "EMPLOYMENT DISCRIMINATION",
+    client: "Dr. Yolanda Price",
+    opponent: "Meridian Hospital Network",
+    summary: "Client, a Black female attending physician, was passed over for department chief three times. White male colleagues with lesser credentials were promoted. You need performance reviews, promotion committee notes, internal HR communications, and comparator data.",
+    hotDocs: ["promotion committee emails", "performance reviews", "HR complaint records", "DEI reports", "communications between decision-makers"],
+    richness: 7,
+    icon: "⚖️"
+  },
+  {
+    type: "GOVERNMENT INVESTIGATION",
+    client: "Coastal Energy Partners LLC",
+    opponent: "DOJ / EPA Joint Task Force",
+    summary: "Federal subpoena for all documents related to offshore platform maintenance, inspection records, and contractor communications over a 7-year period. The agency suspects falsified inspection reports. You have 500,000 documents and 90 days.",
+    hotDocs: ["inspection reports", "contractor invoices", "emails re: regulatory compliance", "maintenance logs", "communications with inspectors"],
+    richness: 5,
+    icon: "🏛️"
+  },
+  {
+    type: "PRODUCT LIABILITY",
+    client: "Families suing MediDevice Corp.",
+    opponent: "MediDevice Corp.",
+    summary: "Class action alleging MediDevice knew about implant failure rates but suppressed internal testing data. You need design review documents, clinical trial communications, post-market surveillance reports, and anything showing knowledge of failure risks.",
+    hotDocs: ["clinical trial communications", "design review memos", "adverse event reports", "board presentations", "emails suppressing or burying safety data"],
+    richness: 8,
+    icon: "⚕️"
+  }
+];
+
+// ─── FAKE DOCUMENTS ───────────────────────────────────────
+/* Educational purpose: Players review realistic-feeling
+   document snippets to practice relevance determinations.
+   Each doc has a "correct" coding and an explanation. */
+function generateDocs(caseType) {
+  const docSets = {
+    "CONTRACT DISPUTE": [
+      { id:"d1", icon:"📧", meta:"From: j.warren@amalgamated.com  To: board@amalgamated.com  Date: 2021-03-14", snippet:"...as I told the CFO, NovaTech has NEVER intended to honor the volume commitments. This was a bait-and-switch from day one. We need to document every shortfall for the litigation team...", correct:"relevant", hint:"Internal email showing bad faith allegation — likely very hot." },
+      { id:"d2", icon:"📄", meta:"Contract Draft v7 — NovaTech Supply Agreement — 2020-11-02", snippet:"...Section 4.2: Supplier agrees to deliver no fewer than 200,000 units per quarter. Failure to deliver shall constitute material breach unless caused by force majeure as defined in Exhibit C...", correct:"relevant", hint:"Contract terms are core to the dispute." },
+      { id:"d3", icon:"📧", meta:"From: p.singh@novatech.com  To: operations@novatech.com  Date: 2022-01-08", snippet:"...quarterly widget report attached. Q4 numbers are in line with projections. Holiday party photos also attached. See you all Tuesday...", correct:"not-relevant", hint:"Routine operational email with no connection to the dispute." },
+      { id:"d4", icon:"📋", meta:"NovaTech Internal Forecast — Q3 2021 — CONFIDENTIAL", snippet:"...Production capacity analysis indicates we CANNOT meet Amalgamated commitments without capital investment. Recommend renegotiating volume targets before Q1 deliverables come due. Legal has been notified...", correct:"relevant", hint:"Shows NovaTech knew about the gap — very relevant." },
+      { id:"d5", icon:"📧", meta:"From: j.warren@amalgamated.com  To: m.feldstein@amalgamated.com  Date: 2020-08-19  SUBJECT: Lunch Thursday?", snippet:"...hey, are you free Thursday? Found a great new Thai place by the office. Also the Knicks look terrible this year...", correct:"not-relevant", hint:"Personal chit-chat. No legal significance whatsoever." },
+      { id:"d6", icon:"🔒", meta:"From: j.warren@amalgamated.com  To: outside-counsel@biglaw.com  Date: 2022-04-01  PRIVILEGED AND CONFIDENTIAL", snippet:"...pursuant to our engagement letter, here is my summary of the delivery failures for your review. Please advise on litigation strategy and document preservation obligations...", correct:"privileged", hint:"Attorney-client communication. Privilege review required." },
+      { id:"d7", icon:"📊", meta:"Amalgamated Board Presentation — Q2 2022 — Strategy Review", snippet:"...NovaTech relationship identified as material risk. GC advises potential litigation exposure of $40M-$120M depending on course of action. Three options: renegotiate, sue, or exit...", correct:"relevant", hint:"Shows awareness of dispute at board level." },
+    ],
+    "TRADE SECRET / IP THEFT": [
+      { id:"d1", icon:"💾", meta:"IT Security Log — User: mholt — 2023-11-28 17:42:11", snippet:"...USB device connected: SanDisk 64GB. Files transferred: /R&D/Photon_Cal_Algo_v9_FINAL.zip (847MB), /R&D/Patent_Pending_Schematics/ (1.2GB). Session ended 18:01:03...", correct:"relevant", hint:"Smoking gun: forensic evidence of file transfer." },
+      { id:"d2", icon:"📧", meta:"From: m.holt@photon.com  To: m.holt@gmail.com  Date: 2023-11-25", snippet:"...sending myself the calibration spec overview just so I have it handy. Lots to think about over the holiday...", correct:"relevant", hint:"Self-exfiltration via personal email — key evidence." },
+      { id:"d3", icon:"📧", meta:"From: m.holt@photon.com  To: hr@photon.com  Date: 2023-11-30", snippet:"...please accept this as my formal resignation, effective December 15. It has been a pleasure working here. Thank you for the opportunities...", correct:"not-relevant", hint:"Standard resignation letter. Timing may be circumstantial but doc itself is not relevant." },
+      { id:"d4", icon:"📧", meta:"From: k.riley@rivalcorp.com  To: m.holt@gmail.com  Date: 2023-10-14", snippet:"...Marcus, looking forward to having you on the team. Our calibration team would love to see the Photon approach first-hand. Details to follow...", correct:"relevant", hint:"Pre-departure contact with rival. Highly relevant." },
+      { id:"d5", icon:"📋", meta:"NDA — Marcus Holt — Executed 2019-03-01", snippet:"...Employee acknowledges that all work product, algorithms, technical specifications, and derivative works created during employment are sole property of Photon Dynamics and shall not be disclosed...", correct:"relevant", hint:"The NDA defines the legal duty. Definitely relevant." },
+      { id:"d6", icon:"📧", meta:"From: m.holt@photon.com  To: team@photon.com  Date: 2023-09-12", snippet:"...reminder that the quarterly laser calibration review is Thursday at 2pm. Bring your Q3 testing notes. Birthday cake in the break room for Sarah...", correct:"not-relevant", hint:"Routine team email. No relevance." },
+      { id:"d7", icon:"🔒", meta:"From: m.holt@gmail.com  To: outside-counsel@defenselaw.com  Date: 2024-01-10  PRIVILEGED", snippet:"...as you requested, here is my account of events leading to my departure from Photon. I was not aware that the files I took were considered proprietary under the NDA...", correct:"privileged", hint:"Communications with defense counsel. Flag for privilege." },
+    ],
+    "EMPLOYMENT DISCRIMINATION": [
+      { id:"d1", icon:"📧", meta:"From: dr.chen@meridian.com  To: hr-exec@meridian.com  Date: 2021-06-03", snippet:"...frankly, the board is not ready for the optics of Price in that role. She's technically qualified but the donor community would push back. Let's move forward with Whitmore...", correct:"relevant", hint:"Exactly the kind of document plaintiffs dream about." },
+      { id:"d2", icon:"📋", meta:"Promotion Committee Notes — Dept. Chief Selection — 2021-06-10", snippet:"...Dr. Price: 14 years experience, board certified, strong patient outcomes (98th percentile). Dr. Whitmore: 9 years experience, board certified, patient outcomes (71st percentile). Committee voted 4-1 in favor of Whitmore...", correct:"relevant", hint:"Shows the credential gap. Relevant to disparate treatment claim." },
+      { id:"d3", icon:"📧", meta:"From: hr@meridian.com  To: all-staff@meridian.com  Date: 2020-11-15", snippet:"...please remember to complete your annual benefits enrollment by December 1. New dental plan options are available this year...", correct:"not-relevant", hint:"Mass email about benefits. No connection to the claim." },
+      { id:"d4", icon:"📊", meta:"DEI Committee Annual Report — Meridian Hospital — 2021", snippet:"...leadership representation: 82% white, 6% Black, 12% other. Department chief positions: 91% white. Pipeline initiatives have not yet translated to senior appointments. Recommend further review...", correct:"relevant", hint:"Statistical evidence supporting systemic claim." },
+      { id:"d5", icon:"📧", meta:"From: dr.price@meridian.com  To: hr@meridian.com  Date: 2021-06-18", snippet:"...I am formally documenting my objection to the promotion outcome and requesting the evaluation criteria used. I believe this decision was influenced by factors unrelated to merit. Please confirm receipt...", correct:"relevant", hint:"Contemporaneous complaint — establishes timeline and notice." },
+      { id:"d6", icon:"🔒", meta:"From: ceo@meridian.com  To: outside-counsel@hospitallaw.com  Date: 2021-07-01  PRIVILEGE", snippet:"...we received a formal complaint from Dr. Price. Please advise on exposure and recommended documentation strategy going forward...", correct:"privileged", hint:"Post-complaint communication with counsel. Privileged." },
+      { id:"d7", icon:"📧", meta:"From: dr.chen@meridian.com  To: admin@meridian.com  Date: 2021-03-02", snippet:"...the lunchroom microwave is broken again. Facilities has been notified but please use the 3rd floor kitchen in the meantime...", correct:"not-relevant", hint:"The microwave is not relevant to discrimination. Unless... no. It's not." },
+    ],
+    "GOVERNMENT INVESTIGATION": [
+      { id:"d1", icon:"📧", meta:"From: t.okafor@coastal.com  To: ops-team@coastal.com  Date: 2019-07-14", snippet:"...re: Platform 7 inspection. The inspector from Region 4 is coming Tuesday. Make sure the maintenance log shows the Q2 work was done. We can fill in the dates later...", correct:"relevant", hint:"Suggests falsification of records. Extremely hot document." },
+      { id:"d2", icon:"📋", meta:"Platform Inspection Report — Platform 7 — Q2 2019", snippet:"...all systems inspected and found to be in compliance with applicable regulations. Maintenance complete per schedule. Inspector signature: [illegible]...", correct:"relevant", hint:"The allegedly falsified report itself. Absolutely relevant." },
+      { id:"d3", icon:"📧", meta:"From: hr@coastal.com  To: all-staff@coastal.com  Date: 2020-01-15", snippet:"...Q4 safety training completion reminder. All offshore personnel must complete the annual safety course by January 31...", correct:"not-relevant", hint:"Routine safety training reminder. Not relevant to falsification claim." },
+      { id:"d4", icon:"📊", meta:"Contractor Invoice — SturdyBuild Maintenance LLC — July 2019", snippet:"...Invoice for maintenance services: Platform 7, Q2 2019. INVOICE DATE: August 14, 2019. Work performed: Q2 structural inspection per contract...", correct:"relevant", hint:"Invoice postdating the inspection could corroborate falsification theory." },
+      { id:"d5", icon:"📧", meta:"From: t.okafor@coastal.com  To: legal@coastal.com  Date: 2019-08-01", snippet:"...we need to talk about the Platform 7 situation. I'm not comfortable with some of what happened during the Q2 cycle. Can we get on a call?...", correct:"relevant", hint:"Hints at internal awareness of problems. Relevant to knowledge." },
+      { id:"d6", icon:"🔒", meta:"From: ceo@coastal.com  To: outside-counsel@energylaw.com  Date: 2022-10-14  PRIVILEGED", snippet:"...following receipt of the subpoena, please advise on preservation obligations and the scope of our production. We have significant concerns about certain 2019 records...", correct:"privileged", hint:"Post-subpoena counsel communication. Classic privilege." },
+      { id:"d7", icon:"📧", meta:"From: t.okafor@coastal.com  To: wife@gmail.com  Date: 2019-12-24", snippet:"...can't make it home until the 26th. Platform emergency. The kids' gifts are in the hall closet. Merry Christmas. Sorry again...", correct:"not-relevant", hint:"Personal family email. Captured on work server. Not relevant." },
+    ],
+    "PRODUCT LIABILITY": [
+      { id:"d1", icon:"📧", meta:"From: dr.k.walsh@medidevice.com  To: exec-team@medidevice.com  Date: 2017-04-20", snippet:"...the Phase 3 failure rate data is alarming. We are seeing 8.3% implant failure within 36 months. This was not in the IND projections. Legal says we cannot let this get out before launch...", correct:"relevant", hint:"Potentially the most damaging document in the case." },
+      { id:"d2", icon:"📊", meta:"Post-Market Surveillance Report — Q3 2018 — INTERNAL ONLY", snippet:"...adverse events: 847 reported implant failures through Q3. Trend line is consistent with pre-launch modeling. Recommend no product recall at this time pending further monitoring...", correct:"relevant", hint:"Internal surveillance showing ongoing knowledge of failures." },
+      { id:"d3", icon:"📧", meta:"From: marketing@medidevice.com  To: sales-team@medidevice.com  Date: 2018-01-10", snippet:"...2018 Q1 sales targets attached. The new Titanium-X implant campaign launches February 1. Focus on the five-star safety profile in all patient-facing materials...", correct:"relevant", hint:"Marketing materials showing public claims vs. internal knowledge." },
+      { id:"d4", icon:"📋", meta:"Board Meeting Minutes — MediDevice Corp. — November 2018", snippet:"...CFO reported Q3 revenue up 14%. COO presented implant performance metrics (slide deck attached—CONFIDENTIAL). Board voted to table recall discussion pending outside expert review...", correct:"relevant", hint:"Board-level awareness and decision not to recall. Key evidence." },
+      { id:"d5", icon:"📧", meta:"From: hr@medidevice.com  To: all-staff@medidevice.com  Date: 2018-09-04", snippet:"...please update your emergency contact information in the HR portal. Open enrollment begins October 1...", correct:"not-relevant", hint:"HR housekeeping email. Not relevant." },
+      { id:"d6", icon:"🔒", meta:"From: ceo@medidevice.com  To: outside-counsel@pharmalaw.com  Date: 2019-01-14  PRIVILEGED", snippet:"...we need to discuss litigation exposure on the implant failures. I am attaching all the internal adverse event data for your privileged review and strategic analysis...", correct:"privileged", hint:"Attaching underlying data to privileged communication is a nuanced privilege issue—flag for attorney review." },
+      { id:"d7", icon:"📧", meta:"From: dr.k.walsh@medidevice.com  To: cafeteria@medidevice.com  Date: 2017-03-15", snippet:"...can we get the veggie option back at the Thursday lunch buffet? Three people have asked and we miss the eggplant...", correct:"not-relevant", hint:"Cafeteria email. Unless the eggplant failed at an 8.3% rate, this is not relevant." },
+    ],
+  };
+  return docSets[caseType] || docSets["CONTRACT DISPUTE"];
+}
+
+// ─── PARTNER ASCII ART ────────────────────────────────────
+const PARTNER_ART = `  ≡≡≡ INCOMING TRANSMISSION — SENIOR PARTNER ≡≡≡`;
+
+// ─── RENDER ENGINE ────────────────────────────────────────
+function render(html) {
+  document.getElementById('game-area').innerHTML = html;
+}
+
+function $ (id) { return document.getElementById(id); }
+
+// ─── STAGE 0: TITLE / INTRO ───────────────────────────────
+/* Educational purpose: Sets tone and introduces the premise.
+   Players understand they're about to learn something real. */
+function stageIntro() {
+  state.stage = 0;
+  render(`
+    <div class="screen">
+      <div class="screen-label">SYSTEM BOOT — CASE INTAKE MODULE</div>
+      <pre class="partner-ascii">${PARTNER_ART}</pre>
+      <div class="partner-box">
+        <p class="partner-text">
+          Welcome, junior associate. I'm your senior partner. I have bad news and worse news.<br><br>
+          The bad news: We have a new matter with 500,000 documents and opposing counsel has already served discovery requests.<br><br>
+          The worse news: The partner in charge (me) is in Singapore until Friday, which means <em>you</em> are in charge of review.<br><br>
+          The good news: We have an AI-assisted review platform. The better news: I'm going to make sure you don't destroy it.<br><br>
+          Congratulations. You have discovered the ancient legal technology known as <em>"reading things."</em> Now let's make the machine help before your soul leaves your body.
+        </p>
+      </div>
+      <div class="callout">
+        ⚠ This simulator teaches Technology Assisted Review (TAR) / Active Learning workflows as used in eDiscovery. Concepts are based on generally accepted industry guidance. Not legal advice. Obviously.
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="stageSelectCase()">▶ BEGIN INTAKE</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 1: CASE SELECTION ──────────────────────────────
+/* Educational purpose: Shows that TAR applies across many
+   case types. Case theory shapes everything downstream. */
+function stageSelectCase() {
+  state.stage = 1;
+  // Randomly pick a case
+  state.caseScenario = CASES[Math.floor(Math.random() * CASES.length)];
+  const c = state.caseScenario;
+
+  // Set richness based on case
+  state.richness = c.richness;
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 1 OF 8 — INTAKE &amp; CASE THEORY</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <pre style="color:var(--amber);font-size:28px;font-family:'VT323',monospace;">
+${c.icon} MATTER TYPE: ${c.type}
+CLIENT: ${c.client}
+ADVERSARY: ${c.opponent}
+UNIVERSE: 500,000 DOCUMENTS
+      </pre>
+      <div class="sep">─────────────────────────────────────────────────────</div>
+      <p style="font-size:13px;line-height:1.7;margin-bottom:12px;">${c.summary}</p>
+      <div class="partner-box">
+        <p class="partner-text">
+          Before we touch a single document, we need a case theory. The model can only learn what you teach it. If you don't know what you're looking for, the AI definitely doesn't.<br><br>
+          Hot document types you should be thinking about: <strong style="color:var(--green)">${c.hotDocs.slice(0,4).join(", ")}</strong>. These will anchor your seed set.<br><br>
+          This is not the AI's job to figure out. This is <em>your</em> job. The AI amplifies your judgment. It does not replace it.
+        </p>
+      </div>
+      <p style="font-size:12px;margin:10px 0;">What are you primarily looking for in this matter?</p>
+      <div class="btn-row">
+        <button onclick="answerCaseTheory('good')" class="primary">📁 Documents showing knowledge, intent, and key decisions by decision-makers</button>
+        <button onclick="answerCaseTheory('ok')">📁 Anything with keywords matching the complaint</button>
+        <button onclick="answerCaseTheory('bad')">📁 I'll let the AI decide what's relevant</button>
+      </div>
+    </div>
+  `);
+}
+
+function answerCaseTheory(choice) {
+  if (choice === 'good') {
+    state.score += 10;
+  } else if (choice === 'ok') {
+    state.score += 3;
+    state.mistakes.push("Over-relied on keywords for case theory instead of substantive analysis.");
+  } else {
+    state.mistakes.push("Delegated case theory development to the AI, which has no idea what your case is about.");
+  }
+  stageSeedChoice();
+}
+
+// ─── STAGE 2: SEED CHOICE ─────────────────────────────────
+/* Educational purpose: The seed set is critical. Different
+   starting strategies have very different consequences for
+   model quality, defensibility, and efficiency. */
+function stageSeedChoice() {
+  state.stage = 2;
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 2 OF 8 — SEED SET STRATEGY</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <div class="partner-box">
+        <p class="partner-text">
+          Now we need to seed the model. The seed set is your first training signal — the examples you give the AI before it starts ranking documents.<br><br>
+          Think of it this way: you're teaching a very fast, very literal student. What you show them first shapes everything they'll think is important.<br><br>
+          Choose wisely. The entire workflow is watching.
+        </p>
+      </div>
+      <p style="font-size:12px;margin:10px 0;">How do you want to start the active learning workflow?</p>
+      <div class="btn-row" style="flex-direction:column;">
+        <button onclick="chooseSeed('judgmental')" class="primary">🎯 Judgmental Seed — Use known hot documents and their near-duplicates to give the model strong positive examples</button>
+        <button onclick="chooseSeed('random')">🎲 Random Sample — Pull a statistically random set of documents for initial coding</button>
+        <button onclick="chooseSeed('keyword')">🔍 Keyword-Only — Use keyword search hits as the initial training corpus</button>
+        <button onclick="chooseSeed('ai')" class="danger">🤖 Just press GO and let the AI figure it out</button>
+      </div>
+    </div>
+  `);
+}
+
+function chooseSeed(choice) {
+  state.seedChoice = choice;
+  let feedback = '';
+  let points = 0;
+
+  /* Educational content: Each seed choice has real
+     consequences explained in plain English. */
+  if (choice === 'judgmental') {
+    points = 15;
+    feedback = `
+      <div class="callout">
+        ✓ <strong>Solid choice.</strong> Using known hot documents (custodian "key people" files, documents you've already identified as important) gives the model strong, clear examples of what relevance looks like in <em>this</em> specific matter. The model can then find more like them.<br><br>
+        Caveat: Make sure your seed set includes examples of both relevant AND not-relevant documents. The model needs to learn both sides of the line. A seed set of only hot docs without non-relevant examples can skew the model.
+      </div>`;
+  } else if (choice === 'random') {
+    points = 8;
+    feedback = `
+      <div class="callout">
+        ⚠ <strong>Defensible but potentially slow.</strong> A random sample is statistically sound and avoids bias accusations — but if the collection richness is low (say, only 5% of docs are relevant), you'll spend a long time coding non-relevant documents before the model gets enough signal to rank well.<br><br>
+        This approach works better as a <em>validation</em> tool or for estimating richness. As a primary seed strategy in a low-richness collection, it's like trying to find a needle by randomly grabbing hay.
+      </div>`;
+    state.mistakes.push("Random seed in a potentially low-richness collection — slow to get signal.");
+  } else if (choice === 'keyword') {
+    points = 2;
+    feedback = `
+      <div class="callout red">
+        ⚠ <strong>Bold. Also, the year 2007 called and wants its workflow back.</strong><br><br>
+        Keyword-only training has well-documented limitations: it misses synonyms, coded language, foreign language documents, and documents that are relevant <em>because of context</em> rather than specific terms. If you train the model only on keyword hits, you get a model that learns to find keyword hits — not relevance.<br><br>
+        Keywords can be a useful starting filter, but they should not be the sole training corpus. Courts have noted that keyword review is often less reliable than well-designed TAR workflows.
+      </div>`;
+    state.mistakes.push("Used keyword-only seed strategy, which limits model generalization.");
+  } else {
+    points = 0;
+    feedback = `
+      <div class="callout red">
+        🚨 <strong>Oh no.</strong> "Let the AI figure it out" is not a strategy. It's a way to explain to a judge why your production was a disaster.<br><br>
+        Active learning workflows require human judgment to bootstrap. The model has no idea what your case theory is, who the key players are, or what "relevant" means in your specific matter. Starting with zero guidance produces garbage initial rankings.<br><br>
+        Even the best active learning system needs a thoughtful human to get it started. That human is you. Unfortunately.
+      </div>`;
+    state.mistakes.push("Failed to provide meaningful seed set — delegated strategy entirely to the AI.");
+  }
+
+  state.score += points;
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 2 OF 8 — SEED FEEDBACK</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      ${feedback}
+      <div class="partner-box">
+        <p class="partner-text">
+          One more thing: whatever seeding approach you use, <em>document it.</em> The process needs to be defensible. "We used our best judgment" is fine as long as you can describe what that judgment was and why it was reasonable. Write it down. Right now. Before you forget.
+        </p>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="stageFirstReview()">▶ PROCEED TO FIRST REVIEW ROUND</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 3: FIRST REVIEW ROUND ─────────────────────────
+/* Educational purpose: Simulates the human coding process.
+   Shows players what relevance determinations actually look
+   like and why careful, consistent coding matters for
+   training data quality. */
+function stageFirstReview() {
+  state.stage = 3;
+  state.docCodings = {};
+  const docs = generateDocs(state.caseScenario.type);
+
+  let docHtml = docs.map(doc => `
+    <div class="doc-card" id="card-${doc.id}">
+      <div class="doc-meta">${doc.icon} ${doc.meta}</div>
+      <div class="doc-snippet">"${doc.snippet}"</div>
+      <div class="code-btns">
+        <button onclick="codeDoc('${doc.id}','relevant','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)" >✓ RELEVANT</button>
+        <button onclick="codeDoc('${doc.id}','not-relevant','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)">✗ NOT RELEVANT</button>
+        <button onclick="codeDoc('${doc.id}','unsure','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)">? UNSURE</button>
+        <button onclick="codeDoc('${doc.id}','privileged','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)" class="amber">🔒 PRIVILEGED</button>
+      </div>
+      <div id="hint-${doc.id}" style="display:none;font-size:11px;margin-top:8px;color:var(--green-dim);border-top:1px solid var(--green-dark);padding-top:6px;"></div>
+    </div>
+  `).join('');
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 3 OF 8 — FIRST REVIEW ROUND (TRAINING DATA)</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <div class="partner-box">
+        <p class="partner-text">
+          Here are your first documents. Code each one. Your decisions become training data. Every coding decision you make teaches the model something.<br><br>
+          Be consistent. Be thoughtful. If you'd mark something relevant at 9am, mark it the same way at 4pm.<br><br>
+          And for the love of all that is holy — if it looks privileged, flag it. Attorney-client privilege does not fix itself.
+        </p>
+      </div>
+      <p style="font-size:11px;color:var(--green-dim);margin-bottom:10px;">CODE EACH DOCUMENT:</p>
+      ${docHtml}
+      <div id="review-feedback"></div>
+      <div class="btn-row" id="continue-btn" style="display:none;">
+        <button class="primary" onclick="stageModelUpdate()">▶ SUBMIT TRAINING ROUND &amp; UPDATE MODEL</button>
+      </div>
+    </div>
+  `);
+
+  // Store docs for scoring
+  window._reviewDocs = docs;
+}
+
+function codeDoc(docId, coding, correct, hint, btn) {
+  state.docCodings[docId] = coding;
+  state.reviewed++;
+
+  // Visual feedback on card
+  const card = document.getElementById('card-' + docId);
+  card.className = 'doc-card ' + coding;
+
+  // Disable all buttons for this doc
+  card.querySelectorAll('button').forEach(b => b.disabled = true);
+
+  // Show hint
+  const hintEl = document.getElementById('hint-' + docId);
+  hintEl.style.display = 'block';
+  hintEl.innerHTML = `<strong>Coding: ${coding.toUpperCase()}</strong> — ${hint}`;
+  if (coding === correct) {
+    hintEl.innerHTML += ' <span style="color:var(--green)">✓ GOOD CALL</span>';
+    state.score += 5;
+  } else if (coding === 'unsure') {
+    hintEl.innerHTML += ' <span style="color:#888">~ Marked unsure — consider escalating these to a senior reviewer.</span>';
+    state.score += 2;
+  } else {
+    hintEl.innerHTML += ' <span style="color:var(--red)">✗ RECONSIDER — this might affect your model.</span>';
+    state.mistakes.push(`Miscoded document: ${docId} as ${coding} (should be ${correct}).`);
+  }
+
+  // Check if all coded
+  const docs = window._reviewDocs;
+  const codedCount = Object.keys(state.docCodings).length;
+  if (codedCount >= docs.length) {
+    document.getElementById('continue-btn').style.display = 'flex';
+    const fb = document.getElementById('review-feedback');
+    fb.innerHTML = `<div class="callout">Round complete. ${codedCount} documents coded. Submitting to model for training...</div>`;
+  }
+}
+
+// ─── STAGE 4: MODEL UPDATE ────────────────────────────────
+/* Educational purpose: Demystifies model metrics. Players
+   learn what precision, recall, confidence, richness, and
+   overturn rates actually mean — and why they don't tell
+   the whole story. */
+function stageModelUpdate() {
+  state.stage = 4;
+
+  // Generate fictional but realistic metrics
+  const baseConf = state.seedChoice === 'judgmental' ? 67 :
+                   state.seedChoice === 'random' ? 54 :
+                   state.seedChoice === 'keyword' ? 58 : 45;
+
+  state.confidence = baseConf + Math.floor(Math.random() * 8);
+  state.precision = 0.72 + (Math.random() * 0.12);
+  state.recall = 0.61 + (Math.random() * 0.14);
+  state.overturnRate = 3 + Math.floor(Math.random() * 9);
+
+  // Richness estimate
+  const richEst = state.richness + (Math.random() * 2 - 1);
+
+  // Top-ranked themes based on case
+  const c = state.caseScenario;
+  const themes = c.hotDocs.slice(0,3);
+
+  const confColor = state.confidence >= 70 ? 'var(--green)' : state.confidence >= 55 ? 'var(--amber)' : 'var(--red)';
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 4 OF 8 — MODEL UPDATE &amp; METRICS REVIEW</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <p style="font-size:11px;color:var(--green-dim);margin-bottom:12px;">■ MODEL TRAINING COMPLETE — ROUND 1 METRICS:</p>
+      <div class="metrics">
+        <div class="metric-box">
+          <div class="metric-label">DOCUMENTS REVIEWED</div>
+          <div class="metric-value" style="font-size:22px;">${Object.keys(state.docCodings).length}</div>
+          <div class="metric-sub">of 500,000 total</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">EST. COLLECTION RICHNESS</div>
+          <div class="metric-value">${richEst.toFixed(1)}%</div>
+          <div class="metric-sub">est. relevant docs in universe</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">MODEL CONFIDENCE SCORE</div>
+          <div class="metric-value" style="color:${confColor}">${state.confidence}%</div>
+          <div class="metric-sub">avg. on ranked docs</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">ESTIMATED PRECISION</div>
+          <div class="metric-value">${(state.precision*100).toFixed(1)}%</div>
+          <div class="metric-sub">of flagged docs actually relevant</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">ESTIMATED RECALL</div>
+          <div class="metric-value">${(state.recall*100).toFixed(1)}%</div>
+          <div class="metric-sub">of relevant docs flagged so far</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">OVERTURN RATE</div>
+          <div class="metric-value" style="color:${state.overturnRate > 8 ? 'var(--red)' : 'var(--green)'}">${state.overturnRate}%</div>
+          <div class="metric-sub">QC disagreements with model</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--green-dim);margin:12px 0 6px;">TOP-RANKED DOCUMENT THEMES:</p>
+      ${themes.map(t => `<div style="font-size:12px;padding:4px 0;border-left:2px solid var(--green);padding-left:10px;margin:4px 0;">▸ ${t}</div>`).join('')}
+      <div class="progress-bar" style="margin:16px 0 4px;">
+        <div class="progress-fill" style="width:${Math.min((Object.keys(state.docCodings).length/500000)*100*10000,12)}%;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--green-dim);">REVIEW PROGRESS (PRIORITIZED UNIVERSE)</div>
+      <div class="partner-box">
+        <p class="partner-text">
+          Good. The model is learning. But don't get excited about that ${state.confidence}% confidence score just yet.<br><br>
+          High confidence is not a permission slip to stop thinking. Confidence tells you how certain the model is about its <em>own</em> rankings — not whether it got it right. A model can be confidently wrong, especially on unusual documents, foreign language files, or document types it hasn't seen in training.<br><br>
+          Also note that overturn rate of ${state.overturnRate}%. That means QC reviewers are disagreeing with the model on ${state.overturnRate}% of sampled documents. ${state.overturnRate > 8 ? "That's high. We need more training rounds." : "That's acceptable, but keep watching it."}
+        </p>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="stagePrioritization()">▶ MAKE PRIORITIZATION DECISION</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 5: PRIORITIZATION DECISION ────────────────────
+/* Educational purpose: Active learning's key value is
+   prioritized review — surfacing likely-relevant docs
+   first. But players must also understand the risks of
+   stopping too early or misusing low-ranked documents. */
+function stagePrioritization() {
+  state.stage = 5;
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 5 OF 8 — PRIORITIZATION &amp; WORKFLOW DECISION</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <div class="partner-box">
+        <p class="partner-text">
+          The model has ranked the remaining 499,993 documents. The highest-ranked documents are most likely to be relevant based on your training examples.<br><br>
+          You have three weeks left in the review window. What do you do next?
+        </p>
+      </div>
+      <p style="font-size:12px;margin:10px 0;">CHOOSE YOUR NEXT ACTION:</p>
+      <div class="btn-row" style="flex-direction:column;">
+        <button onclick="choosePrioritization('prioritized')" class="primary">📈 Review the top-ranked documents first — surface the likely hot docs, train the model further as you go</button>
+        <button onclick="choosePrioritization('borderline')">⚖️ Focus on borderline documents (medium confidence) — help the model learn the hard calls</button>
+        <button onclick="choosePrioritization('qc_low')">🔍 QC a random sample of low-ranked documents — verify the model isn't burying relevant docs</button>
+        <button onclick="choosePrioritization('stop_early')" class="danger">🛑 The model is ${state.confidence}% confident — that's good enough. Stop reviewing and produce the ranked docs.</button>
+        <button onclick="choosePrioritization('export_all')" class="danger">😱 This is too stressful. Export everything. All 500,000 documents. To everyone.</button>
+      </div>
+    </div>
+  `);
+}
+
+function choosePrioritization(choice) {
+  state.prioritizationChoice = choice;
+  let feedback = '';
+  let points = 0;
+
+  /* Educational content: Each prioritization choice explained */
+  if (choice === 'prioritized') {
+    points = 15;
+    feedback = `
+      <div class="callout">
+        ✓ <strong>This is what active learning is for.</strong> Prioritized review means you see likely-relevant documents first, which means you find important documents faster, meet with the partner sooner, and keep training the model as you go.<br><br>
+        This is the core value proposition: you don't have to read all 500,000 documents in random order. The model helps you work smarter. The key is continuing to use human judgment on the documents you review — the model learns from every decision you make.
+      </div>`;
+  } else if (choice === 'borderline') {
+    points = 12;
+    feedback = `
+      <div class="callout">
+        ✓ <strong>Smart training strategy.</strong> Borderline documents — those the model is uncertain about — provide the most new information for training. Highly confident relevant or non-relevant docs don't teach the model much that it doesn't already know.<br><br>
+        This is called "active learning" for a reason: strategically selecting uncertain examples improves the model faster than reviewing documents the model is already confident about. Combine this with prioritized review for best results.
+      </div>`;
+  } else if (choice === 'qc_low') {
+    points = 14;
+    feedback = `
+      <div class="callout">
+        ✓ <strong>Excellent defensive thinking.</strong> QC sampling low-ranked documents is one of the most important validation steps in a TAR workflow. Low rank does not mean "definitely not relevant" — it means the <em>model</em> thinks it's not relevant based on what you've taught it so far.<br><br>
+        If you find relevant documents in the low-ranked pile, that's a signal to continue training. If the low-ranked sample is clean, that supports a reasoned decision to stop reviewing the tail. This is how you build a defensible stopping decision.
+      </div>`;
+  } else if (choice === 'stop_early') {
+    points = -5;
+    state.mistakes.push("Stopped review prematurely based on confidence score alone, without validation sampling of low-ranked documents.");
+    feedback = `
+      <div class="callout red">
+        🚨 <strong>This is a sanctions-adjacent decision.</strong><br><br>
+        A confidence score tells you how sure the model is. It does not tell you that you've found everything. Stopping without validation — without sampling the low-ranked pile to confirm it's actually non-relevant — is indefensible.<br><br>
+        Courts and opposing counsel will ask: how do you know you didn't miss anything? "The AI was confident" is not an answer. Proportionality matters, but so does reasonableness. You need to be able to explain your stopping decision with data.
+      </div>`;
+  } else {
+    points = -10;
+    state.mistakes.push("Panic-exported all 500,000 documents, including privileged materials and irrelevant documents.");
+    feedback = `
+      <div class="callout red">
+        🚨 <strong>Oh no. OH NO.</strong><br><br>
+        You just proposed producing 500,000 unreviewed documents. This collection almost certainly contains:<br>
+        &bull; Attorney-client privileged communications<br>
+        &bull; Work product<br>
+        &bull; Trade secrets<br>
+        &bull; Personal information of non-parties<br>
+        &bull; Documents that actively hurt your client's case<br><br>
+        There is no FRCP 26 proportionality defense for "I got scared and sent everything." This is how careers end. Take a breath. Use the process.
+      </div>`;
+  }
+
+  state.score += points;
+  state.score = Math.max(0, state.score);
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 5 OF 8 — PRIORITIZATION FEEDBACK</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      ${feedback}
+      <div class="btn-row">
+        <button class="primary" onclick="stagePartnerInterruption()">▶ CONTINUE — PARTNER IS CALLING</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 6: PARTNER INTERRUPTION ───────────────────────
+/* Educational purpose: Simulates the real-world pressure
+   of needing to defend your process to a senior lawyer,
+   opposing counsel, or a judge. Players must know their
+   own workflow decisions well enough to explain them. */
+function stagePartnerInterruption() {
+  state.stage = 6;
+
+  const questions = [
+    {
+      q: "I just got off the phone with opposing counsel. They want to know our review methodology. Can we defend this process?",
+      answers: [
+        { text: "Yes — we used [seed strategy], reviewed [X] documents, monitored overturn rates, QC-sampled the low-ranked population, and documented our decisions at each step.", points: 15, feedback: "Perfect. Defensibility is about process documentation, not perfection. You can explain what you did and why. That's the standard." },
+        { text: "We used AI, it was [X]% confident, so we produced the results.", points: -5, feedback: "This will not survive a meet-and-confer. 'The AI was confident' is not a methodology. You need to describe the human decisions, the training process, the validation steps, and the stopping criteria." },
+        { text: "...I'll have to get back to you.", points: 2, feedback: "At least you didn't lie. But you need to know your process cold. Document it NOW so you can answer this question with specifics next time." },
+      ]
+    },
+    {
+      q: "Why did you stop the review when you did? What's your basis for the stopping decision?",
+      answers: [
+        { text: "We reviewed prioritized documents until the estimated recall crossed our threshold, then validated by sampling low-ranked documents and found an acceptable rate of relevant documents in that tail.", points: 15, feedback: "This is a defensible stopping decision. You have data. You can explain it. Reasonable minds can agree this is proportional." },
+        { text: "We ran out of time and the deadline was Friday.", points: -3, feedback: "Honest, unfortunately. But 'we ran out of time' is not a stopping criterion — it's a scheduling problem that becomes a sanctions problem. Build the stopping decision into your workflow from the start." },
+        { text: "The model confidence was high enough.", points: -8, feedback: "Again: confidence score ≠ stopping criterion. You need validation data — not just a number from the model about how sure it is of itself." },
+      ]
+    },
+    {
+      q: "What did you do about privilege? The client is terrified something got out.",
+      answers: [
+        { text: "We flagged potential privilege during review, ran a privilege filter on all outbound documents, and did a secondary privilege review on anything flagged by reviewers or the model.", points: 15, feedback: "Solid. Privilege review is non-negotiable, and a multi-layer approach (reviewer flag + filter + secondary review) is the right structure." },
+        { text: "We relied on the AI to catch privileged documents automatically.", points: -10, feedback: "The AI does NOT do privilege review. Privilege determinations require attorney judgment about the specific communication, the relationship, the purpose of the communication, and the context. An AI ranking model trained on relevance has not been asked to make privilege calls. This is how clawback motions happen." },
+        { text: "We applied a keyword filter for attorney names.", points: 3, feedback: "Better than nothing. Keyword filters for attorney names are a common first pass, but they miss CC'd counsel, outside firm communications that don't match the filter, and in-house counsel emails on non-privileged topics. Needs to be combined with a human review layer." },
+      ]
+    },
+    {
+      q: "How do we know the AI didn't miss the weird stuff — unusual documents, foreign language, non-custodian files?",
+      answers: [
+        { text: "We did targeted searches for non-standard document types, flagged foreign language documents for specialized review, and included atypical document examples in our training set.", points: 15, feedback: "Excellent. Active learning models can have blind spots for document types and formats not well-represented in training data. Proactively addressing these gaps is exactly right." },
+        { text: "If the model didn't find it, it's probably not relevant.", points: -10, feedback: "This is a dangerous assumption. The model finds documents LIKE the ones you trained it on. If you never showed it a foreign language email or a non-standard file format, it may not rank those well even if they're very relevant. Human-in-the-loop thinking matters here." },
+        { text: "We'll deal with it if it comes up in depositions.", points: -5, feedback: "The 'cross that bridge when we come to it' strategy is a discovery sanctions strategy in disguise. If you know there's a category of documents you haven't addressed, you need to address it now — not after someone gets deposed." },
+      ]
+    }
+  ];
+
+  const q = questions[Math.floor(Math.random() * questions.length)];
+  window._partnerQ = q;
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 6 OF 8 — PARTNER INTERRUPTION</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <pre class="partner-ascii">${PARTNER_ART}</pre>
+      <div class="partner-box">
+        <p class="partner-text">
+          ${q.q}
+        </p>
+      </div>
+      <p style="font-size:12px;margin:10px 0;">YOUR RESPONSE:</p>
+      <div class="btn-row" style="flex-direction:column;">
+        ${q.answers.map((a,i) => `<button onclick="answerPartner(${i})">${a.text}</button>`).join('')}
+      </div>
+    </div>
+  `);
+}
+
+function answerPartner(idx) {
+  const q = window._partnerQ;
+  const a = q.answers[idx];
+  state.score += a.points;
+  state.score = Math.max(0, state.score);
+
+  if (a.points < 0) {
+    state.mistakes.push(`Partner question: "${q.q.substring(0,50)}..." — weak answer.`);
+  }
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 6 OF 8 — PARTNER RESPONSE</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <pre class="partner-ascii">${PARTNER_ART}</pre>
+      <div class="partner-box">
+        <p class="partner-text">${a.feedback}</p>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="stageValidation()">▶ PROCEED TO VALIDATION &amp; QC</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 7: VALIDATION ──────────────────────────────────
+/* Educational purpose: Validation is how you know if
+   your TAR workflow worked. Random sampling, recall
+   estimation, and overturn tracking are core tools. */
+function stageValidation() {
+  state.stage = 7;
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 7 OF 8 — VALIDATION &amp; QUALITY CONTROL</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <div class="partner-box">
+        <p class="partner-text">
+          Before we make a final production decision, we need to validate the workflow. You've been reviewing, the model has been ranking — but how do you know if it worked?<br><br>
+          Choose your validation approach:
+        </p>
+      </div>
+      <div class="btn-row" style="flex-direction:column;">
+        <button onclick="chooseValidation('full')" class="primary">📊 Run a statistically valid random sample of the low-ranked population and a separate QC sample of the reviewed documents — calculate recall estimate and overturn rate</button>
+        <button onclick="chooseValidation('partial')">🔎 Quick QC sample of 50 random documents from the reviewed set</button>
+        <button onclick="chooseValidation('none')" class="danger">🤞 The model looked good. Skip validation. We're out of time.</button>
+      </div>
+    </div>
+  `);
+}
+
+function chooseValidation(choice) {
+  let feedback = '';
+  let points = 0;
+
+  if (choice === 'full') {
+    points = 20;
+    feedback = `
+      <div class="callout">
+        ✓ <strong>This is how you build a defensible record.</strong><br><br>
+        A statistically valid random sample of the low-ranked population lets you estimate how many relevant documents you may have missed. If the sample shows very few relevant documents in the tail, that's support for your stopping decision. If it shows a lot, you need to keep reviewing.<br><br>
+        Tracking overturn rates — where QC reviewers disagree with the model — tells you how well the model is performing on unseen documents. High overturn rates mean more training. Low rates support confidence in the model.<br><br>
+        This is the kind of methodology you can explain to a judge, opposing counsel, or a client.
+      </div>`;
+  } else if (choice === 'partial') {
+    points = 8;
+    state.mistakes.push("Ran limited validation — statistically insufficient to estimate recall with confidence.");
+    feedback = `
+      <div class="callout">
+        ⚠ <strong>Better than nothing, but not great.</strong><br><br>
+        50 documents is not a statistically meaningful sample for a 500,000 document universe. You can't make reliable recall estimates from this. For a defensible stopping analysis, you typically need sample sizes calculated based on desired confidence intervals and margin of error — often 150-400 documents per sample depending on richness.<br><br>
+        That said, this is better than no validation at all. Upgrade to full validation if you have any time left.
+      </div>`;
+  } else {
+    points = -15;
+    state.mistakes.push("Skipped validation entirely — no basis for a defensible stopping decision.");
+    feedback = `
+      <div class="callout red">
+        🚨 <strong>This is the part where careers go to die.</strong><br><br>
+        Skipping validation is how you end up in a sanctions motion explaining to a judge why you produced a set of documents you can't defend. "The model looked good" is not a methodology. "We ran out of time" is a planning failure that becomes a legal failure.<br><br>
+        Validation is not optional. Build it into your timeline from day one. Courts are increasingly sophisticated about TAR workflows and will ask pointed questions.
+      </div>`;
+  }
+
+  state.score += points;
+  state.score = Math.max(0, state.score);
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 7 OF 8 — VALIDATION FEEDBACK</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      ${feedback}
+      <div class="partner-box">
+        <p class="partner-text">
+          Here is your validation summary (fictional but realistic):<br><br>
+          &bull; Low-rank sample (n=350): ${choice === 'none' ? 'N/A — not run' : '2.1% relevant found in tail'}<br>
+          &bull; Reviewed document QC overturn rate: ${state.overturnRate}%<br>
+          &bull; Estimated recall: ${choice === 'full' ? '87.3%' : choice === 'partial' ? 'insufficient data' : 'unknown'}<br>
+          &bull; Recommendation: ${choice === 'full' ? 'Proceed to production with documented stopping criteria.' : choice === 'partial' ? 'Consider additional validation before final production.' : 'DO NOT PRODUCE until validation is complete.'}<br><br>
+          Document all of this. Every number. Every decision. Every date. The process memo is your best friend.
+        </p>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="stageFinalOutcome()">▶ GET FINAL OUTCOME</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 8: FINAL OUTCOME ───────────────────────────────
+/* Educational purpose: Provides a summary of what the
+   player did well and what they need to learn. Reinforces
+   key TAR principles in plain English. */
+function stageFinalOutcome() {
+  state.stage = 8;
+
+  // Determine rank
+  let rank, rankDesc, rankColor;
+  if (state.score >= 90) {
+    rank = "TAR WHISPERER";
+    rankDesc = "You navigated the review queue with the grace of someone who has actually read the Sedona Conference Primer. The model listened. The partner is impressed. The client will never know how close this came to chaos.";
+    rankColor = "var(--green)";
+  } else if (state.score >= 70) {
+    rank = "PARTNER'S FAVORITE HUMAN-IN-THE-LOOP";
+    rankDesc = "Solid work. You understood that the AI is a tool, not a replacement for judgment. A few missteps, but you documented your process and the production is defensible. Buy yourself a coffee.";
+    rankColor = "var(--green)";
+  } else if (state.score >= 50) {
+    rank = "ASSOCIATE OF THE ALGORITHM";
+    rankDesc = "You got through it. Some decisions were questionable, a few were mildly terrifying, but you didn't export all 500,000 documents, so we're calling it a partial win. Study up before the next one.";
+    rankColor = "var(--amber)";
+  } else if (state.score >= 25) {
+    rank = "QUEUE GOBLIN";
+    rankDesc = "You made it through the exercise, technically. The partner has questions. So does opposing counsel. The process memo exists, which helps. But several key decisions undermined the workflow. Consider this a learning experience.";
+    rankColor = "var(--amber)";
+  } else {
+    rank = "SANCTIONS GREMLIN";
+    rankDesc = "The partner is in Singapore and unavailable for comment. Opposing counsel has filed a motion. The client wants to know what happened. The good news: you played a browser game, not a real case. The bad news: you'd better study up.";
+    rankColor = "var(--red)";
+  }
+
+  // Build mistakes summary
+  const mistakeHtml = state.mistakes.length > 0
+    ? state.mistakes.map(m => `<div class="summary-item">⚠ ${m}</div>`).join('')
+    : '<div class="summary-item" style="color:var(--green)">✓ No major mistakes recorded. Impressive.</div>';
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 8 OF 8 — FINAL OUTCOME</div>
+      <div class="rank-display">
+        <div style="font-size:12px;color:var(--green-dim);letter-spacing:3px;margin-bottom:8px;">FINAL DESIGNATION:</div>
+        <div class="rank-title" style="color:${rankColor}">${rank}</div>
+        <div class="rank-desc">${rankDesc}</div>
+        <div style="margin-top:16px;font-family:'VT323',monospace;font-size:36px;color:var(--green);">SCORE: ${state.score}</div>
+      </div>
+      
+      <div class="screen">
+        <div class="screen-label">DECISIONS THAT COST YOU</div>
+        ${mistakeHtml}
+      </div>
+
+      <div class="screen">
+        <div class="screen-label">📚 WHAT DID I JUST LEARN? — KEY TAKEAWAYS</div>
+        
+        <div class="summary-item">
+          <strong>TAR is not magic — it amplifies human judgment.</strong> The model learns from your decisions. Garbage in, garbage out. Thoughtful reviewers who understand the case theory produce better training data and better model performance.
+        </div>
+        <div class="summary-item">
+          <strong>Case theory comes before the first document.</strong> Before seeding the model, you need to know what you're looking for: who the key custodians are, what document types matter, and what "relevant" means in your specific matter.
+        </div>
+        <div class="summary-item">
+          <strong>Seed sets shape everything downstream.</strong> Judgmental seed sets using known hot documents can jumpstart model performance, but must include both positive and negative examples. Pure random seeding is statistically sound but slow in low-richness collections.
+        </div>
+        <div class="summary-item">
+          <strong>Keyword-only review has well-documented limitations.</strong> It misses documents that are relevant by context rather than terms, coded language, foreign language files, and documents that don't use the specific vocabulary you anticipated.
+        </div>
+        <div class="summary-item">
+          <strong>High confidence ≠ permission to stop thinking.</strong> Model confidence scores reflect the model's certainty about its own rankings, not whether it got them right. Unusual documents, foreign language, and non-standard file types may not be ranked reliably even with high average confidence.
+        </div>
+        <div class="summary-item">
+          <strong>Low-ranked documents are not safe to ignore without sampling.</strong> A defensible stopping decision requires validation: sampling the low-ranked population to confirm that the model isn't burying relevant documents. That sample data becomes your basis for stopping.
+        </div>
+        <div class="summary-item">
+          <strong>QC sampling and overturn tracking matter.</strong> High overturn rates (QC reviewers disagreeing with model decisions) indicate the model needs more training. Low overturn rates support confidence in the workflow.
+        </div>
+        <div class="summary-item">
+          <strong>Privilege review is not a TAR feature.</strong> Privilege determinations require attorney judgment. Never rely on a relevance-trained model to catch privileged documents. Use attorney name filters, custodian mapping, privilege log protocols, and secondary review.
+        </div>
+        <div class="summary-item">
+          <strong>Document everything.</strong> The process memo is your best friend. Every seed decision, every training round, every validation sample, every stopping criterion — written down, with dates. That's how you defend the workflow.
+        </div>
+        <div class="summary-item">
+          <strong>The goal is proportional, reasonable, defensible review — not perfection.</strong> No review process finds 100% of relevant documents. The standard is reasonableness and proportionality, demonstrated by a documented, principled process.
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="primary" onclick="restartGame()">↺ RESTART CASE</button>
+        <button onclick="window.print()">🖨 PRINT SUMMARY</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── RESTART ──────────────────────────────────────────────
+function restartGame() {
+  // Reset state
+  state.score = 0;
+  state.stage = 0;
+  state.caseScenario = null;
+  state.seedChoice = null;
+  state.docCodings = {};
+  state.prioritizationChoice = null;
+  state.partnerAnswers = {};
+  state.mistakes = [];
+  state.reviewed = 0;
+  state.richness = 0;
+  state.confidence = 0;
+  state.precision = 0;
+  state.recall = 0;
+  state.overturnRate = 0;
+  window._reviewDocs = null;
+  window._partnerQ = null;
+  stageIntro();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+stageIntro();
+</script>
+</body>
+</html>
