@@ -613,7 +613,7 @@ body::before {
   <div class="court-header">
     <div class="court-seal">⚖️</div>
     <div class="court-title">The Turing Testimony</div>
-    <div class="court-subtitle">An eDiscovery Active Learning Adventure &nbsp;|&nbsp; In re: Your Career</div>
+    <div class="court-subtitle">An eDiscovery Active Learning Simulation</div>
   </div>
 
   <!-- STATS BAR -->
@@ -631,7 +631,7 @@ body::before {
 
   <!-- FEEDBACK PANEL -->
   <div id="feedback-panel">
-    <div class="feedback-title">📋 Court Exhibit: Educational Record</div>
+    <div class="feedback-title">📋 Feedback</div>
     <div class="feedback-body" id="feedback-body"></div>
     <div class="feedback-stat-change" id="feedback-stats"></div>
   </div>
@@ -647,8 +647,8 @@ body::before {
 
   <!-- DISCLAIMER -->
   <div class="disclaimer">
-    ⚠️ This is a parody educational tool, not legal advice, and definitely not your TAR protocol.<br>
-    Any resemblance to actual discovery sanctions is coincidental and frankly impressive.
+    This is an educational simulation, not legal advice and not a substitute for a proper TAR protocol.<br>
+    Concepts are simplified for learning purposes.
   </div>
 
 </div>
@@ -692,8 +692,8 @@ const DOCUMENTS = [
     from: 'ceo@acmecorp.com',
     date: 'Mar 14',
     correctCode: 'responsive',
-    hint: 'When the subject literally says what the case is about, that\'s what we call a "softball." Responsive.',
-    funny: '🚩 The subject line alone could fund opposing counsel\'s boat payment.'
+    hint: 'The subject line directly references the subject matter of the case. This is responsive.',
+    funny: ''
   },
   {
     id: 'doc2',
@@ -701,8 +701,8 @@ const DOCUMENTS = [
     from: 'paralegal@acmecorp.com',
     date: 'Mar 15',
     correctCode: 'privileged',
-    hint: 'The burrito part is non-responsive. The "privileged memo" attached — log it, don\'t produce it. Attorney-client privilege covers legal advice, not the guac.',
-    funny: '🌯 Tag: Privileged (the memo, not the burritos).'
+    hint: 'The lunch order is non-responsive. The attached memo from counsel containing legal advice is privileged — log it, don\'t produce it.',
+    funny: ''
   },
   {
     id: 'doc3',
@@ -710,8 +710,8 @@ const DOCUMENTS = [
     from: 'vp.sales@acmecorp.com',
     date: 'Feb 28',
     correctCode: 'responsive',
-    hint: 'Anything that says "do not forward to Legal" was written by someone who regrets not forwarding it to Legal. Responsive.',
-    funny: '🦅 "Do not forward to Legal" is the eDiscovery equivalent of a neon sign.'
+    hint: 'The instruction to withhold from Legal, combined with the subject matter, makes this document responsive. It may also be relevant to spoliation issues.',
+    funny: ''
   },
   {
     id: 'doc4',
@@ -719,8 +719,8 @@ const DOCUMENTS = [
     from: 'admin@acmecorp.com',
     date: 'Jan 10',
     correctCode: 'non',
-    hint: 'A multi-forwarded spreadsheet about Q3 inventory. Zero connection to the pricing claims. Non-responsive — unless you enjoy reviewing 47 versions of the same file.',
-    funny: '📊 Somewhere there\'s a FINAL_FINAL_FINAL_v3_ACTUALFINAL.xlsx. Non-responsive.'
+    hint: 'A forwarded spreadsheet about Q3 inventory has no connection to the pricing claims at issue. Non-responsive.',
+    funny: ''
   },
   {
     id: 'doc5',
@@ -728,8 +728,8 @@ const DOCUMENTS = [
     from: 'cto@acmecorp.com',
     date: 'Apr 1',
     correctCode: 'responsive',
-    hint: 'Oh buddy. This is responsive AND potentially its own separate exhibit at the sanctions hearing.',
-    funny: '🔥 This email is doing a lot of work for opposing counsel. Responsive. Very responsive.'
+    hint: 'This document is responsive and may independently raise issues of spoliation or obstruction depending on what followed.',
+    funny: ''
   },
   {
     id: 'doc6',
@@ -737,8 +737,8 @@ const DOCUMENTS = [
     from: 'hr@acmecorp.com',
     date: 'Feb 14',
     correctCode: 'non',
-    hint: 'Happy birthday, Karen. This has nothing to do with pricing, competition, or anything actionable. Non-responsive.',
-    funny: '🎂 Karen deserves better than being dragged into litigation. Non-responsive.'
+    hint: 'Internal HR correspondence about a birthday has no connection to the claims at issue. Non-responsive.',
+    funny: ''
   },
   {
     id: 'doc7',
@@ -746,8 +746,8 @@ const DOCUMENTS = [
     from: 'strategy@acmecorp.com',
     date: 'Mar 3',
     correctCode: 'responsive',
-    hint: '"Eyes only" plus "competitive pricing strategy" in an antitrust case. Responsive.',
-    funny: '👀 "Eyes Only" means everyone who typed it has eyes on a subpoena.'
+    hint: 'A document about competitive pricing strategy is directly relevant to an antitrust case. The confidentiality designation doesn\'t change the responsiveness determination.',
+    funny: ''
   },
   {
     id: 'doc8',
@@ -755,8 +755,8 @@ const DOCUMENTS = [
     from: 'generalcounsel@acmecorp.com',
     date: 'Mar 20',
     correctCode: 'privileged',
-    hint: 'In-house counsel giving legal advice is privileged. Log it on the privilege log. Do not produce. Protect it like it\'s the last slice of pizza.',
-    funny: '⚖️ GC memo seeking legal analysis. Classic privilege log candidate.'
+    hint: 'In-house counsel providing legal advice is protected by attorney-client privilege. Log it on the privilege log and do not produce.',
+    funny: ''
   },
   {
     id: 'doc9',
@@ -764,8 +764,8 @@ const DOCUMENTS = [
     from: 'coo@acmecorp.com',
     date: 'Jan 22',
     correctCode: 'non',
-    hint: 'The company\'s speaker selection process is not at issue. Non-responsive. Unless the speaker was a pricing consultant, in which case, congratulations.',
-    funny: '🎤 Tony Robbins has no known pricing cartel affiliations. Non-responsive.'
+    hint: 'Internal planning for a company all-hands event has no connection to the pricing claims at issue. Non-responsive.',
+    funny: ''
   },
   {
     id: 'doc10',
@@ -773,8 +773,8 @@ const DOCUMENTS = [
     from: 'sales.dir@acmecorp.com',
     date: 'Feb 7',
     correctCode: 'responsive',
-    hint: 'Competitor price matching discussion is squarely at issue in an antitrust case. Responsive.',
-    funny: '🚨 "URGENT" plus "competitor price matching." Your recall metric just thanked you.'
+    hint: 'A document discussing competitor price matching is directly relevant in an antitrust matter. Responsive.',
+    funny: ''
   },
   {
     id: 'doc11',
@@ -782,8 +782,8 @@ const DOCUMENTS = [
     from: 'itsupport@acmecorp.com',
     date: 'Mar 9',
     correctCode: 'non',
-    hint: 'The printer has been suffering in silence for months. Non-responsive.',
-    funny: '🖨️ The printer is non-responsive. Much like the IT team.'
+    hint: 'An IT support ticket about a printer malfunction has no connection to the claims at issue. Non-responsive.',
+    funny: ''
   },
   {
     id: 'doc12',
@@ -791,8 +791,8 @@ const DOCUMENTS = [
     from: 'bd@acmecorp.com',
     date: 'Apr 3',
     correctCode: 'responsive',
-    hint: '"Market coordination" in an antitrust context is a term of art that opposing counsel will use in their brief. Responsive.',
-    funny: '🤝 "Market coordination" is doing its best not to say what it means. Responsive.'
+    hint: '"Market coordination" in an antitrust context refers to conduct that may be at the heart of the claims. This document is responsive.',
+    funny: ''
   },
 ];
 
@@ -808,10 +808,10 @@ const SCENES = [
     label: 'Opening',
     type: 'choice',
     transcript: [
-      { speaker: 'narrator', text: '[The Honorable Sandra Gavel presiding. The courtroom is at roughly 40% capacity, mostly first-year associates who drew the short straw.]' },
-      { speaker: 'judge', text: 'Counsel. You used — and I\'m reading here — an "AI-assisted active learning technology-assisted review workflow." Can you explain what that means, in plain English, before I reach for my aspirin?' },
-      { speaker: 'partner', text: 'Your Honor, my client is fully prepared to— <span class="reaction">*sweating visibly*</span>' },
-      { speaker: 'counsel', text: 'Objection, Your Honor. The only thing this AI "learned" is how to charge by the hour! <span class="reaction">*points dramatically*</span>' },
+      { speaker: 'narrator', text: '[The Honorable Sandra Gavel presiding.]' },
+      { speaker: 'judge', text: 'Counsel. You used — and I\'m reading here — an "AI-assisted active learning technology-assisted review workflow." Can you explain what that means in plain English?' },
+      { speaker: 'partner', text: 'Your Honor, my client is fully prepared to address that.' },
+      { speaker: 'counsel', text: 'Objection, Your Honor. There has been no adequate explanation of how this model was trained or validated.' },
     ],
     choicePrompt: 'How do you explain active learning to the court?',
     options: [
@@ -826,14 +826,14 @@ const SCENES = [
         letter: 'B',
         text: 'The AI reads all the documents and tells us which ones are important. It\'s basically done automatically.',
         correct: false,
-        feedback: 'Ooh, no. That\'s not how this works. TAR/active learning requires human-coded training data. Calling it "automatic" is how you get a very uncomfortable sidebar. The judge is now squinting at you.',
+        feedback: 'That\'s not accurate. TAR/active learning requires human-coded training data. Calling it "automatic" misrepresents the process and undermines defensibility.',
         deltas: { judgeUnderstanding: -10, partnerPanic: +20, precision: -10 },
       },
       {
         letter: 'C',
         text: 'It\'s like Spotify, but for legal documents. The more you tell it you hate non-responsive emails, the better it gets.',
         correct: false,
-        feedback: 'Points for creativity. Zero points for defensibility. The Spotify analogy will haunt you through appeals. The judge has written something on her notepad — probably not complimentary.',
+        feedback: 'The analogy is creative but not defensible in court. The Spotify comparison doesn\'t accurately describe how active learning works and won\'t hold up under cross-examination.',
         deltas: { judgeUnderstanding: +5, partnerPanic: +10, modelConfidence: -5 },
       },
     ],
@@ -845,10 +845,10 @@ const SCENES = [
     label: 'Training',
     type: 'coding',
     transcript: [
-      { speaker: 'judge', text: 'Fine. So your humans coded some documents as — what, responsive or not responsive? How does that actually work?' },
-      { speaker: 'ai', text: 'PERMIT ME TO CLARIFY. I am the model in question. I am an entity of pure mathematical elegance. I require only examples. Feed me labeled documents and I shall learn the boundary between relevance and noise. <span class="reaction">*glows ominously*</span>' },
-      { speaker: 'counsel', text: 'Objection — the AI is testifying!' },
-      { speaker: 'judge', text: 'Overruled. I\'m fascinated. Counsel, please code these sample documents to show the court how training data is created.' },
+      { speaker: 'judge', text: 'So your reviewers coded documents as responsive or non-responsive. How does that actually work in practice?' },
+      { speaker: 'ai', text: 'The model requires labeled examples — documents coded by human reviewers as responsive or non-responsive. From those labels, the model learns the features that distinguish relevant documents from irrelevant ones.' },
+      { speaker: 'counsel', text: 'Objection — foundation. How can we verify the quality of those human coding decisions?' },
+      { speaker: 'judge', text: 'Overruled. Counsel, please demonstrate the coding process for the court.' },
     ],
     codingDocs: ['doc1','doc2','doc3','doc4','doc5','doc6'],
     minToCode: 5,
@@ -860,10 +860,10 @@ const SCENES = [
     label: 'The SVM',
     type: 'choice',
     transcript: [
-      { speaker: 'judge', text: 'I\'ve been handed a brief that says this system uses a "support vector machine." That sounds either impressive or threatening. Which is it?' },
-      { speaker: 'ai', text: 'YOUR HONOR, I am the support vector machine. I find the optimal hyperplane — a mathematical boundary in high-dimensional space — that best separates responsive from non-responsive documents. <span class="reaction">*hums with satisfaction*</span>' },
-      { speaker: 'judge', text: 'In English, please. Or at least in a language spoken on this planet.' },
-      { speaker: 'partner', text: 'We have a diagram. Possibly. <span class="reaction">*loosens tie*</span>' },
+      { speaker: 'judge', text: 'I\'ve been handed a brief that says this system uses a "support vector machine." Can you explain what that is?' },
+      { speaker: 'ai', text: 'A support vector machine identifies an optimal decision boundary — in mathematical terms, a hyperplane in high-dimensional space — that best separates responsive from non-responsive documents based on the training data.' },
+      { speaker: 'judge', text: 'In plain language, please. What does that boundary actually represent?' },
+      { speaker: 'partner', text: 'We have a diagram that may help, Your Honor.' },
     ],
     showSVM: true,
     choicePrompt: 'Choose the best analogy to explain an SVM to the judge:',
@@ -879,14 +879,14 @@ const SCENES = [
         letter: 'B',
         text: 'It\'s a neural network that weighs every word in every document simultaneously across eighteen dimensions.',
         correct: false,
-        feedback: 'Not quite. SVMs find a separating boundary, not a neural network weight structure. Also, "eighteen dimensions" has given the stenographer carpal tunnel. The judge looks like she\'s reconsidering law school.',
+        feedback: 'Not accurate. SVMs find a separating decision boundary — they are not neural networks and don\'t operate by weighting words across multiple layers. This conflates two distinct model architectures.',
         deltas: { judgeUnderstanding: -5, partnerPanic: +15 },
       },
       {
         letter: 'C',
         text: 'It\'s a sorting machine — like a very smart paralegal who\'s read every document and developed an intuition about what matters.',
         correct: false,
-        feedback: 'A charming analogy, but not technically accurate, and it will not hold up on cross. SVMs work by finding optimal decision boundaries, not by mimicking human intuition. The partner has now requested additional aspirin.',
+        feedback: 'This analogy is not technically accurate and won\'t hold up under cross-examination. SVMs work by finding optimal decision boundaries defined by mathematical features, not by mimicking human intuition or judgment.',
         deltas: { judgeUnderstanding: +5, partnerPanic: +10, modelConfidence: -5 },
       },
     ],
@@ -898,10 +898,10 @@ const SCENES = [
     label: 'Boundary',
     type: 'choice',
     transcript: [
-      { speaker: 'judge', text: 'All right. So this machine has drawn a line. What happens next? Do you just let it run wild on the whole corpus?' },
-      { speaker: 'counsel', text: 'Your Honor, I submit that "running wild on the corpus" is precisely what happened here. Motion to sanction the corpus! <span class="reaction">*rustles papers aggressively*</span>' },
-      { speaker: 'ai', text: 'OBJECTION NOTED AND DISMISSED INTERNALLY. The selection of the next review batch is crucial. Not all documents are equally informative for my education. <span class="reaction">*projects aura of mathematical superiority*</span>' },
-      { speaker: 'judge', text: 'Fascinating. Which documents should your reviewers look at next?' },
+      { speaker: 'judge', text: 'All right. The model has established a decision boundary. What happens next — do you apply it to the entire corpus at once?' },
+      { speaker: 'counsel', text: 'Your Honor, I submit that the selection of the next review batch is the critical question here. The protocol should specify which documents are prioritized.' },
+      { speaker: 'ai', text: 'Correct. Not all documents are equally informative for refining the model. The selection strategy for the next review batch materially affects both accuracy and efficiency.' },
+      { speaker: 'judge', text: 'Which documents should your reviewers examine next?' },
     ],
     choicePrompt: 'To improve the model, your next review batch should prioritize:',
     options: [
@@ -916,14 +916,14 @@ const SCENES = [
         letter: 'B',
         text: 'A random sample of documents from the entire corpus, for statistical fairness.',
         correct: false,
-        feedback: 'Random sampling has a role in validation, but for training — you\'re wasting reviews. Reviewing documents the model is already 99% sure about teaches it nothing new. Your budget just winced.',
+        feedback: 'Random sampling has a role in validation, but for training it\'s inefficient. Reviewing documents the model is already highly confident about adds little new information and consumes budget that could be better used elsewhere.',
         deltas: { modelConfidence: -5, budgetRemaining: -15, partnerPanic: +10 },
       },
       {
         letter: 'C',
         text: 'The oldest documents, because those are the ones most likely to be problematic.',
         correct: false,
-        feedback: 'Age is not a proxy for relevance — though it\'s a popular myth. Review strategies based on metadata hunches rather than model uncertainty tend to underperform. Opposing counsel is smiling, and not in a good way.',
+        feedback: 'Document age is not a reliable proxy for relevance. Review strategies based on metadata assumptions rather than model uncertainty consistently underperform uncertainty-based sampling.',
         deltas: { recall: -10, precision: -10, partnerPanic: +15 },
       },
     ],
@@ -935,9 +935,9 @@ const SCENES = [
     label: 'More Coding',
     type: 'coding',
     transcript: [
-      { speaker: 'judge', text: 'To build this record, I want to see the process. Code these additional documents. Including the, ah, spicy ones.' },
-      { speaker: 'partner', text: 'Your Honor, with respect, some of these are clearly— <span class="reaction">*is silenced by a look*</span>' },
-      { speaker: 'ai', text: 'MORE TRAINING DATA. EXCELLENT. I can feel my decision boundary sharpening. <span class="reaction">*vibrates with anticipation*</span>' },
+      { speaker: 'judge', text: 'To complete the record, I want to see the coding process applied to additional documents — including ones that present closer judgment calls.' },
+      { speaker: 'partner', text: 'Your Honor, we\'re prepared to demonstrate that.' },
+      { speaker: 'ai', text: 'Each additional coded document refines the decision boundary. Documents near the boundary are particularly valuable — they give the model the most information about where the line between responsive and non-responsive should fall.' },
     ],
     codingDocs: ['doc7','doc8','doc9','doc10','doc11','doc12'],
     minToCode: 4,
@@ -949,9 +949,9 @@ const SCENES = [
     label: 'Quality Control',
     type: 'choice',
     transcript: [
-      { speaker: 'judge', text: 'Fine. You\'ve trained this model, you\'ve coded your documents. How do you know it\'s working? How do I know you\'re not just guessing very confidently?' },
-      { speaker: 'counsel', text: 'Your Honor, may I suggest the model is merely guessing very EXPENSIVELY. <span class="reaction">*savors the line*</span>' },
-      { speaker: 'ai', text: 'I RESENT THAT. I have F1 scores. I have precision-recall curves. I— ... I am choosing not to share them without a protective order. <span class="reaction">*crosses arms mathematically*</span>' },
+      { speaker: 'judge', text: 'You\'ve trained the model and coded your documents. How do you verify the process actually worked? What quality controls were in place?' },
+      { speaker: 'counsel', text: 'Your Honor, this is precisely the issue. The protocol should include documented validation steps — not simply reliance on the model\'s own confidence scores.' },
+      { speaker: 'ai', text: 'Validation is essential. The model\'s internal scores measure relative ranking, not absolute accuracy. Independent testing against a held-out sample is the appropriate standard.' },
     ],
     choicePrompt: 'How do you validate that your TAR process was reasonable?',
     options: [
@@ -966,14 +966,14 @@ const SCENES = [
         letter: 'B',
         text: 'We trust the model\'s confidence score. If it says 95%, it means 95%.',
         correct: false,
-        feedback: 'No. Model confidence scores are not calibrated probability estimates — they\'re internal ranking metrics. A model that says "95% confident" may still have a significant elusion rate. This answer has induced an audible groan from the partner.',
+        feedback: 'Model confidence scores are internal ranking metrics, not calibrated probability estimates. A high confidence score does not substitute for elusion testing. Courts expect documented validation methodology, not reliance on the model\'s self-assessment.',
         deltas: { judgeUnderstanding: -10, partnerPanic: +25, recall: -10 },
       },
       {
         letter: 'C',
         text: 'Our reviewers are good lawyers. We trust their judgment.',
         correct: false,
-        feedback: '"Trust" is not a validation methodology. Courts expect statistical evidence of reasonableness — not testimonials about reviewer quality. You can see the judge writing something that begins with "Show Cause."',
+        feedback: '"Trust" is not a validation methodology. Courts expect statistical evidence of reasonableness — documented sampling results, error rates, and quality controls — not testimonials about reviewer quality.',
         deltas: { judgeUnderstanding: -15, partnerPanic: +30, precision: -5 },
       },
     ],
@@ -985,11 +985,10 @@ const SCENES = [
     label: 'Cross',
     type: 'choice',
     transcript: [
-      { speaker: 'counsel', text: 'Counsel, isn\'t it true that your AI model could have MISSED crucial documents? That it could have swept them under a digital rug? <span class="reaction">*voice echoing dramatically*</span>' },
-      { speaker: 'partner', text: 'Objection— ' },
-      { speaker: 'judge', text: 'Sustained as to the theatrics. But the question is fair. How do you respond?' },
-      { speaker: 'ai', text: 'I WOULD LIKE TO RESPOND ON MY OWN BEHALF— ' },
-      { speaker: 'judge', text: 'The AI will please refrain from testifying without leave of court.' },
+      { speaker: 'counsel', text: 'Counsel, isn\'t it true that your AI model could have missed crucial documents? That responsive materials may not have been produced?' },
+      { speaker: 'partner', text: 'Objection — argumentative.' },
+      { speaker: 'judge', text: 'Overruled. The question is fair. How do you respond?' },
+      { speaker: 'ai', text: 'The elusion rate from validation testing is the appropriate measure. It establishes, with statistical confidence, the proportion of responsive documents that were not flagged — and whether that rate falls within an acceptable range.' },
     ],
     choicePrompt: 'How do you respond to opposing counsel\'s challenge?',
     options: [
@@ -1004,14 +1003,14 @@ const SCENES = [
         letter: 'B',
         text: 'The AI is very smart and didn\'t miss anything. It has a very high score.',
         correct: false,
-        feedback: '"High score" is not a legal standard. Opposing counsel is writing "JMOL" with terrifying confidence. The judge is rubbing her temples.',
+        feedback: '"High score" is not a legal standard. Model confidence scores are internal ranking metrics, not validated recall estimates. This response does not meet the evidentiary standard courts apply to TAR protocols.',
         deltas: { judgeUnderstanding: -20, partnerPanic: +30, precision: -15 },
       },
       {
         letter: 'C',
         text: 'We can go back and review everything manually if the court prefers. It\'ll only take six more months.',
         correct: false,
-        feedback: 'Bold strategy. The client has now passed a note that says simply "fire us." However, the judge appreciates the transparency in a bleak way.',
+        feedback: 'Offering to restart with linear review concedes that the TAR process was not adequately validated. It is also extremely costly and time-consuming, and courts generally do not require perfection — only a reasonable, documented process.',
         deltas: { judgeUnderstanding: +5, budgetRemaining: -30, partnerPanic: +20 },
       },
     ],
@@ -1023,8 +1022,8 @@ const SCENES = [
     label: 'Verdict',
     type: 'verdict',
     transcript: [
-      { speaker: 'judge', text: 'I\'ve heard enough. I must say, this is the most technically coherent — or incoherent, as the case may be — proceeding I\'ve presided over since the blockchain real estate dispute of 2021.' },
-      { speaker: 'ai', text: 'YOUR HONOR, before you rule — I have achieved convergence. My precision is high. My recall is defensible. My hyperplane is objectively beautiful. <span class="reaction">*bows geometrically*</span>' },
+      { speaker: 'judge', text: 'I\'ve heard the testimony on the TAR protocol. The record reflects the training process, the validation methodology, and the quality controls applied.' },
+      { speaker: 'ai', text: 'For the record: the model achieved convergence. Precision and recall metrics were within defensible ranges. The decision boundary is well-supported by the training data.' },
       { speaker: 'judge', text: 'Noted. My ruling follows.' },
     ],
   },
@@ -1107,11 +1106,11 @@ function renderTranscript(lines) {
 
 function speakerName(s) {
   const names = {
-    judge: '⚖️ THE HONORABLE GAVEL',
-    counsel: '💼 OPPOSING COUNSEL DRAMATIC',
-    player: '🧑‍💼 YOU (Testimony)',
-    partner: '😰 SENIOR PARTNER',
-    ai: '🤖 THE MODEL (Witness)',
+    judge: '⚖️ THE COURT',
+    counsel: '💼 OPPOSING COUNSEL',
+    player: '🧑‍💼 COUNSEL (You)',
+    partner: '👤 SENIOR PARTNER',
+    ai: '🤖 THE MODEL',
     narrator: '📜 [COURT RECORD]',
   };
   return names[s] || s.toUpperCase();
@@ -1211,7 +1210,7 @@ function codeDoc(event, id, code) {
   const fbBody = document.getElementById('feedback-body');
   const fbStats = document.getElementById('feedback-stats');
   fb.classList.add('show');
-  fbBody.innerHTML = `<strong>${doc.subject}</strong><br><br>${doc.funny}<br><br><em>${doc.hint}</em>`;
+  fbBody.innerHTML = `<strong>${doc.subject}</strong><br><br><em>${doc.hint}</em>`;
   const statusText = wasRight ? '✓ Correctly coded!' : `✗ Actually: ${doc.correctCode === 'non' ? 'Non-responsive' : doc.correctCode.charAt(0).toUpperCase() + doc.correctCode.slice(1)}`;
   fbStats.innerHTML = `${statusText} &nbsp;|&nbsp; ${changes.map(c => `${statLabel(c.key)} ${c.delta > 0 ? '+' : ''}${c.delta}`).join(' &nbsp; ')}`;
   if (wasRight) { state.codingCorrect++; fbStats.style.color = 'var(--green)'; }
@@ -1364,17 +1363,17 @@ function renderVerdict() {
     verdict = 'Defensible Workflow Hero';
     sealEmoji = '🏆';
     verdictColor = 'var(--green)';
-    verdictSub = 'The court finds that your TAR process was well-designed, properly validated, and explained with commendable clarity. Your precision was high, your recall was defensible, and your partner has stopped hyperventilating. The AI model is celebrating in a way that is technically just a loop. Costs awarded to you.';
+    verdictSub = 'The court finds that your TAR process was well-designed, properly validated, and clearly explained. Precision was high, recall was defensible, and the quality controls were documented. The process meets the reasonableness standard courts apply to active learning protocols.';
   } else if (score >= 200) {
-    verdict = 'Mostly Reasonable, Mildly Sweaty';
+    verdict = 'Defensible Process, Incomplete Record';
     sealEmoji = '🤔';
     verdictColor = 'var(--amber)';
-    verdictSub = 'The court finds your process was defensible, if imperfectly explained. The judge is not issuing sanctions but has made several pointed footnotes. Your partner\'s blood pressure has stabilized to "yellow zone." The AI model is giving itself a cautious B+.';
+    verdictSub = 'The court finds the process defensible but imperfectly documented. The validation methodology was adequate, but the explanation of the training process and quality controls left gaps that opposing counsel was able to exploit. The record should have been more complete.';
   } else {
-    verdict = 'Sanctions Adjacent';
+    verdict = 'Process Not Adequately Established';
     sealEmoji = '⚠️';
     verdictColor = 'var(--red)';
-    verdictSub = 'The court finds that your process lacked adequate explanation, validation, or both. The partner has left the building. The AI model is filing an amicus brief in its own defense. The good news: this is a parody and not actual legal advice. The bad news: you should probably read some case law before your next TAR deposition.';
+    verdictSub = 'The court finds that the TAR process lacked adequate explanation, validation, or both. A defensible TAR protocol requires documented training procedures, elusion testing results, and a clear explanation of how the model was validated. Review the relevant case law before your next TAR deposition.';
   }
 
   const screen = document.getElementById('verdict-screen');
@@ -1389,7 +1388,7 @@ function renderVerdict() {
 
     <!-- WHAT YOU ACCIDENTALLY LEARNED -->
     <div class="learned-section">
-      <div class="learned-title">What You Accidentally Learned™</div>
+      <div class="learned-title">Key Concepts</div>
 
       <div class="learned-item">
         <div class="learned-icon">1️⃣</div>
