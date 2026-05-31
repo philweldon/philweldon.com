@@ -625,7 +625,7 @@ UNIVERSE: 500,000 DOCUMENTS
       <div class="partner-box">
         <p class="partner-text">
           Before we touch a single document, we need a case theory. The model can only learn what you teach it. If you don't know what you're looking for, the AI definitely doesn't.<br><br>
-          Hot document types you should be thinking about: <strong style="color:var(--green)">${c.hotDocs.slice(0,4).join(", ")}</strong>. These will anchor your seed set.<br><br>
+          Hot document types you should be thinking about: <strong style="color:var(--green)">${c.hotDocs.slice(0,4).join(", ")}</strong>. These will anchor the model.<br><br>
           This is not the AI's job to figure out. This is <em>your</em> job. The AI amplifies your judgment. It does not replace it.
         </p>
       </div>
@@ -651,8 +651,8 @@ function answerCaseTheory(choice) {
   stageSeedChoice();
 }
 
-// ─── STAGE 2: SEED CHOICE ─────────────────────────────────
-/* Educational purpose: The seed set is critical. Different
+// ─── STAGE 2: MODEL CHOICE ─────────────────────────────────
+/* Educational purpose: Training the model is critical. Different
    starting strategies have very different consequences for
    model quality, defensibility, and efficiency. */
 function stageSeedChoice() {
@@ -663,7 +663,7 @@ function stageSeedChoice() {
       <div class="score-display">SCORE: ${state.score}</div>
       <div class="partner-box">
         <p class="partner-text">
-          Now we need to seed the model. The seed set is your first training signal — the examples you give the AI before it starts ranking documents.<br><br>
+          Now we need to train the model. Any examples or concepts that you give the AI before it starts ranking documents will help.<br><br>
           Think of it this way: you're teaching a very fast, very literal student. What you show them first shapes everything they'll think is important.<br><br>
           Choose wisely. The entire workflow is watching.
         </p>
@@ -691,7 +691,7 @@ function chooseSeed(choice) {
     feedback = `
       <div class="callout">
         ✓ <strong>Solid choice.</strong> Using known hot documents (custodian "key people" files, documents you've already identified as important) gives the model strong, clear examples of what relevance looks like in <em>this</em> specific matter. The model can then find more like them.<br><br>
-        Caveat: Make sure your seed set includes examples of both relevant AND not-relevant documents. The model needs to learn both sides of the line. A seed set of only hot docs without non-relevant examples can skew the model.
+        Caveat: Make sure your any examples you set includes both relevant AND not-relevant documents. The model needs to learn both sides of the line. A set of only hot docs without non-relevant examples can skew the model.
       </div>`;
   } else if (choice === 'random') {
     points = 8;
