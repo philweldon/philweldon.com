@@ -299,7 +299,6 @@
     <ul class="nav-links">
       <li><a href="#">Speaking</a></li>
       <li><a href="#">Writing</a></li>
-      <li><a href="#">Media</a></li>
       <li><a href="#">Contact</a></li>
     </ul>
   </nav>
@@ -319,7 +318,7 @@
       <button class="opt-btn" onclick="choose('journalist')">
         <span class="opt-icon">📰</span>
         <span class="opt-label">Writing</span>
-        <span class="opt-hint">Press & media inquiries</span>
+        <span class="opt-hint">Writing & essays</span>
       </button>
       <button class="opt-btn" onclick="window.location.href='turing-testimony.html'">
         <span class="opt-icon">⚖️</span>
@@ -351,7 +350,7 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/></svg>
         <span id="action2-label"></span>
       </button>
-      <button class="action-btn" id="action3">
+      <button class="action-btn" id="action3" onclick="window.location.href='contact.html'">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
         Get in touch
       </button>
@@ -383,22 +382,22 @@
         badge: '🎤 Event organizer',
         action1: 'See speaking topics',
         action1href: 'speaking.html',
-        action2: 'Download speaker kit',
-        action2href: '',
+        action2: 'Get in touch',
+        action2href: 'contact.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He speaks at panels and roundtables and is known for making complex AI topics feel approachable and thought-provoking.\n\nWrite a warm, conversational 3-sentence introduction for someone who has arrived at the site because they are planning an event and are considering Phil as a speaker. Mention his passion for making AI understandable, his experience at panels and roundtables, and make them feel like they've come to the right place. Do not use hype or clichés. Write in first person as Phil.`
       },
       journalist: {
-        badge: '📰 Journalist / media',
+        badge: '📰 Writing',
         action1: 'Read recent writing',
         action1href: 'writing.html',
-        action2: 'Download press kit',
-        action2href: '',
+        action2: 'Get in touch',
+        action2href: 'contact.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.\n\nWrite a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
       },
       collaborator: {
-        badge: '🤝 Potential collaborator',
-        action1: 'See current projects',
-        action1href: '',
+        badge: '⚖️ Turing Testimony',
+        action1: 'Play Turing Testimony',
+        action1href: 'turing-testimony.html',
         action2: 'Read my writing',
         action2href: 'writing.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.\n\nWrite a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`
