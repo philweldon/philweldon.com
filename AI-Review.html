@@ -419,7 +419,7 @@
 <div id="terminal">
   <div class="header">
     <div class="title">THE REVIEW QUEUE CRISIS</div>
-    <div class="subtitle">AN EDISCOVERY SURVIVAL SIMULATOR &bull; TERMINAL v2.4.1</div>
+    <div class="subtitle">AN aiR FOR REVIEW SURVIVAL SIMULATOR &bull; TERMINAL v3.0.0</div>
   </div>
   <div id="game-area"></div>
 </div>
@@ -439,6 +439,7 @@ const state = {
   stage: 0,
   caseScenario: null,
   seedChoice: null,
+  analysisType: null,   // aiR for Review analysis type
   docCodings: {},       // docId -> coding
   prioritizationChoice: null,
   partnerAnswers: {},
@@ -580,15 +581,15 @@ function stageIntro() {
       <pre class="partner-ascii">${PARTNER_ART}</pre>
       <div class="partner-box">
         <p class="partner-text">
-          Welcome, junior associate. I'm your senior partner. I have bad news and worse news.<br><br>
+          Welcome, junior associate. I have bad news and worse news.<br><br>
           The bad news: We have a new matter with 500,000 documents and opposing counsel has already served discovery requests.<br><br>
-          The worse news: The partner in charge (me) is in Singapore until Friday, which means <em>you</em> are in charge of review.<br><br>
-          The good news: We have an AI-assisted review platform. The better news: I'm going to make sure you don't destroy it.<br><br>
-          Congratulations. You have discovered the ancient legal technology known as <em>"reading things."</em> Now let's make the machine help before your soul leaves your body.
+          The worse news: The partner in charge is in Singapore until Friday, which means <em>you</em> are in charge of review.<br><br>
+          The good news: We have an AI-assisted review platform.<br><br>
+          This is your mission, should you choose to accept it. <em> :') </em> 
         </p>
       </div>
       <div class="callout">
-        ⚠ This simulator teaches Technology Assisted Review (TAR) / Active Learning workflows as used in eDiscovery. Concepts are based on generally accepted industry guidance. Not legal advice. Obviously.
+        ⚠ This simulator teaches AI-assisted review workflows using Relativity's <strong>aiR for Review</strong> analysis types (Relevance, Key Documents, Issues, and CBI). Concepts are based on Relativity's published documentation and generally accepted eDiscovery guidance. This page does not constitute legal advice. This is generally meant to be a helpful and fun introduction to AI Assisted Review. Any opinions do not constitute those of the author, those of the software developer, and any companies or people mentioned were AI generated and meant to be completely fictional. If you find yourself in a similar situation, please reach out to a human familiar with AI Assisted Review techniques (and ideally, access to Relativity). 
       </div>
       <div class="btn-row">
         <button class="primary" onclick="stageSelectCase()">▶ BEGIN INTAKE</button>
@@ -611,7 +612,7 @@ function stageSelectCase() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 1 OF 8 — INTAKE &amp; CASE THEORY</div>
+      <div class="screen-label">STAGE 1 OF 9 — INTAKE &amp; CASE THEORY</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <pre style="color:var(--amber);font-size:28px;font-family:'VT323',monospace;">
 ${c.icon} MATTER TYPE: ${c.type}
@@ -658,7 +659,7 @@ function stageSeedChoice() {
   state.stage = 2;
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 2 OF 8 — SEED SET STRATEGY</div>
+      <div class="screen-label">STAGE 2 OF 9 — SEED SET STRATEGY</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <div class="partner-box">
         <p class="partner-text">
@@ -724,7 +725,7 @@ function chooseSeed(choice) {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 2 OF 8 — SEED FEEDBACK</div>
+      <div class="screen-label">STAGE 2 OF 9 — SEED FEEDBACK</div>
       <div class="score-display">SCORE: ${state.score}</div>
       ${feedback}
       <div class="partner-box">
@@ -733,7 +734,101 @@ function chooseSeed(choice) {
         </p>
       </div>
       <div class="btn-row">
-        <button class="primary" onclick="stageFirstReview()">▶ PROCEED TO FIRST REVIEW ROUND</button>
+        <button class="primary" onclick="stageSelectAnalysisType()">▶ SELECT ANALYSIS TYPE</button>
+      </div>
+    </div>
+  `);
+}
+
+// ─── STAGE 2.5: aiR FOR REVIEW ANALYSIS TYPE ─────────────
+/* Educational purpose: aiR for Review offers four distinct
+   analysis types. Choosing the right one for your workflow
+   objective is the first configuration decision you make
+   inside the platform. */
+function stageSelectAnalysisType() {
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 3 OF 9 — SELECT aiR FOR REVIEW ANALYSIS TYPE</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <div class="partner-box">
+        <p class="partner-text">
+          Before we run aiR for Review, we need to choose the right <strong>analysis type</strong>. This isn't just a settings toggle — it shapes the entire review workflow, how documents are coded, and what the model is actually looking for.<br><br>
+          Relativity's aiR for Review offers four analysis types. Choose the one that fits our matter objectives:
+        </p>
+      </div>
+      <div class="btn-row" style="flex-direction:column;">
+        <button onclick="chooseAnalysisType('relevance')" class="primary">
+          🔍 <strong>RELEVANCE</strong> — Identify documents responsive to a production request or case matter. Outputs: Relevant / Not Relevant / Borderline.
+        </button>
+        <button onclick="chooseAnalysisType('key_documents')">
+          🔥 <strong>KEY DOCUMENTS</strong> — Surface the most important or "hot" documents that may be critical or embarrassing to a party. Goes beyond relevance to importance.
+        </button>
+        <button onclick="chooseAnalysisType('issues')">
+          📋 <strong>ISSUES</strong> — Tag documents by specific legal issues or categories defined in your prompt (e.g., coercion, retaliation, breach). A single document can hit multiple issues.
+        </button>
+        <button onclick="chooseAnalysisType('cbi')">
+          🔒 <strong>CONFIDENTIAL BUSINESS INFORMATION (CBI)</strong> — Classify documents containing sensitive business data: trade secrets, business strategy, non-public financials, PII, and similar categories.
+        </button>
+      </div>
+    </div>
+  `);
+}
+
+function chooseAnalysisType(type) {
+  state.analysisType = type;
+
+  const typeInfo = {
+    relevance: {
+      label: "RELEVANCE",
+      desc: "You'll be coding documents as <strong>Relevant</strong>, <strong>Not Relevant</strong>, or <strong>Borderline</strong>. aiR for Review uses your prompt criteria to predict which documents are responsive to the production request. Citations and rationale are provided for each prediction so reviewers can audit the AI's reasoning.",
+      points: 15,
+      tip: "Best practice: Write clear, specific prompt criteria describing what relevant means in <em>this</em> matter. Vague prompts produce vague results. Include examples of what counts and what doesn't.",
+      mistake: null
+    },
+    key_documents: {
+      label: "KEY DOCUMENTS",
+      desc: "You'll be identifying documents flagged as <strong>Hot / Important</strong>, <strong>Not Key</strong>, or <strong>Borderline</strong>. aiR for Review looks beyond basic relevance to documents that are particularly significant, potentially damaging, or strategically important to one party.",
+      points: 15,
+      tip: "Key Documents analysis is powerful for early case assessment — finding the 'smoking gun' documents quickly before full review. Often run alongside Relevance for a comprehensive picture.",
+      mistake: null
+    },
+    issues: {
+      label: "ISSUES",
+      desc: "You'll tag documents by <strong>specific legal issues</strong> defined in your prompt criteria (e.g., Coercion, Retaliation, Breach of Contract). A single document can be tagged for multiple issues. aiR for Review analyzes each issue independently against each document.",
+      points: 12,
+      tip: "Issues analysis is ideal for multi-claim matters or investigations. Each issue needs its own precise definition in the prompt criteria. The more precise your issue definitions, the better the model performs.",
+      mistake: null
+    },
+    cbi: {
+      label: "CONFIDENTIAL BUSINESS INFORMATION",
+      desc: "You'll classify documents by CBI category: <strong>Trade Secrets</strong>, <strong>Business Strategy</strong>, <strong>Non-Public Financial Data</strong>, <strong>PII/Personal Data</strong>, or <strong>No CBI</strong>. This analysis is for confidentiality review to ensure proper handling before production.",
+      points: 10,
+      tip: "CBI analysis is critical in matters involving cross-border productions, regulatory inquiries, or any context where certain document types need special handling or redaction. Run it in parallel with relevance review.",
+      mistake: "Note: CBI is currently available only to US and EU Data Zone clients in phased rollout."
+    }
+  };
+
+  const info = typeInfo[type];
+  state.score += info.points;
+
+  render(`
+    <div class="screen">
+      <div class="screen-label">STAGE 3 OF 9 — ANALYSIS TYPE SELECTED</div>
+      <div class="score-display">SCORE: ${state.score}</div>
+      <div class="callout">
+        ✓ <strong>Analysis Type: ${info.label}</strong><br><br>
+        ${info.desc}<br><br>
+        💡 <em>${info.tip}</em>${info.mistake ? `<br><br>⚠ <em>${info.mistake}</em>` : ''}
+      </div>
+      <div class="partner-box">
+        <p class="partner-text">
+          Good. Now write your <strong>prompt criteria</strong> — the review instructions that tell aiR for Review exactly what to look for. This is the most important configuration step. The model is only as good as the instructions you give it.<br><br>
+          Think of it as briefing a very fast, very literal paralegal. Be specific. Define your terms. Give examples. Tell it what counts and what doesn't.<br><br>
+          When you're ready, we'll run the first analysis batch.
+        </p>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="stageFirstReview()">▶ RUN FIRST ANALYSIS BATCH</button>
       </div>
     </div>
   `);
@@ -741,23 +836,66 @@ function chooseSeed(choice) {
 
 // ─── STAGE 3: FIRST REVIEW ROUND ─────────────────────────
 /* Educational purpose: Simulates the human coding process.
-   Shows players what relevance determinations actually look
-   like and why careful, consistent coding matters for
-   training data quality. */
+   Shows players what review determinations actually look
+   like under each aiR for Review analysis type. */
 function stageFirstReview() {
   state.stage = 3;
   state.docCodings = {};
   const docs = generateDocs(state.caseScenario.type);
+
+  // Build coding buttons based on selected analysis type
+  function getCodingButtons(docId, correct, hint) {
+    const safeHint = hint.replace(/'/g,"\\'");
+    const at = state.analysisType;
+    if (at === 'relevance') {
+      return `
+        <button onclick="codeDoc('${docId}','relevant','${correct}','${safeHint}',this)">✓ RELEVANT</button>
+        <button onclick="codeDoc('${docId}','not-relevant','${correct}','${safeHint}',this)">✗ NOT RELEVANT</button>
+        <button onclick="codeDoc('${docId}','borderline','${correct}','${safeHint}',this)" class="amber">~ BORDERLINE</button>`;
+    } else if (at === 'key_documents') {
+      return `
+        <button onclick="codeDoc('${docId}','hot','${correct}','${safeHint}',this)" class="primary">🔥 HOT / KEY</button>
+        <button onclick="codeDoc('${docId}','not-key','${correct}','${safeHint}',this)">✗ NOT KEY</button>
+        <button onclick="codeDoc('${docId}','borderline','${correct}','${safeHint}',this)" class="amber">~ BORDERLINE</button>`;
+    } else if (at === 'issues') {
+      const c = state.caseScenario;
+      // Derive 2 issues from case type
+      const issueMap = {
+        "CONTRACT DISPUTE": ["BREACH OF CONTRACT", "FRAUDULENT INDUCEMENT"],
+        "TRADE SECRET / IP THEFT": ["IP MISAPPROPRIATION", "BREACH OF NDA"],
+        "EMPLOYMENT DISCRIMINATION": ["DISPARATE TREATMENT", "RETALIATION"],
+        "GOVERNMENT INVESTIGATION": ["FALSIFICATION OF RECORDS", "REGULATORY VIOLATION"],
+        "PRODUCT LIABILITY": ["FAILURE TO DISCLOSE", "NEGLIGENT DESIGN"],
+      };
+      const issues = issueMap[c.type] || ["ISSUE A", "ISSUE B"];
+      return `
+        <button onclick="codeDoc('${docId}','issue1','${correct}','${safeHint}',this)" class="primary">📋 ${issues[0]}</button>
+        <button onclick="codeDoc('${docId}','issue2','${correct}','${safeHint}',this)" class="amber">📋 ${issues[1]}</button>
+        <button onclick="codeDoc('${docId}','both-issues','${correct}','${safeHint}',this)">📋 BOTH ISSUES</button>
+        <button onclick="codeDoc('${docId}','no-issue','${correct}','${safeHint}',this)">✗ NO ISSUE HIT</button>`;
+    } else { // cbi
+      return `
+        <button onclick="codeDoc('${docId}','trade-secret','${correct}','${safeHint}',this)" class="primary">🔒 TRADE SECRET</button>
+        <button onclick="codeDoc('${docId}','business-strategy','${correct}','${safeHint}',this)" class="amber">🔒 BUSINESS STRATEGY</button>
+        <button onclick="codeDoc('${docId}','financial-data','${correct}','${safeHint}',this)" class="amber">🔒 NON-PUBLIC FINANCIAL</button>
+        <button onclick="codeDoc('${docId}','pii','${correct}','${safeHint}',this)">🔒 PII / PERSONAL DATA</button>
+        <button onclick="codeDoc('${docId}','no-cbi','${correct}','${safeHint}',this)">✗ NO CBI</button>`;
+    }
+  }
+
+  const analysisLabels = {
+    relevance: "RELEVANCE REVIEW",
+    key_documents: "KEY DOCUMENTS REVIEW",
+    issues: "ISSUES REVIEW",
+    cbi: "CONFIDENTIAL BUSINESS INFORMATION REVIEW"
+  };
 
   let docHtml = docs.map(doc => `
     <div class="doc-card" id="card-${doc.id}">
       <div class="doc-meta">${doc.icon} ${doc.meta}</div>
       <div class="doc-snippet">"${doc.snippet}"</div>
       <div class="code-btns">
-        <button onclick="codeDoc('${doc.id}','relevant','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)" >✓ RELEVANT</button>
-        <button onclick="codeDoc('${doc.id}','not-relevant','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)">✗ NOT RELEVANT</button>
-        <button onclick="codeDoc('${doc.id}','unsure','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)">? UNSURE</button>
-        <button onclick="codeDoc('${doc.id}','privileged','${doc.correct}','${doc.hint.replace(/'/g,"\\'")}',this)" class="amber">🔒 PRIVILEGED</button>
+        ${getCodingButtons(doc.id, doc.correct, doc.hint)}
       </div>
       <div id="hint-${doc.id}" style="display:none;font-size:11px;margin-top:8px;color:var(--green-dim);border-top:1px solid var(--green-dark);padding-top:6px;"></div>
     </div>
@@ -765,20 +903,20 @@ function stageFirstReview() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 3 OF 8 — FIRST REVIEW ROUND (TRAINING DATA)</div>
+      <div class="screen-label">STAGE 4 OF 9 — FIRST ANALYSIS BATCH · ${analysisLabels[state.analysisType] || 'REVIEW'}</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <div class="partner-box">
         <p class="partner-text">
-          Here are your first documents. Code each one. Your decisions become training data. Every coding decision you make teaches the model something.<br><br>
-          Be consistent. Be thoughtful. If you'd mark something relevant at 9am, mark it the same way at 4pm.<br><br>
-          And for the love of all that is holy — if it looks privileged, flag it. Attorney-client privilege does not fix itself.
+          Here are your first documents. Code each one according to your <strong>${analysisLabels[state.analysisType]}</strong> prompt criteria.<br><br>
+          Remember: aiR for Review analyzes each document against your prompt and returns a prediction with citations and rationale. Your job is to validate those predictions — agree, override, or flag for further review. Your decisions feed the iterative refinement cycle.<br><br>
+          Be consistent. If a document meets the criteria at 9am, it meets them at 4pm. Inconsistency degrades model performance.
         </p>
       </div>
       <p style="font-size:11px;color:var(--green-dim);margin-bottom:10px;">CODE EACH DOCUMENT:</p>
       ${docHtml}
       <div id="review-feedback"></div>
       <div class="btn-row" id="continue-btn" style="display:none;">
-        <button class="primary" onclick="stageModelUpdate()">▶ SUBMIT TRAINING ROUND &amp; UPDATE MODEL</button>
+        <button class="primary" onclick="stageModelUpdate()">▶ SUBMIT CODING &amp; ADVANCE TO METRICS</button>
       </div>
     </div>
   `);
@@ -793,7 +931,13 @@ function codeDoc(docId, coding, correct, hint, btn) {
 
   // Visual feedback on card
   const card = document.getElementById('card-' + docId);
-  card.className = 'doc-card ' + coding;
+  // Map coding to card style class
+  const styleMap = {
+    'relevant': 'relevant', 'hot': 'relevant', 'issue1': 'relevant', 'both-issues': 'relevant', 'trade-secret': 'privileged',
+    'not-relevant': 'not-relevant', 'not-key': 'not-relevant', 'no-issue': 'not-relevant', 'no-cbi': 'not-relevant',
+    'borderline': 'unsure', 'issue2': 'unsure', 'business-strategy': 'privileged', 'financial-data': 'privileged', 'pii': 'unsure'
+  };
+  card.className = 'doc-card ' + (styleMap[coding] || 'unsure');
 
   // Disable all buttons for this doc
   card.querySelectorAll('button').forEach(b => b.disabled = true);
@@ -801,16 +945,39 @@ function codeDoc(docId, coding, correct, hint, btn) {
   // Show hint
   const hintEl = document.getElementById('hint-' + docId);
   hintEl.style.display = 'block';
-  hintEl.innerHTML = `<strong>Coding: ${coding.toUpperCase()}</strong> — ${hint}`;
-  if (coding === correct) {
+
+  // Determine if the coding was "good" based on analysis type
+  let isCorrect = false;
+  let isBorderline = false;
+  const at = state.analysisType;
+
+  if (at === 'relevance') {
+    isCorrect = (coding === correct);
+    isBorderline = (coding === 'borderline');
+  } else if (at === 'key_documents') {
+    // Map: hot = relevant, not-key = not-relevant
+    isCorrect = (coding === 'hot' && correct === 'relevant') || (coding === 'not-key' && correct === 'not-relevant') || (coding === correct);
+    isBorderline = (coding === 'borderline');
+  } else if (at === 'issues') {
+    // Any issue hit on a relevant doc, or no-issue on a not-relevant = good
+    isCorrect = (['issue1','issue2','both-issues'].includes(coding) && correct === 'relevant') || (coding === 'no-issue' && correct === 'not-relevant');
+    isBorderline = false;
+  } else { // cbi
+    // CBI types on relevant/privileged docs, no-cbi on not-relevant = good
+    isCorrect = (['trade-secret','business-strategy','financial-data','pii'].includes(coding) && (correct === 'relevant' || correct === 'privileged')) || (coding === 'no-cbi' && correct === 'not-relevant');
+    isBorderline = false;
+  }
+
+  hintEl.innerHTML = `<strong>Coding: ${coding.toUpperCase().replace(/-/g,' ')}</strong> — ${hint}`;
+  if (isCorrect) {
     hintEl.innerHTML += ' <span style="color:var(--green)">✓ GOOD CALL</span>';
     state.score += 5;
-  } else if (coding === 'unsure') {
-    hintEl.innerHTML += ' <span style="color:#888">~ Marked unsure — consider escalating these to a senior reviewer.</span>';
+  } else if (isBorderline) {
+    hintEl.innerHTML += ' <span style="color:#888">~ Marked borderline — aiR for Review flags these for human follow-up. Escalate to a senior reviewer.</span>';
     state.score += 2;
   } else {
-    hintEl.innerHTML += ' <span style="color:var(--red)">✗ RECONSIDER — this might affect your model.</span>';
-    state.mistakes.push(`Miscoded document: ${docId} as ${coding} (should be ${correct}).`);
+    hintEl.innerHTML += ' <span style="color:var(--red)">✗ RECONSIDER — inconsistent coding degrades prompt performance.</span>';
+    state.mistakes.push(`Miscoded document: ${docId} as ${coding} (expected ${correct}).`);
   }
 
   // Check if all coded
@@ -819,7 +986,7 @@ function codeDoc(docId, coding, correct, hint, btn) {
   if (codedCount >= docs.length) {
     document.getElementById('continue-btn').style.display = 'flex';
     const fb = document.getElementById('review-feedback');
-    fb.innerHTML = `<div class="callout">Round complete. ${codedCount} documents coded. Submitting to model for training...</div>`;
+    fb.innerHTML = `<div class="callout">Batch complete. ${codedCount} documents coded and validated. Advancing to metrics review...</div>`;
   }
 }
 
@@ -852,9 +1019,9 @@ function stageModelUpdate() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 4 OF 8 — MODEL UPDATE &amp; METRICS REVIEW</div>
+      <div class="screen-label">STAGE 5 OF 9 — MODEL UPDATE &amp; METRICS REVIEW</div>
       <div class="score-display">SCORE: ${state.score}</div>
-      <p style="font-size:11px;color:var(--green-dim);margin-bottom:12px;">■ MODEL TRAINING COMPLETE — ROUND 1 METRICS:</p>
+      <p style="font-size:11px;color:var(--green-dim);margin-bottom:12px;">■ aiR FOR REVIEW — ANALYSIS BATCH COMPLETE — METRICS:</p>
       <div class="metrics">
         <div class="metric-box">
           <div class="metric-label">DOCUMENTS REVIEWED</div>
@@ -895,9 +1062,9 @@ function stageModelUpdate() {
       <div style="font-size:10px;color:var(--green-dim);">REVIEW PROGRESS (PRIORITIZED UNIVERSE)</div>
       <div class="partner-box">
         <p class="partner-text">
-          Good. The model is learning. But don't get excited about that ${state.confidence}% confidence score just yet.<br><br>
-          High confidence is not a permission slip to stop thinking. Confidence tells you how certain the model is about its <em>own</em> rankings — not whether it got it right. A model can be confidently wrong, especially on unusual documents, foreign language files, or document types it hasn't seen in training.<br><br>
-          Also note that overturn rate of ${state.overturnRate}%. That means QC reviewers are disagreeing with the model on ${state.overturnRate}% of sampled documents. ${state.overturnRate > 8 ? "That's high. We need more training rounds." : "That's acceptable, but keep watching it."}
+          Good. aiR for Review has processed this batch. But don't get excited about that ${state.confidence}% confidence score just yet.<br><br>
+          High confidence means the model is certain about its own rankings — not that it got them right. aiR for Review uses an LLM and your prompt criteria to analyze each document independently. Unlike traditional TAR, it doesn't learn from your coding. That means your <em>prompt criteria</em> is everything: if it's vague, the model is confidently vague.<br><br>
+          Also note that overturn rate of ${state.overturnRate}%. That means QC reviewers are disagreeing with aiR's predictions on ${state.overturnRate}% of sampled documents. ${state.overturnRate > 8 ? "That's high. You need to revise and iterate your prompt criteria — the instructions aren't precise enough." : "That's acceptable, but keep validating the results."}
         </p>
       </div>
       <div class="btn-row">
@@ -917,7 +1084,7 @@ function stagePrioritization() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 5 OF 8 — PRIORITIZATION &amp; WORKFLOW DECISION</div>
+      <div class="screen-label">STAGE 6 OF 9 — PRIORITIZATION &amp; WORKFLOW DECISION</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <div class="partner-box">
         <p class="partner-text">
@@ -994,7 +1161,7 @@ function choosePrioritization(choice) {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 5 OF 8 — PRIORITIZATION FEEDBACK</div>
+      <div class="screen-label">STAGE 6 OF 9 — PRIORITIZATION FEEDBACK</div>
       <div class="score-display">SCORE: ${state.score}</div>
       ${feedback}
       <div class="btn-row">
@@ -1017,7 +1184,7 @@ function stagePartnerInterruption() {
       q: "I just got off the phone with opposing counsel. They want to know our review methodology. Can we defend this process?",
       answers: [
         { text: "Yes — we used [seed strategy], reviewed [X] documents, monitored overturn rates, QC-sampled the low-ranked population, and documented our decisions at each step.", points: 15, feedback: "Perfect. Defensibility is about process documentation, not perfection. You can explain what you did and why. That's the standard." },
-        { text: "We used AI, it was [X]% confident, so we produced the results.", points: -5, feedback: "This will not survive a meet-and-confer. 'The AI was confident' is not a methodology. You need to describe the human decisions, the training process, the validation steps, and the stopping criteria." },
+        { text: "We used AI, it was [X]% confident, so we produced the results.", points: -5, feedback: "This will not survive a meet-and-confer. 'The AI was confident' is not a methodology. You need to describe the analysis type you selected, the prompt criteria you used, the validation steps you ran, and why the results are reliable. aiR for Review's confidence score is not a substitute for a defensible process description." },
         { text: "...I'll have to get back to you.", points: 2, feedback: "At least you didn't lie. But you need to know your process cold. Document it NOW so you can answer this question with specifics next time." },
       ]
     },
@@ -1033,7 +1200,7 @@ function stagePartnerInterruption() {
       q: "What did you do about privilege? The client is terrified something got out.",
       answers: [
         { text: "We flagged potential privilege during review, ran a privilege filter on all outbound documents, and did a secondary privilege review on anything flagged by reviewers or the model.", points: 15, feedback: "Solid. Privilege review is non-negotiable, and a multi-layer approach (reviewer flag + filter + secondary review) is the right structure." },
-        { text: "We relied on the AI to catch privileged documents automatically.", points: -10, feedback: "The AI does NOT do privilege review. Privilege determinations require attorney judgment about the specific communication, the relationship, the purpose of the communication, and the context. An AI ranking model trained on relevance has not been asked to make privilege calls. This is how clawback motions happen." },
+        { text: "We relied on the AI to catch privileged documents automatically.", points: -10, feedback: "aiR for Review does NOT perform privilege review. The Relevance and Key Documents analyses are trained on responsiveness criteria you wrote — they have no awareness of attorney-client privilege or work product. Privilege determinations require attorney judgment. This is how clawback motions happen." },
         { text: "We applied a keyword filter for attorney names.", points: 3, feedback: "Better than nothing. Keyword filters for attorney names are a common first pass, but they miss CC'd counsel, outside firm communications that don't match the filter, and in-house counsel emails on non-privileged topics. Needs to be combined with a human review layer." },
       ]
     },
@@ -1052,7 +1219,7 @@ function stagePartnerInterruption() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 6 OF 8 — PARTNER INTERRUPTION</div>
+      <div class="screen-label">STAGE 7 OF 9 — PARTNER INTERRUPTION</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <pre class="partner-ascii">${PARTNER_ART}</pre>
       <div class="partner-box">
@@ -1080,7 +1247,7 @@ function answerPartner(idx) {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 6 OF 8 — PARTNER RESPONSE</div>
+      <div class="screen-label">STAGE 7 OF 9 — PARTNER RESPONSE</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <pre class="partner-ascii">${PARTNER_ART}</pre>
       <div class="partner-box">
@@ -1102,7 +1269,7 @@ function stageValidation() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 7 OF 8 — VALIDATION &amp; QUALITY CONTROL</div>
+      <div class="screen-label">STAGE 8 OF 9 — VALIDATION &amp; QUALITY CONTROL</div>
       <div class="score-display">SCORE: ${state.score}</div>
       <div class="partner-box">
         <p class="partner-text">
@@ -1157,7 +1324,7 @@ function chooseValidation(choice) {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 7 OF 8 — VALIDATION FEEDBACK</div>
+      <div class="screen-label">STAGE 8 OF 9 — VALIDATION FEEDBACK</div>
       <div class="score-display">SCORE: ${state.score}</div>
       ${feedback}
       <div class="partner-box">
@@ -1215,7 +1382,7 @@ function stageFinalOutcome() {
 
   render(`
     <div class="screen">
-      <div class="screen-label">STAGE 8 OF 8 — FINAL OUTCOME</div>
+      <div class="screen-label">STAGE 9 OF 9 — FINAL OUTCOME</div>
       <div class="rank-display">
         <div style="font-size:12px;color:var(--green-dim);letter-spacing:3px;margin-bottom:8px;">FINAL DESIGNATION:</div>
         <div class="rank-title" style="color:${rankColor}">${rank}</div>
@@ -1232,34 +1399,34 @@ function stageFinalOutcome() {
         <div class="screen-label">📚 WHAT DID I JUST LEARN? — KEY TAKEAWAYS</div>
         
         <div class="summary-item">
-          <strong>TAR is not magic — it amplifies human judgment.</strong> The model learns from your decisions. Garbage in, garbage out. Thoughtful reviewers who understand the case theory produce better training data and better model performance.
+          <strong>aiR for Review is not magic — it amplifies human judgment through prompt criteria.</strong> Unlike traditional TAR/active learning, aiR for Review uses an LLM that analyzes each document against your instructions. The model is only as good as the prompt criteria you write. Garbage instructions, garbage results.
         </div>
         <div class="summary-item">
-          <strong>Case theory comes before the first document.</strong> Before seeding the model, you need to know what you're looking for: who the key custodians are, what document types matter, and what "relevant" means in your specific matter.
+          <strong>Choose the right analysis type for your objective.</strong> Relativity aiR for Review offers four types: <em>Relevance</em> (responsive documents), <em>Key Documents</em> (hot docs), <em>Issues</em> (multi-tag by legal issue), and <em>Confidential Business Information</em> (CBI classification). Running the wrong type wastes time and produces irrelevant output.
         </div>
         <div class="summary-item">
-          <strong>Seed sets shape everything downstream.</strong> Judgmental seed sets using known hot documents can jumpstart model performance, but must include both positive and negative examples. Pure random seeding is statistically sound but slow in low-richness collections.
+          <strong>Prompt criteria is the most important configuration step.</strong> Before running any analysis, write precise, specific instructions. Define what "relevant" means in this matter. Define each issue. Provide examples of what counts and what doesn't. Iterate on a small sample before applying to the full set.
         </div>
         <div class="summary-item">
-          <strong>Keyword-only review has well-documented limitations.</strong> It misses documents that are relevant by context rather than terms, coded language, foreign language files, and documents that don't use the specific vocabulary you anticipated.
+          <strong>aiR for Review uses a Develop → Validate → Apply workflow.</strong> Don't run the full document set with an untested prompt. First develop and test on a small sample, validate alignment with human reviewers, then apply to the full universe. The three-phase approach is how you catch prompt problems before they scale.
         </div>
         <div class="summary-item">
-          <strong>High confidence ≠ permission to stop thinking.</strong> Model confidence scores reflect the model's certainty about its own rankings, not whether it got them right. Unusual documents, foreign language, and non-standard file types may not be ranked reliably even with high average confidence.
+          <strong>Citations and rationale are your audit trail.</strong> aiR for Review provides citations from the document text supporting each prediction. Reviewers should check these — they're how you verify the model understood the document correctly and wasn't hallucinating.
         </div>
         <div class="summary-item">
-          <strong>Low-ranked documents are not safe to ignore without sampling.</strong> A defensible stopping decision requires validation: sampling the low-ranked population to confirm that the model isn't burying relevant documents. That sample data becomes your basis for stopping.
+          <strong>Overturn rates tell you if your prompt criteria needs work.</strong> High overturn rates (QC reviewers disagreeing with aiR predictions) mean your prompt is unclear or underspecified. Revise the instructions, re-run the sample, and iterate until alignment improves.
         </div>
         <div class="summary-item">
-          <strong>QC sampling and overturn tracking matter.</strong> High overturn rates (QC reviewers disagreeing with model decisions) indicate the model needs more training. Low overturn rates support confidence in the workflow.
+          <strong>aiR for Review is not a privilege tool.</strong> The relevance and Key Documents analyses are not trained to catch attorney-client privilege. Use separate attorney name filters, custodian mapping, privilege log protocols, and secondary attorney review — in addition to, not instead of, aiR.
         </div>
         <div class="summary-item">
-          <strong>Privilege review is not a TAR feature.</strong> Privilege determinations require attorney judgment. Never rely on a relevance-trained model to catch privileged documents. Use attorney name filters, custodian mapping, privilege log protocols, and secondary review.
+          <strong>CBI analysis is a separate workflow with separate criteria.</strong> Confidential Business Information review requires classifying documents by type (trade secrets, business strategy, non-public financials, PII). This is often run in parallel with relevance review, especially in cross-border or regulatory productions.
         </div>
         <div class="summary-item">
-          <strong>Document everything.</strong> The process memo is your best friend. Every seed decision, every training round, every validation sample, every stopping criterion — written down, with dates. That's how you defend the workflow.
+          <strong>Document everything.</strong> Every prompt criteria version, every iteration decision, every validation sample, every stopping criterion — written down, with dates. The process memo is your best friend when opposing counsel or a judge asks how you ran your review.
         </div>
         <div class="summary-item">
-          <strong>The goal is proportional, reasonable, defensible review — not perfection.</strong> No review process finds 100% of relevant documents. The standard is reasonableness and proportionality, demonstrated by a documented, principled process.
+          <strong>The goal is proportional, reasonable, defensible review — not perfection.</strong> No review process finds 100% of responsive documents. The standard is reasonableness and proportionality, demonstrated by a documented, principled process using validated tools with well-written prompt criteria.
         </div>
       </div>
 
@@ -1278,6 +1445,7 @@ function restartGame() {
   state.stage = 0;
   state.caseScenario = null;
   state.seedChoice = null;
+  state.analysisType = null;
   state.docCodings = {};
   state.prioritizationChoice = null;
   state.partnerAnswers = {};
