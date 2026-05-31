@@ -616,11 +616,6 @@ body::before {
     <div class="court-subtitle">An eDiscovery Active Learning Simulation</div>
   </div>
 
-  <!-- STATS BAR -->
-  <div id="stats-bar">
-    <!-- Filled by JS -->
-  </div>
-
   <!-- PROGRESS TRACK -->
   <div id="progress-track">
     <!-- Filled by JS -->
@@ -633,7 +628,6 @@ body::before {
   <div id="feedback-panel">
     <div class="feedback-title">📋 Feedback</div>
     <div class="feedback-body" id="feedback-body"></div>
-    <div class="feedback-stat-change" id="feedback-stats"></div>
   </div>
 
   <!-- CHOICE AREA -->
@@ -1197,24 +1191,18 @@ function codeDoc(event, id, code) {
   // Remove active
   document.getElementById('dcard-' + id).classList.remove('active');
 
-  // Apply stat deltas
+  // Apply stat deltas (kept for score calculation at verdict)
   const deltas = wasRight
     ? { modelConfidence: +8, recall: +5, precision: +5 }
     : { modelConfidence: -5, recall: -3 };
-  const changes = applyDeltas(deltas);
-  changes.forEach(c => animateStat(c.key));
-  renderStats();
+  applyDeltas(deltas);
 
   // Show feedback
   const fb = document.getElementById('feedback-panel');
   const fbBody = document.getElementById('feedback-body');
-  const fbStats = document.getElementById('feedback-stats');
   fb.classList.add('show');
-  fbBody.innerHTML = `<strong>${doc.subject}</strong><br><br><em>${doc.hint}</em>`;
-  const statusText = wasRight ? '✓ Correctly coded!' : `✗ Actually: ${doc.correctCode === 'non' ? 'Non-responsive' : doc.correctCode.charAt(0).toUpperCase() + doc.correctCode.slice(1)}`;
-  fbStats.innerHTML = `${statusText} &nbsp;|&nbsp; ${changes.map(c => `${statLabel(c.key)} ${c.delta > 0 ? '+' : ''}${c.delta}`).join(' &nbsp; ')}`;
-  if (wasRight) { state.codingCorrect++; fbStats.style.color = 'var(--green)'; }
-  else { fbStats.style.color = 'var(--red)'; }
+  const statusText = wasRight ? '✓ Correctly coded.' : `✗ Incorrect. Correct code: ${doc.correctCode === 'non' ? 'Non-responsive' : doc.correctCode.charAt(0).toUpperCase() + doc.correctCode.slice(1)}`;
+  fbBody.innerHTML = `<strong>${statusText}</strong><br><br><em>${doc.hint}</em>`;
 
   // Re-render grid
   const scene = SCENES[state.stage];
@@ -1274,19 +1262,14 @@ function handleChoice(sceneIdx, optionIdx) {
   // Record choice
   state.choiceHistory[sceneIdx] = optionIdx;
 
-  // Apply deltas
-  const changes = applyDeltas(opt.deltas);
-  changes.forEach(c => animateStat(c.key));
-  renderStats();
+  // Apply deltas (kept for score calculation at verdict)
+  applyDeltas(opt.deltas);
 
   // Show feedback
   const fb = document.getElementById('feedback-panel');
   const fbBody = document.getElementById('feedback-body');
-  const fbStats = document.getElementById('feedback-stats');
   fb.classList.add('show');
-  fbBody.innerHTML = `<strong>${opt.correct ? '✓ Good answer.' : '✗ Ouch.'}</strong><br><br>${opt.feedback}`;
-  fbStats.style.color = opt.correct ? 'var(--green)' : 'var(--red)';
-  fbStats.innerHTML = changes.map(c => `${statLabel(c.key)} ${c.delta > 0 ? '+' : ''}${c.delta}`).join(' &nbsp;|&nbsp; ');
+  fbBody.innerHTML = `<strong>${opt.correct ? '✓ Good answer.' : '✗ Incorrect.'}</strong><br><br>${opt.feedback}`;
 
   // Re-render choices with results shown
   renderChoices(scene, optionIdx);
@@ -1352,7 +1335,6 @@ function renderVerdict() {
   document.getElementById('choice-area').style.display = 'none';
   document.getElementById('feedback-panel').style.display = 'none';
   document.getElementById('next-btn').style.display = 'none';
-  document.getElementById('stats-bar').style.display = 'none';
   document.getElementById('progress-track').style.display = 'none';
 
   const score = state.judgeUnderstanding + state.recall + state.precision + state.modelConfidence - state.partnerPanic + state.budgetRemaining;
@@ -1382,9 +1364,6 @@ function renderVerdict() {
     <div class="verdict-seal" style="color:${verdictColor}">${sealEmoji}</div>
     <div class="verdict-title" style="color:${verdictColor}">${verdict}</div>
     <div class="verdict-subtitle">${verdictSub}</div>
-    <div class="verdict-stats">
-      ${STATS.map(s => `<div class="verdict-stat-pill">${s.icon} ${s.label.replace('\n',' ')}: <strong style="color:${s.color}">${state[s.key]}</strong></div>`).join('')}
-    </div>
 
     <!-- WHAT YOU ACCIDENTALLY LEARNED -->
     <div class="learned-section">
@@ -1445,12 +1424,10 @@ function restartGame() {
   document.getElementById('choice-area').style.display = '';
   document.getElementById('feedback-panel').style.display = '';
   document.getElementById('next-btn').style.display = '';
-  document.getElementById('stats-bar').style.display = '';
   document.getElementById('progress-track').style.display = '';
   document.getElementById('verdict-screen').classList.remove('show');
   document.getElementById('verdict-screen').innerHTML = '';
 
-  renderStats();
   renderProgress();
   renderScene();
 }
@@ -1458,7 +1435,6 @@ function restartGame() {
 /* ============================================================
    INIT
    ============================================================ */
-renderStats();
 renderProgress();
 renderScene();
 </script>
