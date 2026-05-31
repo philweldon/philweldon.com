@@ -318,12 +318,12 @@
       </button>
       <button class="opt-btn" onclick="choose('journalist')">
         <span class="opt-icon">📰</span>
-        <span class="opt-label">Writing a story</span>
+        <span class="opt-label">Writing</span>
         <span class="opt-hint">Press & media inquiries</span>
       </button>
-      <button class="opt-btn" onclick="choose('collaborator')">
-        <span class="opt-icon">🤝</span>
-        <span class="opt-label">Exploring collaboration</span>
+      <button class="opt-btn" onclick="window.location.href='turing-testimony.html'">
+        <span class="opt-icon">⚖️</span>
+        <span class="opt-label">Turing Testimony (Text Game)</span>
         <span class="opt-hint">Projects & partnerships</span>
       </button>
       <button class="opt-btn" onclick="choose('curious')">
@@ -343,7 +343,7 @@
     </div>
 
     <div class="intro-actions" id="intro-actions" style="display:none">
-      <button class="action-btn" id="action1" onclick="window.location.href='writing.html'">
+      <button class="action-btn" id="action1">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
         <span id="action1-label"></span>
       </button>
@@ -382,25 +382,33 @@
       organizer: {
         badge: '🎤 Event organizer',
         action1: 'See speaking topics',
+        action1href: 'speaking.html',
         action2: 'Download speaker kit',
+        action2href: '',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He speaks at panels and roundtables and is known for making complex AI topics feel approachable and thought-provoking.\n\nWrite a warm, conversational 3-sentence introduction for someone who has arrived at the site because they are planning an event and are considering Phil as a speaker. Mention his passion for making AI understandable, his experience at panels and roundtables, and make them feel like they've come to the right place. Do not use hype or clichés. Write in first person as Phil.`
       },
       journalist: {
         badge: '📰 Journalist / media',
         action1: 'Read recent writing',
+        action1href: 'writing.html',
         action2: 'Download press kit',
+        action2href: '',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.\n\nWrite a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
       },
       collaborator: {
         badge: '🤝 Potential collaborator',
         action1: 'See current projects',
+        action1href: '',
         action2: 'Read my writing',
+        action2href: 'writing.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.\n\nWrite a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`
       },
       curious: {
         badge: '✨ Curious visitor',
         action1: 'Explore my ideas',
+        action1href: '',
         action2: 'Read recent essays',
+        action2href: 'writing.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He loves exploring ideas with anyone willing to think.\n\nWrite a warm, conversational 3-sentence introduction for someone who has wandered in out of curiosity about AI, ideas, or Phil's writing. Be inviting and a little playful. Mention his belief that AI is one of the most interesting things happening right now, and that his favourite conversations happen with people who haven't made up their minds about it yet. Do not use hype or clichés. Write in first person as Phil.`
       }
     };
@@ -426,6 +434,13 @@
       document.getElementById('visitor-badge').textContent = config.badge;
       document.getElementById('action1-label').textContent = config.action1;
       document.getElementById('action2-label').textContent = config.action2;
+
+      const btn1 = document.getElementById('action1');
+      const btn2 = document.getElementById('action2');
+      btn1.onclick = config.action1href ? () => window.location.href = config.action1href : null;
+      btn2.onclick = config.action2href ? () => window.location.href = config.action2href : null;
+      btn1.style.opacity = config.action1href ? '1' : '0.5';
+      btn2.style.opacity = config.action2href ? '1' : '0.5';
       document.getElementById('intro-actions').style.display = 'none';
 
       counts[type]++;

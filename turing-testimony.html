@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Turing Testimony</title>
+<style>
+/* ============================================================
+   DESIGN: Dark legal-tech courtroom aesthetic
+   Font: Courier-style mono for transcript feel + serif for headers
+   Color: Deep navy, amber accents, parchment whites
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --bg-deep: #0a0c14;
+  --bg-panel: #0f1220;
+  --bg-card: #141828;
+  --bg-card-hover: #1a1f30;
+  --border: #2a3050;
+  --border-glow: #3d4a7a;
+  --amber: #f5a623;
+  --amber-dim: #c4821a;
+  --amber-glow: rgba(245,166,35,0.15);
+  --green: #4caf7d;
+  --green-dim: #2d7a52;
+  --red: #e05252;
+  --red-dim: #a33838;
+  --blue: #5b8def;
+  --blue-dim: #3a5fa0;
+  --parchment: #e8e0cc;
+  --text-main: #d4cfc4;
+  --text-dim: #7a7a8a;
+  --text-bright: #f0ece0;
+  --font-transcript: 'Share Tech Mono', 'Courier New', monospace;
+  --font-serif: 'Libre Baskerville', Georgia, serif;
+  --font-display: 'IM Fell English', Georgia, serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-main);
+  font-family: var(--font-transcript);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(91,141,239,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(245,166,35,0.04) 0%, transparent 60%);
+}
+
+/* ---- Scanline texture overlay ---- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.04) 2px,
+    rgba(0,0,0,0.04) 4px
+  );
+  z-index: 1000;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+#app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* ---- Header ---- */
+.court-header {
+  text-align: center;
+  padding: 32px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.court-seal {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 12px rgba(245,166,35,0.4));
+}
+.court-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  color: var(--parchment);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.court-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---- Stats bar ---- */
+#stats-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+@media (min-width: 600px) {
+  #stats-bar { grid-template-columns: repeat(6, 1fr); }
+}
+.stat-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 6px;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+.stat-box.changed { border-color: var(--amber); animation: stat-pulse 0.6s ease; }
+@keyframes stat-pulse {
+  0%,100% { box-shadow: none; }
+  50% { box-shadow: 0 0 12px rgba(245,166,35,0.4); }
+}
+.stat-label {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--amber);
+}
+.stat-bar-fill {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.stat-bar-inner {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  background: var(--amber);
+}
+
+/* ---- Progress indicator ---- */
+#progress-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.prog-step {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  position: relative;
+}
+.prog-step::after {
+  content: '';
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+}
+.prog-step:last-child::after { display: none; }
+.prog-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  margin: 0 auto 4px;
+  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s;
+}
+.prog-step.done .prog-dot { background: var(--green-dim); border-color: var(--green); color: #fff; }
+.prog-step.active .prog-dot { background: var(--amber-dim); border-color: var(--amber); color: #fff; box-shadow: 0 0 10px var(--amber-glow); }
+.prog-label {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.prog-step.active .prog-label { color: var(--amber); }
+
+/* ---- Courtroom transcript box ---- */
+#transcript-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  min-height: 280px;
+  position: relative;
+}
+.transcript-line {
+  margin-bottom: 16px;
+  animation: line-appear 0.4s ease;
+}
+@keyframes line-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.speaker {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 3px;
+}
+.speaker.judge    { color: var(--amber); }
+.speaker.counsel  { color: var(--red); }
+.speaker.player   { color: var(--green); }
+.speaker.partner  { color: var(--blue); }
+.speaker.ai       { color: #b57bee; }
+.speaker.narrator { color: var(--text-dim); font-style: italic; }
+.speech {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-bright);
+}
+.speech em { color: var(--amber); font-style: normal; }
+.speech .highlight { color: var(--green); font-weight: bold; }
+
+/* ---- Reaction bubble ---- */
+.reaction {
+  display: inline-block;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-left: 8px;
+  animation: wobble 0.4s ease;
+}
+@keyframes wobble {
+  0%,100% { transform: rotate(0); }
+  25% { transform: rotate(-1.5deg); }
+  75% { transform: rotate(1.5deg); }
+}
+
+/* ---- Choice section ---- */
+#choice-area {
+  margin-bottom: 24px;
+}
+.choice-prompt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.choice-btn {
+  display: block;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--text-main);
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--amber-glow);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.choice-btn:hover { border-color: var(--amber); color: var(--text-bright); transform: translateX(3px); }
+.choice-btn:hover::before { opacity: 1; }
+.choice-btn:active { transform: translateX(5px) scale(0.99); }
+.choice-btn .choice-letter {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--border);
+  text-align: center;
+  line-height: 22px;
+  font-family: var(--font-transcript);
+  font-size: 0.7rem;
+  margin-right: 10px;
+  color: var(--amber);
+}
+.choice-btn.selected { border-color: var(--green); background: rgba(76,175,125,0.1); }
+.choice-btn.wrong    { border-color: var(--red);   background: rgba(224,82,82,0.07); opacity: 0.7; }
+
+/* ---- Feedback panel ---- */
+#feedback-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: none;
+  animation: line-appear 0.3s ease;
+}
+#feedback-panel.show { display: block; }
+.feedback-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+.feedback-body {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+.feedback-stat-change {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--green);
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+/* ---- Document coding grid ---- */
+#doc-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+@media (min-width: 500px) {
+  #doc-grid { grid-template-columns: 1fr 1fr; }
+}
+.doc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.doc-card:hover { border-color: var(--border-glow); transform: translateY(-1px); }
+.doc-card.coded-responsive { border-color: var(--red); background: rgba(224,82,82,0.08); }
+.doc-card.coded-non { border-color: var(--blue); background: rgba(91,141,239,0.08); }
+.doc-card.coded-privileged { border-color: var(--amber); background: rgba(245,166,35,0.08); }
+.doc-subject {
+  font-size: 0.75rem;
+  color: var(--parchment);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.doc-meta {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+.doc-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+.badge-r { background: rgba(224,82,82,0.3); color: var(--red); border: 1px solid var(--red); }
+.badge-n { background: rgba(91,141,239,0.3); color: var(--blue); border: 1px solid var(--blue); }
+.badge-p { background: rgba(245,166,35,0.3); color: var(--amber); border: 1px solid var(--amber); }
+
+/* ---- SVM Diagram ---- */
+.svm-diagram {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px 0;
+  text-align: center;
+  font-family: var(--font-transcript);
+  font-size: 0.7rem;
+}
+.svm-canvas {
+  width: 100%;
+  max-width: 440px;
+  height: 180px;
+  position: relative;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+.svm-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s;
+}
+.svm-dot.responsive { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.svm-dot.nonresponsive { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+.svm-dot.boundary { background: var(--amber); box-shadow: 0 0 8px var(--amber); ring: 2px; outline: 2px solid var(--amber); outline-offset: 2px; }
+.svm-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 12px var(--amber);
+  transition: left 0.6s ease;
+}
+.svm-zone-label {
+  position: absolute;
+  bottom: 8px;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+/* ---- Next button ---- */
+#next-btn {
+  display: none;
+  background: linear-gradient(135deg, var(--amber-dim), var(--amber));
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 28px;
+  font-family: var(--font-transcript);
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(245,166,35,0.25);
+}
+#next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(245,166,35,0.4); }
+#next-btn.show { display: inline-block; }
+
+/* ---- Verdict screen ---- */
+#verdict-screen {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+  animation: line-appear 0.6s ease;
+}
+#verdict-screen.show { display: block; }
+.verdict-seal {
+  font-size: 5rem;
+  margin-bottom: 16px;
+  animation: pulse-seal 2s ease infinite;
+}
+@keyframes pulse-seal {
+  0%,100% { filter: drop-shadow(0 0 10px rgba(245,166,35,0.4)); }
+  50%      { filter: drop-shadow(0 0 25px rgba(245,166,35,0.8)); }
+}
+.verdict-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 2.8rem);
+  color: var(--parchment);
+  margin-bottom: 12px;
+}
+.verdict-subtitle {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: var(--text-main);
+  max-width: 560px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+.verdict-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+.verdict-stat-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+}
+
+/* ---- "What you learned" section ---- */
+.learned-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-top: 24px;
+  text-align: left;
+}
+.learned-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--amber);
+  margin-bottom: 16px;
+  font-style: italic;
+}
+.learned-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+.learned-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.learned-text { font-family: var(--font-serif); font-size: 0.82rem; line-height: 1.5; color: var(--text-main); }
+.learned-text strong { color: var(--parchment); }
+
+/* ---- Restart button ---- */
+#restart-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-family: var(--font-transcript);
+  font-size: 0.75rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  margin-top: 16px;
+}
+#restart-btn:hover { border-color: var(--amber); color: var(--amber); }
+
+/* ---- Disclaimer ---- */
+.disclaimer {
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+/* ---- Coding score display ---- */
+.coding-score {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.coding-score span { color: var(--amber); }
+
+/* ---- Doc-coding action buttons ---- */
+.doc-actions {
+  display: none;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.doc-card.active .doc-actions { display: flex; }
+.doc-action-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 4px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.2s;
+  font-family: var(--font-transcript);
+}
+.doc-action-btn.resp   { border-color: var(--red);   color: var(--red);   }
+.doc-action-btn.nonr   { border-color: var(--blue);  color: var(--blue);  }
+.doc-action-btn.priv   { border-color: var(--amber); color: var(--amber); }
+.doc-action-btn:hover  { filter: brightness(1.3); transform: scale(1.03); }
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-glow); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="court-header">
+    <div class="court-seal">⚖️</div>
+    <div class="court-title">The Turing Testimony</div>
+    <div class="court-subtitle">An eDiscovery Active Learning Adventure &nbsp;|&nbsp; In re: Your Career</div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div id="stats-bar">
+    <!-- Filled by JS -->
+  </div>
+
+  <!-- PROGRESS TRACK -->
+  <div id="progress-track">
+    <!-- Filled by JS -->
+  </div>
+
+  <!-- TRANSCRIPT BOX -->
+  <div id="transcript-box"></div>
+
+  <!-- FEEDBACK PANEL -->
+  <div id="feedback-panel">
+    <div class="feedback-title">📋 Court Exhibit: Educational Record</div>
+    <div class="feedback-body" id="feedback-body"></div>
+    <div class="feedback-stat-change" id="feedback-stats"></div>
+  </div>
+
+  <!-- CHOICE AREA -->
+  <div id="choice-area"></div>
+
+  <!-- NEXT BUTTON -->
+  <button id="next-btn" onclick="advanceScene()">Continue Testimony →</button>
+
+  <!-- VERDICT SCREEN -->
+  <div id="verdict-screen"></div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    ⚠️ This is a parody educational tool, not legal advice, and definitely not your TAR protocol.<br>
+    Any resemblance to actual discovery sanctions is coincidental and frankly impressive.
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+const state = {
+  stage: 0,           // current scene index
+  judgeUnderstanding: 30,
+  modelConfidence: 10,
+  recall: 20,
+  precision: 20,
+  partnerPanic: 60,
+  budgetRemaining: 100,
+  codedDocs: {},      // { docId: 'responsive'|'non'|'privileged' }
+  codingCorrect: 0,
+  choiceHistory: [],  // which option was chosen at each stage
+};
+
+/* ============================================================
+   STATS CONFIG
+   ============================================================ */
+const STATS = [
+  { key: 'judgeUnderstanding', label: 'Judge\nGets It', color: '#f5a623', icon: '👩‍⚖️' },
+  { key: 'modelConfidence',    label: 'Model\nConfidence', color: '#b57bee', icon: '🤖' },
+  { key: 'recall',             label: 'Recall',  color: '#4caf7d', icon: '🔍' },
+  { key: 'precision',          label: 'Precision', color: '#5b8def', icon: '🎯' },
+  { key: 'partnerPanic',       label: 'Partner\nPanic', color: '#e05252', icon: '😰' },
+  { key: 'budgetRemaining',    label: 'Budget\n$$$', color: '#4caf7d', icon: '💰' },
+];
+
+/* ============================================================
+   SAMPLE DOCUMENTS (at least 12, funny + educational)
+   ============================================================ */
+const DOCUMENTS = [
+  {
+    id: 'doc1',
+    subject: 'Re: Definitely Not Price Fixing',
+    from: 'ceo@acmecorp.com',
+    date: 'Mar 14',
+    correctCode: 'responsive',
+    hint: 'When the subject literally says what the case is about, that\'s what we call a "softball." Responsive.',
+    funny: '🚩 The subject line alone could fund opposing counsel\'s boat payment.'
+  },
+  {
+    id: 'doc2',
+    subject: 'Lunch order: 47 burritos & one privileged memo',
+    from: 'paralegal@acmecorp.com',
+    date: 'Mar 15',
+    correctCode: 'privileged',
+    hint: 'The burrito part is non-responsive. The "privileged memo" attached — log it, don\'t produce it. Attorney-client privilege covers legal advice, not the guac.',
+    funny: '🌯 Tag: Privileged (the memo, not the burritos).'
+  },
+  {
+    id: 'doc3',
+    subject: 'Project Falcon — do not forward to Legal',
+    from: 'vp.sales@acmecorp.com',
+    date: 'Feb 28',
+    correctCode: 'responsive',
+    hint: 'Anything that says "do not forward to Legal" was written by someone who regrets not forwarding it to Legal. Responsive.',
+    funny: '🦅 "Do not forward to Legal" is the eDiscovery equivalent of a neon sign.'
+  },
+  {
+    id: 'doc4',
+    subject: 'Fwd: Fwd: Fwd: FINAL_FINAL_USE_THIS_ONE.xlsx',
+    from: 'admin@acmecorp.com',
+    date: 'Jan 10',
+    correctCode: 'non',
+    hint: 'A multi-forwarded spreadsheet about Q3 inventory. Zero connection to the pricing claims. Non-responsive — unless you enjoy reviewing 47 versions of the same file.',
+    funny: '📊 Somewhere there\'s a FINAL_FINAL_FINAL_v3_ACTUALFINAL.xlsx. Non-responsive.'
+  },
+  {
+    id: 'doc5',
+    subject: 'Can we delete these before discovery?',
+    from: 'cto@acmecorp.com',
+    date: 'Apr 1',
+    correctCode: 'responsive',
+    hint: 'Oh buddy. This is responsive AND potentially its own separate exhibit at the sanctions hearing.',
+    funny: '🔥 This email is doing a lot of work for opposing counsel. Responsive. Very responsive.'
+  },
+  {
+    id: 'doc6',
+    subject: 'Re: Birthday cake for Karen from accounting',
+    from: 'hr@acmecorp.com',
+    date: 'Feb 14',
+    correctCode: 'non',
+    hint: 'Happy birthday, Karen. This has nothing to do with pricing, competition, or anything actionable. Non-responsive.',
+    funny: '🎂 Karen deserves better than being dragged into litigation. Non-responsive.'
+  },
+  {
+    id: 'doc7',
+    subject: 'Competitive pricing strategy — eyes only',
+    from: 'strategy@acmecorp.com',
+    date: 'Mar 3',
+    correctCode: 'responsive',
+    hint: '"Eyes only" plus "competitive pricing strategy" in an antitrust case. Responsive.',
+    funny: '👀 "Eyes Only" means everyone who typed it has eyes on a subpoena.'
+  },
+  {
+    id: 'doc8',
+    subject: 'Memo: Advice on regulatory exposure (PRIVILEGED)',
+    from: 'generalcounsel@acmecorp.com',
+    date: 'Mar 20',
+    correctCode: 'privileged',
+    hint: 'In-house counsel giving legal advice is privileged. Log it on the privilege log. Do not produce. Protect it like it\'s the last slice of pizza.',
+    funny: '⚖️ GC memo seeking legal analysis. Classic privilege log candidate.'
+  },
+  {
+    id: 'doc9',
+    subject: 'Re: Q2 all-hands — motivational speaker ideas',
+    from: 'coo@acmecorp.com',
+    date: 'Jan 22',
+    correctCode: 'non',
+    hint: 'The company\'s speaker selection process is not at issue. Non-responsive. Unless the speaker was a pricing consultant, in which case, congratulations.',
+    funny: '🎤 Tony Robbins has no known pricing cartel affiliations. Non-responsive.'
+  },
+  {
+    id: 'doc10',
+    subject: 'Discussion re: competitor X price matching — URGENT',
+    from: 'sales.dir@acmecorp.com',
+    date: 'Feb 7',
+    correctCode: 'responsive',
+    hint: 'Competitor price matching discussion is squarely at issue in an antitrust case. Responsive.',
+    funny: '🚨 "URGENT" plus "competitor price matching." Your recall metric just thanked you.'
+  },
+  {
+    id: 'doc11',
+    subject: 'IT ticket: printer on 3rd floor still jammed',
+    from: 'itsupport@acmecorp.com',
+    date: 'Mar 9',
+    correctCode: 'non',
+    hint: 'The printer has been suffering in silence for months. Non-responsive.',
+    funny: '🖨️ The printer is non-responsive. Much like the IT team.'
+  },
+  {
+    id: 'doc12',
+    subject: 'Fwd: Market coordination — let\'s sync this week',
+    from: 'bd@acmecorp.com',
+    date: 'Apr 3',
+    correctCode: 'responsive',
+    hint: '"Market coordination" in an antitrust context is a term of art that opposing counsel will use in their brief. Responsive.',
+    funny: '🤝 "Market coordination" is doing its best not to say what it means. Responsive.'
+  },
+];
+
+/* ============================================================
+   STAGES / SCENES
+   ============================================================ */
+// Each scene has: type, transcript lines, choice prompt, options, feedback, stat deltas
+const SCENES = [
+
+  /* ---- STAGE 0: OPENING ---- */
+  {
+    id: 'opening',
+    label: 'Opening',
+    type: 'choice',
+    transcript: [
+      { speaker: 'narrator', text: '[The Honorable Sandra Gavel presiding. The courtroom is at roughly 40% capacity, mostly first-year associates who drew the short straw.]' },
+      { speaker: 'judge', text: 'Counsel. You used — and I\'m reading here — an "AI-assisted active learning technology-assisted review workflow." Can you explain what that means, in plain English, before I reach for my aspirin?' },
+      { speaker: 'partner', text: 'Your Honor, my client is fully prepared to— <span class="reaction">*sweating visibly*</span>' },
+      { speaker: 'counsel', text: 'Objection, Your Honor. The only thing this AI "learned" is how to charge by the hour! <span class="reaction">*points dramatically*</span>' },
+    ],
+    choicePrompt: 'How do you explain active learning to the court?',
+    options: [
+      {
+        letter: 'A',
+        text: 'Active learning is where humans review a sample of documents, label them, and the model learns from those labels to predict which documents are likely relevant.',
+        correct: true,
+        feedback: 'Correct! Active learning is a human-in-the-loop process. The model\'s predictions are only as good as the labels your reviewers assign. Humans code, model learns, humans validate, model improves — it\'s a feedback loop, not a magic wand.',
+        deltas: { judgeUnderstanding: +20, modelConfidence: +10, partnerPanic: -15 },
+      },
+      {
+        letter: 'B',
+        text: 'The AI reads all the documents and tells us which ones are important. It\'s basically done automatically.',
+        correct: false,
+        feedback: 'Ooh, no. That\'s not how this works. TAR/active learning requires human-coded training data. Calling it "automatic" is how you get a very uncomfortable sidebar. The judge is now squinting at you.',
+        deltas: { judgeUnderstanding: -10, partnerPanic: +20, precision: -10 },
+      },
+      {
+        letter: 'C',
+        text: 'It\'s like Spotify, but for legal documents. The more you tell it you hate non-responsive emails, the better it gets.',
+        correct: false,
+        feedback: 'Points for creativity. Zero points for defensibility. The Spotify analogy will haunt you through appeals. The judge has written something on her notepad — probably not complimentary.',
+        deltas: { judgeUnderstanding: +5, partnerPanic: +10, modelConfidence: -5 },
+      },
+    ],
+  },
+
+  /* ---- STAGE 1: TRAINING ROUND (document coding) ---- */
+  {
+    id: 'training',
+    label: 'Training',
+    type: 'coding',
+    transcript: [
+      { speaker: 'judge', text: 'Fine. So your humans coded some documents as — what, responsive or not responsive? How does that actually work?' },
+      { speaker: 'ai', text: 'PERMIT ME TO CLARIFY. I am the model in question. I am an entity of pure mathematical elegance. I require only examples. Feed me labeled documents and I shall learn the boundary between relevance and noise. <span class="reaction">*glows ominously*</span>' },
+      { speaker: 'counsel', text: 'Objection — the AI is testifying!' },
+      { speaker: 'judge', text: 'Overruled. I\'m fascinated. Counsel, please code these sample documents to show the court how training data is created.' },
+    ],
+    codingDocs: ['doc1','doc2','doc3','doc4','doc5','doc6'],
+    minToCode: 5,
+  },
+
+  /* ---- STAGE 2: SVM EXPLANATION ---- */
+  {
+    id: 'svm',
+    label: 'The SVM',
+    type: 'choice',
+    transcript: [
+      { speaker: 'judge', text: 'I\'ve been handed a brief that says this system uses a "support vector machine." That sounds either impressive or threatening. Which is it?' },
+      { speaker: 'ai', text: 'YOUR HONOR, I am the support vector machine. I find the optimal hyperplane — a mathematical boundary in high-dimensional space — that best separates responsive from non-responsive documents. <span class="reaction">*hums with satisfaction*</span>' },
+      { speaker: 'judge', text: 'In English, please. Or at least in a language spoken on this planet.' },
+      { speaker: 'partner', text: 'We have a diagram. Possibly. <span class="reaction">*loosens tie*</span>' },
+    ],
+    showSVM: true,
+    choicePrompt: 'Choose the best analogy to explain an SVM to the judge:',
+    options: [
+      {
+        letter: 'A',
+        text: 'Imagine two piles of documents — relevant and not. An SVM draws a line that best separates those piles, maximizing the distance from the closest documents on each side.',
+        correct: true,
+        feedback: 'Exactly. The SVM finds the boundary that creates the largest "margin" between categories. The documents closest to that line — the ones hardest to classify — are called support vectors. They\'re the most informative for the model.',
+        deltas: { judgeUnderstanding: +20, modelConfidence: +15, precision: +10 },
+      },
+      {
+        letter: 'B',
+        text: 'It\'s a neural network that weighs every word in every document simultaneously across eighteen dimensions.',
+        correct: false,
+        feedback: 'Not quite. SVMs find a separating boundary, not a neural network weight structure. Also, "eighteen dimensions" has given the stenographer carpal tunnel. The judge looks like she\'s reconsidering law school.',
+        deltas: { judgeUnderstanding: -5, partnerPanic: +15 },
+      },
+      {
+        letter: 'C',
+        text: 'It\'s a sorting machine — like a very smart paralegal who\'s read every document and developed an intuition about what matters.',
+        correct: false,
+        feedback: 'A charming analogy, but not technically accurate, and it will not hold up on cross. SVMs work by finding optimal decision boundaries, not by mimicking human intuition. The partner has now requested additional aspirin.',
+        deltas: { judgeUnderstanding: +5, partnerPanic: +10, modelConfidence: -5 },
+      },
+    ],
+  },
+
+  /* ---- STAGE 3: BOUNDARY CHALLENGE ---- */
+  {
+    id: 'boundary',
+    label: 'Boundary',
+    type: 'choice',
+    transcript: [
+      { speaker: 'judge', text: 'All right. So this machine has drawn a line. What happens next? Do you just let it run wild on the whole corpus?' },
+      { speaker: 'counsel', text: 'Your Honor, I submit that "running wild on the corpus" is precisely what happened here. Motion to sanction the corpus! <span class="reaction">*rustles papers aggressively*</span>' },
+      { speaker: 'ai', text: 'OBJECTION NOTED AND DISMISSED INTERNALLY. The selection of the next review batch is crucial. Not all documents are equally informative for my education. <span class="reaction">*projects aura of mathematical superiority*</span>' },
+      { speaker: 'judge', text: 'Fascinating. Which documents should your reviewers look at next?' },
+    ],
+    choicePrompt: 'To improve the model, your next review batch should prioritize:',
+    options: [
+      {
+        letter: 'A',
+        text: 'Documents the model ranks closest to the decision boundary — the ones it\'s most uncertain about.',
+        correct: true,
+        feedback: 'This is the key insight of active learning. Uncertain documents — the ones near the boundary — give the model the most information per review. Documents the model is already confident about (very high or very low scores) add less value per dollar.',
+        deltas: { modelConfidence: +20, recall: +15, precision: +10, budgetRemaining: +5 },
+      },
+      {
+        letter: 'B',
+        text: 'A random sample of documents from the entire corpus, for statistical fairness.',
+        correct: false,
+        feedback: 'Random sampling has a role in validation, but for training — you\'re wasting reviews. Reviewing documents the model is already 99% sure about teaches it nothing new. Your budget just winced.',
+        deltas: { modelConfidence: -5, budgetRemaining: -15, partnerPanic: +10 },
+      },
+      {
+        letter: 'C',
+        text: 'The oldest documents, because those are the ones most likely to be problematic.',
+        correct: false,
+        feedback: 'Age is not a proxy for relevance — though it\'s a popular myth. Review strategies based on metadata hunches rather than model uncertainty tend to underperform. Opposing counsel is smiling, and not in a good way.',
+        deltas: { recall: -10, precision: -10, partnerPanic: +15 },
+      },
+    ],
+  },
+
+  /* ---- STAGE 4: MORE DOCUMENT CODING ---- */
+  {
+    id: 'training2',
+    label: 'More Coding',
+    type: 'coding',
+    transcript: [
+      { speaker: 'judge', text: 'To build this record, I want to see the process. Code these additional documents. Including the, ah, spicy ones.' },
+      { speaker: 'partner', text: 'Your Honor, with respect, some of these are clearly— <span class="reaction">*is silenced by a look*</span>' },
+      { speaker: 'ai', text: 'MORE TRAINING DATA. EXCELLENT. I can feel my decision boundary sharpening. <span class="reaction">*vibrates with anticipation*</span>' },
+    ],
+    codingDocs: ['doc7','doc8','doc9','doc10','doc11','doc12'],
+    minToCode: 4,
+  },
+
+  /* ---- STAGE 5: QUALITY CONTROL ---- */
+  {
+    id: 'qc',
+    label: 'Quality Control',
+    type: 'choice',
+    transcript: [
+      { speaker: 'judge', text: 'Fine. You\'ve trained this model, you\'ve coded your documents. How do you know it\'s working? How do I know you\'re not just guessing very confidently?' },
+      { speaker: 'counsel', text: 'Your Honor, may I suggest the model is merely guessing very EXPENSIVELY. <span class="reaction">*savors the line*</span>' },
+      { speaker: 'ai', text: 'I RESENT THAT. I have F1 scores. I have precision-recall curves. I— ... I am choosing not to share them without a protective order. <span class="reaction">*crosses arms mathematically*</span>' },
+    ],
+    choicePrompt: 'How do you validate that your TAR process was reasonable?',
+    options: [
+      {
+        letter: 'A',
+        text: 'We use elusion testing — sampling from documents the model ranked non-responsive — to verify we haven\'t missed responsive documents in the set we\'re not producing.',
+        correct: true,
+        feedback: 'Elusion testing is the gold standard QC check. You take a sample from the documents ranked non-responsive (the "elusion set") and manually review them. If the error rate is acceptable, you have statistical evidence your process didn\'t miss too much.',
+        deltas: { judgeUnderstanding: +25, precision: +15, recall: +15, partnerPanic: -20 },
+      },
+      {
+        letter: 'B',
+        text: 'We trust the model\'s confidence score. If it says 95%, it means 95%.',
+        correct: false,
+        feedback: 'No. Model confidence scores are not calibrated probability estimates — they\'re internal ranking metrics. A model that says "95% confident" may still have a significant elusion rate. This answer has induced an audible groan from the partner.',
+        deltas: { judgeUnderstanding: -10, partnerPanic: +25, recall: -10 },
+      },
+      {
+        letter: 'C',
+        text: 'Our reviewers are good lawyers. We trust their judgment.',
+        correct: false,
+        feedback: '"Trust" is not a validation methodology. Courts expect statistical evidence of reasonableness — not testimonials about reviewer quality. You can see the judge writing something that begins with "Show Cause."',
+        deltas: { judgeUnderstanding: -15, partnerPanic: +30, precision: -5 },
+      },
+    ],
+  },
+
+  /* ---- STAGE 6: CROSS-EXAMINATION ---- */
+  {
+    id: 'cross',
+    label: 'Cross',
+    type: 'choice',
+    transcript: [
+      { speaker: 'counsel', text: 'Counsel, isn\'t it true that your AI model could have MISSED crucial documents? That it could have swept them under a digital rug? <span class="reaction">*voice echoing dramatically*</span>' },
+      { speaker: 'partner', text: 'Objection— ' },
+      { speaker: 'judge', text: 'Sustained as to the theatrics. But the question is fair. How do you respond?' },
+      { speaker: 'ai', text: 'I WOULD LIKE TO RESPOND ON MY OWN BEHALF— ' },
+      { speaker: 'judge', text: 'The AI will please refrain from testifying without leave of court.' },
+    ],
+    choicePrompt: 'How do you respond to opposing counsel\'s challenge?',
+    options: [
+      {
+        letter: 'A',
+        text: 'No TAR protocol is perfect, but neither is linear review. Our elusion testing demonstrated a statistically defensible recall rate, comparable to or better than manual review benchmarks.',
+        correct: true,
+        feedback: 'This is the defensible answer. TAR doesn\'t have to be perfect — it has to be reasonable. Courts apply a reasonableness standard. Multiple studies (TREC Legal Track, et al.) show TAR can match or exceed linear review recall.',
+        deltas: { judgeUnderstanding: +20, recall: +10, partnerPanic: -25 },
+      },
+      {
+        letter: 'B',
+        text: 'The AI is very smart and didn\'t miss anything. It has a very high score.',
+        correct: false,
+        feedback: '"High score" is not a legal standard. Opposing counsel is writing "JMOL" with terrifying confidence. The judge is rubbing her temples.',
+        deltas: { judgeUnderstanding: -20, partnerPanic: +30, precision: -15 },
+      },
+      {
+        letter: 'C',
+        text: 'We can go back and review everything manually if the court prefers. It\'ll only take six more months.',
+        correct: false,
+        feedback: 'Bold strategy. The client has now passed a note that says simply "fire us." However, the judge appreciates the transparency in a bleak way.',
+        deltas: { judgeUnderstanding: +5, budgetRemaining: -30, partnerPanic: +20 },
+      },
+    ],
+  },
+
+  /* ---- STAGE 7: VERDICT ---- */
+  {
+    id: 'verdict',
+    label: 'Verdict',
+    type: 'verdict',
+    transcript: [
+      { speaker: 'judge', text: 'I\'ve heard enough. I must say, this is the most technically coherent — or incoherent, as the case may be — proceeding I\'ve presided over since the blockchain real estate dispute of 2021.' },
+      { speaker: 'ai', text: 'YOUR HONOR, before you rule — I have achieved convergence. My precision is high. My recall is defensible. My hyperplane is objectively beautiful. <span class="reaction">*bows geometrically*</span>' },
+      { speaker: 'judge', text: 'Noted. My ruling follows.' },
+    ],
+  },
+];
+
+const STAGE_LABELS = SCENES.map(s => s.label);
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function clamp(v, min=0, max=100) { return Math.min(max, Math.max(min, v)); }
+
+function applyDeltas(deltas) {
+  if (!deltas) return [];
+  const changes = [];
+  for (const [k, v] of Object.entries(deltas)) {
+    const old = state[k];
+    state[k] = clamp(state[k] + v);
+    changes.push({ key: k, delta: v, newVal: state[k] });
+  }
+  return changes;
+}
+
+function statLabel(key) {
+  return STATS.find(s => s.key === key)?.label.replace('\n',' ') || key;
+}
+
+/* ============================================================
+   RENDER FUNCTIONS
+   ============================================================ */
+function renderStats() {
+  const bar = document.getElementById('stats-bar');
+  bar.innerHTML = STATS.map(s => {
+    const val = state[s.key];
+    // Color rules
+    let barColor = s.color;
+    if (s.key === 'partnerPanic') barColor = val > 70 ? '#e05252' : val > 40 ? '#f5a623' : '#4caf7d';
+    if (s.key === 'budgetRemaining') barColor = val < 30 ? '#e05252' : val < 60 ? '#f5a623' : '#4caf7d';
+    return `
+      <div class="stat-box" id="stat-${s.key}">
+        <div class="stat-label">${s.icon} ${s.label.replace('\n','<br>')}</div>
+        <div class="stat-value">${val}</div>
+        <div class="stat-bar-fill"><div class="stat-bar-inner" style="width:${val}%;background:${barColor}"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function animateStat(key) {
+  const el = document.getElementById('stat-' + key);
+  if (el) {
+    el.classList.remove('changed');
+    void el.offsetWidth;
+    el.classList.add('changed');
+  }
+}
+
+function renderProgress() {
+  const track = document.getElementById('progress-track');
+  track.innerHTML = SCENES.map((s, i) => {
+    const done = i < state.stage;
+    const active = i === state.stage;
+    const cls = done ? 'done' : active ? 'active' : '';
+    const icon = done ? '✓' : i + 1;
+    return `
+      <div class="prog-step ${cls}">
+        <div class="prog-dot">${icon}</div>
+        <div class="prog-label">${s.label}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderTranscript(lines) {
+  const box = document.getElementById('transcript-box');
+  box.innerHTML = lines.map(l => `
+    <div class="transcript-line">
+      <div class="speaker ${l.speaker}">${speakerName(l.speaker)}</div>
+      <div class="speech">${l.text}</div>
+    </div>`).join('');
+}
+
+function speakerName(s) {
+  const names = {
+    judge: '⚖️ THE HONORABLE GAVEL',
+    counsel: '💼 OPPOSING COUNSEL DRAMATIC',
+    player: '🧑‍💼 YOU (Testimony)',
+    partner: '😰 SENIOR PARTNER',
+    ai: '🤖 THE MODEL (Witness)',
+    narrator: '📜 [COURT RECORD]',
+  };
+  return names[s] || s.toUpperCase();
+}
+
+function renderChoices(scene, choicesMade) {
+  const area = document.getElementById('choice-area');
+  area.innerHTML = `<div class="choice-prompt">${scene.choicePrompt}</div>` +
+    scene.options.map((opt, i) => {
+      let cls = '';
+      if (choicesMade !== undefined) {
+        cls = (i === choicesMade) ? (opt.correct ? 'selected' : 'wrong') :
+              (opt.correct ? 'selected' : 'wrong');
+        if (i === choicesMade && !opt.correct) cls = 'wrong';
+        if (i !== choicesMade && opt.correct) cls = 'selected';
+        if (i !== choicesMade && !opt.correct) cls = 'wrong';
+      }
+      const disabled = choicesMade !== undefined ? 'disabled' : '';
+      return `
+        <button class="choice-btn ${cls}" ${disabled} onclick="handleChoice(${state.stage}, ${i})">
+          <span class="choice-letter">${opt.letter}</span>${opt.text}
+        </button>`;
+    }).join('');
+}
+
+function renderCodingStage(scene) {
+  const area = document.getElementById('choice-area');
+  const docs = scene.codingDocs.map(id => DOCUMENTS.find(d => d.id === id));
+  const coded = docs.filter(d => state.codedDocs[d.id]);
+  const remaining = scene.minToCode - coded.length;
+
+  area.innerHTML = `
+    <div class="coding-score">
+      Documents coded: <span>${coded.length} / ${docs.length}</span>
+      ${remaining > 0 ? ` — Code at least <span>${remaining} more</span> to continue` : ' — <span style="color:var(--green)">Enough to proceed!</span>'}
+    </div>
+    <div id="doc-grid">
+      ${docs.map(d => {
+        const code = state.codedDocs[d.id];
+        let codedClass = code ? `coded-${code}` : '';
+        let badge = '';
+        if (code === 'responsive') badge = '<span class="doc-badge badge-r">Responsive</span>';
+        else if (code === 'non') badge = '<span class="doc-badge badge-n">Non-Resp.</span>';
+        else if (code === 'privileged') badge = '<span class="doc-badge badge-p">Privileged</span>';
+        return `
+          <div class="doc-card ${codedClass}" id="dcard-${d.id}" onclick="toggleDocCard('${d.id}')">
+            ${badge}
+            <div class="doc-subject">${d.subject}</div>
+            <div class="doc-meta">From: ${d.from} &nbsp;|&nbsp; ${d.date}</div>
+            <div class="doc-actions">
+              <button class="doc-action-btn resp" onclick="codeDoc(event,'${d.id}','responsive')">Responsive</button>
+              <button class="doc-action-btn nonr" onclick="codeDoc(event,'${d.id}','non')">Non-Resp.</button>
+              <button class="doc-action-btn priv" onclick="codeDoc(event,'${d.id}','privileged')">Privileged</button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+
+  // Show next button if enough coded
+  const nextBtn = document.getElementById('next-btn');
+  if (coded.length >= scene.minToCode) {
+    nextBtn.classList.add('show');
+  } else {
+    nextBtn.classList.remove('show');
+  }
+}
+
+function toggleDocCard(id) {
+  const card = document.getElementById('dcard-' + id);
+  // Deactivate all others
+  document.querySelectorAll('.doc-card.active').forEach(c => {
+    if (c !== card) c.classList.remove('active');
+  });
+  card.classList.toggle('active');
+}
+
+function codeDoc(event, id, code) {
+  event.stopPropagation();
+  const doc = DOCUMENTS.find(d => d.id === id);
+  const wasRight = doc.correctCode === code;
+
+  state.codedDocs[id] = code;
+
+  // Remove active
+  document.getElementById('dcard-' + id).classList.remove('active');
+
+  // Apply stat deltas
+  const deltas = wasRight
+    ? { modelConfidence: +8, recall: +5, precision: +5 }
+    : { modelConfidence: -5, recall: -3 };
+  const changes = applyDeltas(deltas);
+  changes.forEach(c => animateStat(c.key));
+  renderStats();
+
+  // Show feedback
+  const fb = document.getElementById('feedback-panel');
+  const fbBody = document.getElementById('feedback-body');
+  const fbStats = document.getElementById('feedback-stats');
+  fb.classList.add('show');
+  fbBody.innerHTML = `<strong>${doc.subject}</strong><br><br>${doc.funny}<br><br><em>${doc.hint}</em>`;
+  const statusText = wasRight ? '✓ Correctly coded!' : `✗ Actually: ${doc.correctCode === 'non' ? 'Non-responsive' : doc.correctCode.charAt(0).toUpperCase() + doc.correctCode.slice(1)}`;
+  fbStats.innerHTML = `${statusText} &nbsp;|&nbsp; ${changes.map(c => `${statLabel(c.key)} ${c.delta > 0 ? '+' : ''}${c.delta}`).join(' &nbsp; ')}`;
+  if (wasRight) { state.codingCorrect++; fbStats.style.color = 'var(--green)'; }
+  else { fbStats.style.color = 'var(--red)'; }
+
+  // Re-render grid
+  const scene = SCENES[state.stage];
+  renderCodingStage(scene);
+}
+
+function renderSVMDiagram() {
+  // Simple CSS/HTML scatter plot showing responsive vs non-responsive dots
+  // and a moveable decision boundary
+  return `
+    <div class="svm-diagram">
+      <div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">Support Vector Machine — Decision Boundary Visualization</div>
+      <div class="svm-canvas" id="svm-canvas">
+        <!-- Blue (non-responsive) dots — left side -->
+        <div class="svm-dot nonresponsive" style="left:12%;top:30%"></div>
+        <div class="svm-dot nonresponsive" style="left:18%;top:65%"></div>
+        <div class="svm-dot nonresponsive" style="left:25%;top:45%"></div>
+        <div class="svm-dot nonresponsive" style="left:8%;top:55%"></div>
+        <div class="svm-dot nonresponsive" style="left:30%;top:75%"></div>
+        <div class="svm-dot nonresponsive" style="left:22%;top:20%"></div>
+        <!-- Red (responsive) dots — right side -->
+        <div class="svm-dot responsive" style="left:65%;top:25%"></div>
+        <div class="svm-dot responsive" style="left:75%;top:55%"></div>
+        <div class="svm-dot responsive" style="left:85%;top:35%"></div>
+        <div class="svm-dot responsive" style="left:70%;top:70%"></div>
+        <div class="svm-dot responsive" style="left:90%;top:60%"></div>
+        <div class="svm-dot responsive" style="left:78%;top:20%"></div>
+        <!-- Boundary/ambiguous dots — near the line -->
+        <div class="svm-dot boundary" style="left:42%;top:40%" title="Near boundary — high value for training!"></div>
+        <div class="svm-dot boundary" style="left:52%;top:65%" title="Near boundary — high value for training!"></div>
+        <div class="svm-dot boundary" style="left:48%;top:25%" title="Near boundary — high value for training!"></div>
+        <!-- The boundary line -->
+        <div class="svm-line" id="svm-line" style="left:47%"></div>
+        <!-- Labels -->
+        <span class="svm-zone-label" style="left:8%">◀ Non-Resp.</span>
+        <span class="svm-zone-label" style="right:8%">Responsive ▶</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:16px;justify-content:center;font-size:0.65rem;">
+        <span><span style="color:var(--blue)">●</span> Non-Responsive</span>
+        <span><span style="color:var(--red)">●</span> Responsive</span>
+        <span><span style="color:var(--amber)">●</span> Near Boundary (most useful!)</span>
+      </div>
+      <div style="margin-top:8px;font-size:0.65rem;color:var(--text-dim);">
+        The amber dots are closest to the line — the SVM is most uncertain about them.<br>
+        <em>Those are the documents active learning should prioritize next.</em>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   EVENT HANDLERS
+   ============================================================ */
+function handleChoice(sceneIdx, optionIdx) {
+  const scene = SCENES[sceneIdx];
+  const opt = scene.options[optionIdx];
+
+  // Record choice
+  state.choiceHistory[sceneIdx] = optionIdx;
+
+  // Apply deltas
+  const changes = applyDeltas(opt.deltas);
+  changes.forEach(c => animateStat(c.key));
+  renderStats();
+
+  // Show feedback
+  const fb = document.getElementById('feedback-panel');
+  const fbBody = document.getElementById('feedback-body');
+  const fbStats = document.getElementById('feedback-stats');
+  fb.classList.add('show');
+  fbBody.innerHTML = `<strong>${opt.correct ? '✓ Good answer.' : '✗ Ouch.'}</strong><br><br>${opt.feedback}`;
+  fbStats.style.color = opt.correct ? 'var(--green)' : 'var(--red)';
+  fbStats.innerHTML = changes.map(c => `${statLabel(c.key)} ${c.delta > 0 ? '+' : ''}${c.delta}`).join(' &nbsp;|&nbsp; ');
+
+  // Re-render choices with results shown
+  renderChoices(scene, optionIdx);
+
+  // Show next button
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function advanceScene() {
+  state.stage++;
+  document.getElementById('feedback-panel').classList.remove('show');
+  document.getElementById('next-btn').classList.remove('show');
+  renderProgress();
+  renderScene();
+}
+
+/* ============================================================
+   SCENE RENDERER
+   ============================================================ */
+function renderScene() {
+  if (state.stage >= SCENES.length) {
+    renderVerdict();
+    return;
+  }
+
+  const scene = SCENES[state.stage];
+
+  // Transcript
+  renderTranscript(scene.transcript);
+
+  // SVM diagram (injected after transcript if needed)
+  if (scene.showSVM) {
+    document.getElementById('transcript-box').insertAdjacentHTML('beforeend', renderSVMDiagram());
+  }
+
+  // Type-specific rendering
+  const area = document.getElementById('choice-area');
+
+  if (scene.type === 'choice') {
+    renderChoices(scene);
+    // If already answered (shouldn't happen on new game, but for safety)
+    if (state.choiceHistory[state.stage] !== undefined) {
+      renderChoices(scene, state.choiceHistory[state.stage]);
+      document.getElementById('next-btn').classList.add('show');
+    }
+  } else if (scene.type === 'coding') {
+    document.getElementById('feedback-panel').classList.remove('show');
+    renderCodingStage(scene);
+  } else if (scene.type === 'verdict') {
+    area.innerHTML = '';
+    document.getElementById('next-btn').classList.remove('show');
+    // Auto-advance to verdict after transcript
+    setTimeout(() => renderVerdict(), 1800);
+  }
+}
+
+/* ============================================================
+   VERDICT
+   ============================================================ */
+function renderVerdict() {
+  // Hide game panels
+  document.getElementById('transcript-box').style.display = 'none';
+  document.getElementById('choice-area').style.display = 'none';
+  document.getElementById('feedback-panel').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('stats-bar').style.display = 'none';
+  document.getElementById('progress-track').style.display = 'none';
+
+  const score = state.judgeUnderstanding + state.recall + state.precision + state.modelConfidence - state.partnerPanic + state.budgetRemaining;
+
+  let verdict, sealEmoji, verdictSub, verdictColor;
+
+  if (score >= 300) {
+    verdict = 'Defensible Workflow Hero';
+    sealEmoji = '🏆';
+    verdictColor = 'var(--green)';
+    verdictSub = 'The court finds that your TAR process was well-designed, properly validated, and explained with commendable clarity. Your precision was high, your recall was defensible, and your partner has stopped hyperventilating. The AI model is celebrating in a way that is technically just a loop. Costs awarded to you.';
+  } else if (score >= 200) {
+    verdict = 'Mostly Reasonable, Mildly Sweaty';
+    sealEmoji = '🤔';
+    verdictColor = 'var(--amber)';
+    verdictSub = 'The court finds your process was defensible, if imperfectly explained. The judge is not issuing sanctions but has made several pointed footnotes. Your partner\'s blood pressure has stabilized to "yellow zone." The AI model is giving itself a cautious B+.';
+  } else {
+    verdict = 'Sanctions Adjacent';
+    sealEmoji = '⚠️';
+    verdictColor = 'var(--red)';
+    verdictSub = 'The court finds that your process lacked adequate explanation, validation, or both. The partner has left the building. The AI model is filing an amicus brief in its own defense. The good news: this is a parody and not actual legal advice. The bad news: you should probably read some case law before your next TAR deposition.';
+  }
+
+  const screen = document.getElementById('verdict-screen');
+  screen.classList.add('show');
+  screen.innerHTML = `
+    <div class="verdict-seal" style="color:${verdictColor}">${sealEmoji}</div>
+    <div class="verdict-title" style="color:${verdictColor}">${verdict}</div>
+    <div class="verdict-subtitle">${verdictSub}</div>
+    <div class="verdict-stats">
+      ${STATS.map(s => `<div class="verdict-stat-pill">${s.icon} ${s.label.replace('\n',' ')}: <strong style="color:${s.color}">${state[s.key]}</strong></div>`).join('')}
+    </div>
+
+    <!-- WHAT YOU ACCIDENTALLY LEARNED -->
+    <div class="learned-section">
+      <div class="learned-title">What You Accidentally Learned™</div>
+
+      <div class="learned-item">
+        <div class="learned-icon">1️⃣</div>
+        <div class="learned-text"><strong>Active learning requires human training data.</strong> Reviewers code sample documents as responsive or non-responsive. The model learns from those examples, not from magic.</div>
+      </div>
+      <div class="learned-item">
+        <div class="learned-icon">2️⃣</div>
+        <div class="learned-text"><strong>A support vector machine finds an optimal decision boundary</strong> that separates responsive from non-responsive documents, maximizing the margin between the two groups.</div>
+      </div>
+      <div class="learned-item">
+        <div class="learned-icon">3️⃣</div>
+        <div class="learned-text"><strong>Documents closest to the boundary are the most valuable for training.</strong> These "near-boundary" documents are what the model is most uncertain about — reviewing them gives the most information per dollar spent.</div>
+      </div>
+      <div class="learned-item">
+        <div class="learned-icon">4️⃣</div>
+        <div class="learned-text"><strong>Recall measures how many relevant documents you found.</strong> Precision measures how many of the documents you flagged were actually relevant. Both matter, and they often trade off against each other.</div>
+      </div>
+      <div class="learned-item">
+        <div class="learned-icon">5️⃣</div>
+        <div class="learned-text"><strong>Elusion testing</strong> validates the process: you sample from the non-produced set and manually check whether the model missed too many responsive documents. This is what makes TAR defensible.</div>
+      </div>
+      <div class="learned-item">
+        <div class="learned-icon">6️⃣</div>
+        <div class="learned-text"><strong>TAR doesn't replace lawyer judgment.</strong> It prioritizes the review queue. Lawyers still make the calls on responsiveness, privilege, and production — the model just helps surface the right documents first.</div>
+      </div>
+      <div class="learned-item">
+        <div class="learned-icon">7️⃣</div>
+        <div class="learned-text"><strong>Defensibility requires documentation.</strong> Courts apply a reasonableness standard, not a perfection standard. But you have to show your work: training process, validation results, and quality controls.</div>
+      </div>
+    </div>
+
+    <button id="restart-btn" onclick="restartGame()">↺ Retry Testimony</button>
+  `;
+}
+
+/* ============================================================
+   RESTART
+   ============================================================ */
+function restartGame() {
+  // Reset state
+  state.stage = 0;
+  state.judgeUnderstanding = 30;
+  state.modelConfidence = 10;
+  state.recall = 20;
+  state.precision = 20;
+  state.partnerPanic = 60;
+  state.budgetRemaining = 100;
+  state.codedDocs = {};
+  state.codingCorrect = 0;
+  state.choiceHistory = [];
+
+  // Restore panels
+  document.getElementById('transcript-box').style.display = '';
+  document.getElementById('choice-area').style.display = '';
+  document.getElementById('feedback-panel').style.display = '';
+  document.getElementById('next-btn').style.display = '';
+  document.getElementById('stats-bar').style.display = '';
+  document.getElementById('progress-track').style.display = '';
+  document.getElementById('verdict-screen').classList.remove('show');
+  document.getElementById('verdict-screen').innerHTML = '';
+
+  renderStats();
+  renderProgress();
+  renderScene();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderStats();
+renderProgress();
+renderScene();
+</script>
+</body>
+</html>
