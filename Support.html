@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support – Footnotes</title>
+
+    <!-- hCaptcha — free, privacy-friendly CAPTCHA. Sign up at hcaptcha.com to get your sitekey. -->
+    <!-- Replace "YOUR_SITE_KEY" below with the sitekey from your hCaptcha dashboard. -->
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: #0a0e1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 48px 24px;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid #2a3349;
+        }
+
+        .app-icon { font-size: 48px; line-height: 1; }
+
+        .header-text h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #4f8ef7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-text p {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .intro {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #94a3b8;
+            margin-bottom: 36px;
+        }
+
+        .intro a {
+            color: #4f8ef7;
+            text-decoration: none;
+        }
+
+        .intro a:hover { text-decoration: underline; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #4f8ef7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        select,
+        textarea {
+            width: 100%;
+            background: #141824;
+            border: 1px solid #2a3349;
+            border-radius: 10px;
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: 15px;
+            padding: 12px 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #4f8ef7;
+        }
+
+        input::placeholder,
+        textarea::placeholder { color: #64748b; }
+
+        textarea { resize: vertical; min-height: 140px; line-height: 1.6; }
+
+        select { cursor: pointer; }
+
+        /* Honeypot — hidden from humans, bots fill it in */
+        .hp { display: none; }
+
+        .captcha-row {
+            margin-bottom: 24px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #4f8ef7;
+            color: #fff;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .submit-btn:hover { opacity: 0.88; }
+        .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .success-box {
+            display: none;
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            color: #22c55e;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .error-box {
+            display: none;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: #ef4444;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            margin-top: 56px;
+            padding-top: 24px;
+            border-top: 1px solid #2a3349;
+            font-size: 13px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <div class="app-icon">⚖️</div>
+        <div class="header-text">
+            <h1>FOOTNOTES</h1>
+            <p>Support &nbsp;·&nbsp; We usually respond within 1–2 business days</p>
+        </div>
+    </div>
+
+    <p class="intro">
+        Having trouble with the app, or just have a question? Fill out the form below and we'll get back to you at <a href="mailto:support@rundevphil.com">support@rundevphil.com</a>.
+    </p>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <!--
+        SETUP INSTRUCTIONS:
+        1. Sign up free at formspree.io
+        2. Create a new form — set the email to support@rundevphil.com
+        3. Replace "YOUR_FORM_ID" in the action URL below with your Formspree form ID
+        4. Sign up at hcaptcha.com, add your site (philweldon.com), and replace "YOUR_SITE_KEY" with your hCaptcha site key
+    -->
+    <form
+        id="supportForm"
+        action="https://formspree.io/f/YOUR_FORM_ID"
+        method="POST"
+    >
+        <!-- Honeypot field — bots fill this in, humans don't see it -->
+        <div class="hp">
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" placeholder="Jane Smith" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Your Email</label>
+            <input type="email" id="email" name="email" placeholder="jane@example.com" required>
+        </div>
+
+        <div class="form-group">
+            <label for="topic">Topic</label>
+            <select id="topic" name="topic" required>
+                <option value="" disabled selected>Select a topic…</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Game Question">Game Question</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Describe your issue or question…" required></textarea>
+        </div>
+
+        <div class="captcha-row">
+            <!-- Replace YOUR_SITE_KEY with your hCaptcha sitekey -->
+            <div class="h-captcha" data-sitekey="YOUR_SITE_KEY" data-theme="dark"></div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Send Message</button>
+    </form>
+
+    <div class="success-box" id="successBox">
+        ✓ &nbsp; Message sent! We'll get back to you within 1–2 business days.
+    </div>
+
+    <div class="footer">
+        &copy; 2026 Phil Weldon &nbsp;·&nbsp; Footnotes
+    </div>
+
+</div>
+
+<script>
+    const form = document.getElementById('supportForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const successBox = document.getElementById('successBox');
+    const errorBox = document.getElementById('errorBox');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Check hCaptcha completed
+        const captchaResponse = hcaptcha.getResponse();
+        if (!captchaResponse) {
+            showError('Please complete the CAPTCHA before sending.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+        errorBox.style.display = 'none';
+
+        const data = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                form.style.display = 'none';
+                successBox.style.display = 'block';
+            } else {
+                const json = await response.json();
+                showError(json.error || 'Something went wrong. Please try again.');
+                resetBtn();
+            }
+        } catch (err) {
+            showError('Could not send your message. Please check your connection and try again.');
+            resetBtn();
+        }
+    });
+
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+        errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function resetBtn() {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Message';
+        hcaptcha.reset();
+    }
+</script>
+</body>
+</html>
