@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KDCR Search Lab — An Educational Game That Teaches eDiscovery Search</title>
+<meta name="description" content="KDCR Search Lab is an iOS game that teaches eDiscovery search. Try Keyword, dtSearch, Concept, and RAG search against unique fictional legal cases.">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1e;
+    --panel: #131a30;
+    --border: #243052;
+    --bright: #60a5fa;
+    --soft: #93bbf2;
+    --text: #e6e9f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    text-align: center;
+    padding: 90px 0 70px;
+    background: radial-gradient(ellipse at top, #1a2040 0%, var(--bg) 65%);
+  }
+  .logo { font-size: 64px; }
+  h1 {
+    font-size: clamp(36px, 7vw, 56px);
+    font-weight: 800;
+    letter-spacing: 6px;
+    margin-top: 12px;
+    background: linear-gradient(135deg, #ffffff, #4f8ef7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .kdcr { font-size: clamp(15px, 2.5vw, 19px); font-weight: 600; margin-top: 10px; color: var(--soft); }
+  .kdcr strong { color: var(--bright); }
+  .tagline { color: var(--text2); margin-top: 18px; font-size: 17px; }
+  .credit { color: var(--text3); font-size: 14px; margin-top: 6px; }
+
+  .badge {
+    display: inline-block; margin-top: 28px; padding: 10px 22px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--soft); font-size: 14px; font-weight: 500;
+    background: var(--panel);
+  }
+
+  section { padding: 48px 0; }
+  h2 {
+    font-size: 26px; font-weight: 600; color: var(--bright);
+    margin-bottom: 18px;
+  }
+  p + p { margin-top: 14px; }
+  .muted { color: var(--text2); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-top: 24px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px;
+  }
+  .card .letter {
+    font-size: 28px; font-weight: 800; color: var(--bright);
+  }
+  .card h3 { font-size: 17px; font-weight: 600; margin: 4px 0 8px; }
+  .card p { font-size: 14px; color: var(--text2); }
+
+  ol.steps { margin: 20px 0 0 20px; color: var(--text2); }
+  ol.steps li { margin-bottom: 10px; }
+  ol.steps b { color: var(--text); font-weight: 600; }
+
+  .privacy { border-top: 1px solid var(--border); }
+  .privacy h2 { color: var(--soft); }
+  .privacy p, .privacy li { font-size: 14.5px; color: var(--text2); }
+  .privacy ul { margin: 12px 0 0 20px; }
+  .privacy li { margin-bottom: 8px; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0; text-align: center;
+    color: var(--text3); font-size: 13px;
+  }
+  a { color: var(--bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">⚖️</div>
+    <h1>SEARCH LAB</h1>
+    <div class="kdcr"><strong>KDCR:</strong> Keyword, dtSearch, Concept, RAG</div>
+    <p class="tagline">An educational game that teaches eDiscovery search</p>
+    <p class="credit">Created by Phil Weldon</p>
+    <div class="badge">📱 Now in beta on TestFlight for iOS</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2>What is KDCR Search Lab?</h2>
+    <p>KDCR Search Lab turns one of the trickiest skills in legal technology — searching large document collections — into a game you can learn by playing. Every round drops you into a unique, fictional legal case: a dispute, an investigation, a discovery request. Your job is to find the documents that matter.</p>
+    <p class="muted">The twist: you solve the same case four different ways, using the four search methods real eDiscovery professionals use every day. Then a scorecard shows you exactly what each method found, what it missed, and why — so you build real intuition for when each technique shines and when it fails.</p>
+  </section>
+
+  <section>
+    <h2>The four search methods</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="letter">K</div>
+        <h3>Keyword</h3>
+        <p>The classic. Search for exact words and phrases. Fast and precise — until people use synonyms, abbreviations, or code words.</p>
+      </div>
+      <div class="card">
+        <div class="letter">D</div>
+        <h3>dtSearch</h3>
+        <p>Power-user syntax: boolean operators, wildcards, and proximity searches that find words near each other.</p>
+      </div>
+      <div class="card">
+        <div class="letter">C</div>
+        <h3>Concept</h3>
+        <p>Search by meaning, not exact words. Finds documents about a topic even when they never use your search terms.</p>
+      </div>
+      <div class="card">
+        <div class="letter">R</div>
+        <h3>RAG</h3>
+        <p>Retrieval-augmented generation — ask questions in plain English and let AI retrieve and reason over the documents.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How a round works</h2>
+    <ol class="steps">
+      <li><b>Get your case.</b> A fictional legal scenario is generated just for you — no two rounds are the same.</li>
+      <li><b>Read the brief.</b> Understand the dispute and your search objective.</li>
+      <li><b>Browse the documents.</b> Emails, memos, and records — some relevant, some red herrings.</li>
+      <li><b>Search four ways.</b> Run Keyword, dtSearch, Concept, and RAG searches against the same objective.</li>
+      <li><b>Review your scorecard.</b> See what each method caught and missed, with teaching notes explaining why.</li>
+    </ol>
+  </section>
+
+  <section class="privacy" id="privacy">
+    <h2>Privacy Policy</h2>
+    <p><em>Last updated: June 11, 2026</em></p>
+    <p>KDCR Search Lab is designed to collect as little as possible:</p>
+    <ul>
+      <li><b>No accounts.</b> The app has no sign-up, login, or user profiles.</li>
+      <li><b>No personal data collected.</b> We do not collect, store, or sell your name, email, location, contacts, or device identifiers.</li>
+      <li><b>AI-generated content.</b> Game scenarios and search queries you enter are sent to our server, which uses Anthropic's Claude API to generate cases and process gameplay. Queries are used only to power the game and are not linked to your identity.</li>
+      <li><b>No tracking.</b> The app contains no advertising, analytics SDKs, or third-party trackers.</li>
+      <li><b>TestFlight.</b> During beta testing, Apple may share crash logs and basic usage statistics with the developer under Apple's own privacy terms.</li>
+    </ul>
+    <p style="margin-top:14px;">Questions? Contact <a href="mailto:support@rundevphil.com">support@rundevphil.com</a>.</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    © 2026 Phil Weldon · KDCR Search Lab · <a href="#privacy">Privacy Policy</a> · <a href="mailto:support@rundevphil.com">Support</a>
+  </div>
+</footer>
+
+</body>
+</html>
