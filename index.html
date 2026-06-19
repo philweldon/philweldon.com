@@ -291,48 +291,26 @@
       .nav-links { gap: 1.25rem; }
     }
 
-    /* ── Review Queue terminal button ── */
-    .opt-btn.terminal {
-      background: #020c04;
-      border: 1px solid #00aa2a;
-      color: #00ff41;
-      font-family: 'Share Tech Mono', 'Courier New', monospace;
-      box-shadow: 0 0 8px rgba(0,255,65,0.08), inset 0 0 12px rgba(0,255,65,0.04);
-      position: relative;
-      overflow: hidden;
+    /* ── App Store card ── */
+    .opt-btn.app-card {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 1rem;
     }
-    .opt-btn.terminal::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.18) 0px,
-        rgba(0,0,0,0.18) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-      pointer-events: none;
-    }
-    .opt-btn.terminal .opt-icon { filter: none; }
-    .opt-btn.terminal .opt-label {
-      color: #00ff41;
-      font-family: 'Share Tech Mono', 'Courier New', monospace;
-      font-size: 13px;
-      letter-spacing: 0.05em;
-      text-shadow: 0 0 6px rgba(0,255,65,0.5);
-    }
-    .opt-btn.terminal .opt-hint {
-      color: #00aa2a;
-      font-family: 'Share Tech Mono', 'Courier New', monospace;
-      font-size: 11px;
-      letter-spacing: 0.04em;
-    }
-    .opt-btn.terminal:hover {
-      border-color: #00ff41;
-      background: #031a07;
-      transform: translateY(-2px);
-      box-shadow: 0 0 18px rgba(0,255,65,0.2), inset 0 0 16px rgba(0,255,65,0.06);
+    .app-icon {
+      width: 100%;
+      max-width: 160px;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      border-radius: 22px;
+      display: block;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.16);
     }
   </style>
   <!-- Google Analytics -->
@@ -374,11 +352,11 @@
         <span class="opt-label">Writing</span>
         <span class="opt-hint"></span>
       </button>
-      <button class="opt-btn terminal" onclick="window.location.href='AI-Review.html'">
-        <span class="opt-icon">⚖️</span>
-        <span class="opt-label">Review Queue (Text Game)</span>
-        <span class="opt-hint">eDiscovery simulator</span>
-      </button>
+      <a class="opt-btn app-card" href="https://apps.apple.com/us/app/kdcr-search-lab/id6778771999" target="_blank" rel="noopener">
+        <img class="app-icon" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/40/23/09/40230999-055f-a101-facc-3648886721be/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/512x512bb.jpg" alt="KDCR Search Lab app icon">
+        <span class="opt-label">KDCR Search Lab</span>
+        <span class="opt-hint">My iOS app — get it on the App Store</span>
+      </a>
       <button class="opt-btn" onclick="choose('curious')">
         <span class="opt-icon">✨</span>
         <span class="opt-label">Just curious</span>
@@ -448,14 +426,6 @@
         action2href: 'contact.html',
         prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He writes essays and appears on podcasts and panels.\n\nWrite a warm, conversational 3-sentence introduction for a journalist or media professional who has arrived to research Phil or seek a quote or interview. Mention his clear perspective on AI, his availability for press conversations, and that he enjoys engaging with curious, critical journalists. Do not use hype or clichés. Write in first person as Phil.`
       },
-      collaborator: {
-        badge: '⚖️ Review Queue',
-        action1: 'Play Review Queue',
-        action1href: 'AI-Review.html',
-        action2: 'Read my writing',
-        action2href: 'writing.html',
-        prompt: `You are the voice of Phil Weldon's personal website. Phil is a professional speaker and writer with a deep interest in AI — particularly how it reshapes work, communication, and society. He is interested in collaborating with thoughtful people on projects at the intersection of AI and human experience.\n\nWrite a warm, conversational 3-sentence introduction for someone interested in collaborating with Phil. Mention his openness to new ideas, his work at the intersection of AI and communication, and invite them to reach out with what's on their mind. Do not use hype or clichés. Write in first person as Phil.`
-      },
       curious: {
         badge: '✨ Curious visitor',
         action1: 'Explore my ideas',
@@ -466,7 +436,7 @@
       }
     };
 
-    const counts = { organizer: 0, journalist: 0, collaborator: 0, curious: 0 };
+    const counts = { organizer: 0, journalist: 0, curious: 0 };
 
     function updateAnalytics() {
       const total = Object.values(counts).reduce((a, b) => a + b, 0);
