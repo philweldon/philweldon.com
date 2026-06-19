@@ -334,20 +334,6 @@
       transform: translateY(-2px);
       box-shadow: 0 0 18px rgba(0,255,65,0.2), inset 0 0 16px rgba(0,255,65,0.06);
     }
-
-    /* ── App Store card ── */
-    .opt-btn.app-card {
-      text-decoration: none;
-      display: block;
-    }
-    .app-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 11px;
-      display: block;
-      margin-bottom: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.16);
-    }
   </style>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YN259X7CNJ"></script>
@@ -388,11 +374,11 @@
         <span class="opt-label">Writing</span>
         <span class="opt-hint"></span>
       </button>
-      <a class="opt-btn app-card" href="https://apps.apple.com/us/app/kdcr-search-lab/id6778771999" target="_blank" rel="noopener">
-        <img class="app-icon" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/40/23/09/40230999-055f-a101-facc-3648886721be/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/512x512bb.jpg" alt="KDCR Search Lab app icon">
-        <span class="opt-label">KDCR Search Lab</span>
-        <span class="opt-hint">My iOS app — get it on the App Store</span>
-      </a>
+      <button class="opt-btn terminal" onclick="window.location.href='AI-Review.html'">
+        <span class="opt-icon">⚖️</span>
+        <span class="opt-label">Review Queue (Text Game)</span>
+        <span class="opt-hint">eDiscovery simulator</span>
+      </button>
       <button class="opt-btn" onclick="choose('curious')">
         <span class="opt-icon">✨</span>
         <span class="opt-label">Just curious</span>
