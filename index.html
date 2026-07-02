@@ -291,26 +291,33 @@
       .nav-links { gap: 1.25rem; }
     }
 
-    /* ── App Store card ── */
-    .opt-btn.app-card {
-      text-decoration: none;
-      display: flex;
+    /* ── Vignette stage ── */
+    #vignette-stage {
+      min-height: 100vh;
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: 1rem;
+      padding: 6rem 2rem 4rem;
+      max-width: 640px;
+      margin: 0 auto;
     }
-    .app-icon {
-      width: 100%;
-      max-width: 160px;
-      height: auto;
-      aspect-ratio: 1 / 1;
-      object-fit: contain;
-      border-radius: 22px;
-      display: block;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.16);
+    .vignette-body {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      line-height: 1.75;
+      color: var(--text);
+      min-height: 120px;
+      max-width: 560px;
+    }
+    .vignette-meta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--hint);
+      margin-top: 1.5rem;
+      align-self: flex-start;
     }
   </style>
   <!-- Google Analytics -->
@@ -352,11 +359,11 @@
         <span class="opt-label">Writing</span>
         <span class="opt-hint"></span>
       </button>
-      <a class="opt-btn app-card" href="https://apps.apple.com/us/app/kdcr-search-lab/id6778771999" target="_blank" rel="noopener">
-        <img class="app-icon" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/40/23/09/40230999-055f-a101-facc-3648886721be/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/512x512bb.jpg" alt="KDCR Search Lab app icon">
-        <span class="opt-label">KDCR Search Lab</span>
-        <span class="opt-hint">My iOS app — get it on the App Store</span>
-      </a>
+      <button class="opt-btn" onclick="openVignette()">
+        <span class="opt-icon">⚖️</span>
+        <span class="opt-label">Courtroom, 2035</span>
+        <span class="opt-hint">a future-of-law vignette, written live by AI</span>
+      </button>
       <button class="opt-btn" onclick="choose('curious')">
         <span class="opt-icon">✨</span>
         <span class="opt-label">Just curious</span>
@@ -396,6 +403,33 @@
     </div>
 
     <button class="restart-link" onclick="restart()">← Start over</button>
+  </div>
+
+  <!-- Step 2b: Future-of-law vignette -->
+  <div id="vignette-stage">
+    <div class="visitor-badge">⚖️ From the future of law</div>
+    <h1 class="intro-name">A dispatch from 2035.</h1>
+    <div class="vignette-body" id="vignette-body">
+      <span class="loading-dots"><span></span><span></span><span></span></span>
+    </div>
+    <p class="vignette-meta" id="vignette-meta"></p>
+
+    <div class="intro-actions" id="vignette-actions" style="display:none">
+      <button class="action-btn" onclick="generateVignette()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8a5.5 5.5 0 11-1.6-3.9M13.5 1.5v3h-3"/></svg>
+        Another vignette
+      </button>
+      <button class="action-btn" onclick="window.location.href='speaking.html'">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+        Hear me speak on this
+      </button>
+      <button class="action-btn" onclick="window.location.href='contact.html'">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+        Get in touch
+      </button>
+    </div>
+
+    <button class="restart-link" onclick="restartFromVignette()">← Start over</button>
   </div>
 
   <footer>
@@ -470,6 +504,18 @@
       updateAnalytics();
 
       const bodyEl = document.getElementById('intro-body');
+
+      try {
+        await streamClaude(config.prompt, bodyEl, 300);
+        document.getElementById('intro-actions').style.display = 'flex';
+      } catch (e) {
+        bodyEl.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ ${e.message || 'Something went wrong. Please try again.'}</span>`;
+      }
+    }
+
+    // ── Shared streaming helper ──
+    // Streams a Claude response into bodyEl with a typing cursor.
+    async function streamClaude(prompt, bodyEl, maxTokens) {
       bodyEl.innerHTML = '';
       const cursor = document.createElement('span');
       cursor.className = 'cursor';
@@ -481,9 +527,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             model: 'claude-haiku-4-5',
-            max_tokens: 300,
+            max_tokens: maxTokens,
             stream: true,
-            messages: [{ role: 'user', content: config.prompt }]
+            messages: [{ role: 'user', content: prompt }]
           })
         });
 
@@ -515,14 +561,67 @@
             }
           }
         }
-
+      } finally {
         cursor.remove();
-        document.getElementById('intro-actions').style.display = 'flex';
+      }
+    }
 
+    // ── Future-of-law vignette ──
+    const VIGNETTE_ANGLES = [
+      'an AI co-counsel whispering to a nervous first-year associate during their first hearing',
+      'a small-town solo practitioner using tools that once belonged only to big firms',
+      'a judge deciding whether to follow an algorithm\'s sentencing recommendation',
+      'a contract quietly renegotiating itself at 3 a.m. while both parties sleep',
+      'document discovery in a case with two billion files and one human reviewer',
+      'jury selection in a world where everyone\'s online life is searchable',
+      'a malpractice hearing where the AI was right and the lawyer overrode it',
+      'cross-examining an expert about whether the video evidence is a deepfake',
+      'a law student\'s first day, learning what the machines still can\'t do',
+      'a courtroom translation AI catching a nuance that changes the outcome',
+      'an access-to-justice kiosk in a grocery store handling an eviction notice',
+      'the retirement party of the last paralegal who did it all by hand'
+    ];
+
+    function vignettePrompt() {
+      const angle = VIGNETTE_ANGLES[Math.floor(Math.random() * VIGNETTE_ANGLES.length)];
+      return `You are writing for Phil Weldon's personal website. Phil is a professional speaker and writer on AI, with a particular interest in legal tech and how AI is reshaping the practice of law.\n\nWrite a vivid, self-contained vignette of 90-130 words set in the near future of law (sometime between 2030 and 2040). This scene's angle: ${angle}.\n\nGround it in one specific human moment and one concrete, plausible detail of legal technology. Show, don't explain. No title, no preamble, no hype, no cliches. End on a line that lingers.`;
+    }
+
+    function stampVignetteMeta() {
+      const docket = '2035-' + (Math.floor(Math.random() * 9000) + 1000);
+      const t = new Date().toTimeString().slice(0, 8);
+      document.getElementById('vignette-meta').textContent =
+        `Docket no. ${docket} · generated ${t} · never the same twice`;
+    }
+
+    async function generateVignette() {
+      const bodyEl = document.getElementById('vignette-body');
+      document.getElementById('vignette-actions').style.display = 'none';
+      document.getElementById('vignette-meta').textContent = '';
+
+      try {
+        await streamClaude(vignettePrompt(), bodyEl, 350);
+        stampVignetteMeta();
       } catch (e) {
-        cursor.remove();
         bodyEl.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ ${e.message || 'Something went wrong. Please try again.'}</span>`;
       }
+      document.getElementById('vignette-actions').style.display = 'flex';
+    }
+
+    function openVignette() {
+      document.getElementById('stage').style.display = 'none';
+      document.getElementById('vignette-stage').style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      generateVignette();
+    }
+
+    function restartFromVignette() {
+      document.getElementById('vignette-stage').style.display = 'none';
+      document.getElementById('vignette-body').innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+      document.getElementById('vignette-actions').style.display = 'none';
+      document.getElementById('vignette-meta').textContent = '';
+      document.getElementById('stage').style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function restart() {
