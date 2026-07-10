@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beat Past Phil</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f6f7f9; color: #1a202c; padding: 16px; }
+.header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+h1 { font-size: 20px; font-weight: 700; }
+.countdown { font-size: 14px; color: #4a5568; }
+.countdown b { color: #c53030; font-size: 16px; }
+#banner { font-size: 12.5px; padding: 8px 12px; border-radius: 8px; margin: 10px 0; background: #fff8e6; border: 1px solid #f0d48a; color: #744210; }
+#banner.live { background: #e6fff0; border-color: #8af0b0; color: #1c6b3a; }
+.nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; }
+.nav button { border: 1px solid #cbd5e0; background: #fff; border-radius: 8px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+.nav button:hover { background: #edf2f7; }
+.nav .wk { font-weight: 600; font-size: 14px; min-width: 210px; text-align: center; }
+.toggle { display: flex; justify-content: center; gap: 0; margin-bottom: 12px; }
+.toggle button { border: 1px solid #cbd5e0; background: #fff; padding: 4px 14px; font-size: 12.5px; cursor: pointer; }
+.toggle button:first-child { border-radius: 8px 0 0 8px; }
+.toggle button:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+.toggle button.on { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+.panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; }
+.panel h2 { font-size: 15px; margin-bottom: 2px; }
+.panel .sub { font-size: 12px; color: #718096; margin-bottom: 8px; }
+.panel.past h2 { color: #6b46c1; }
+.panel.now h2 { color: #2b6cb0; }
+.chartbox { position: relative; height: 220px; }
+.totals { margin-top: 10px; width: 100%; border-collapse: collapse; font-size: 13px; }
+.totals th, .totals td { padding: 4px 6px; text-align: right; border-top: 1px solid #edf2f7; }
+.totals th:first-child, .totals td:first-child { text-align: left; }
+.totals thead th { color: #718096; font-weight: 600; font-size: 11.5px; text-transform: uppercase; border-top: none; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.sessions { margin-top: 10px; font-size: 12px; }
+.sessions summary { cursor: pointer; color: #4a5568; font-weight: 600; }
+.sessions li { list-style: none; padding: 3px 0; border-bottom: 1px solid #f1f5f9; display: flex; gap: 6px; }
+.sessions .sd { color: #a0aec0; min-width: 58px; }
+.sessions .st { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sessions .sm { color: #718096; white-space: nowrap; }
+#verdict { margin: 14px 0; text-align: center; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; }
+#verdict.win { background: #e6fff0; color: #1c6b3a; border: 1px solid #8af0b0; }
+#verdict.lose { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+#verdict.tie { background: #ebf4ff; color: #2b6cb0; border: 1px solid #bee3f8; }
+#verdict .detail { display: block; font-size: 12.5px; font-weight: 400; margin-top: 4px; color: inherit; opacity: .85; }
+.scorebox { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 14px; }
+.scorebox h2 { font-size: 15px; margin-bottom: 8px; }
+.score { width: 100%; border-collapse: collapse; font-size: 13px; }
+.score th, .score td { padding: 6px; text-align: right; border-top: 1px solid #edf2f7; }
+.score th:first-child, .score td:first-child { text-align: left; }
+.score thead th { color: #718096; font-weight: 600; font-size: 11.5px; text-transform: uppercase; border-top: none; }
+.pos { color: #1c6b3a; font-weight: 700; }
+.neg { color: #c53030; font-weight: 700; }
+.foot { text-align: center; font-size: 11.5px; color: #a0aec0; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Beat Past Phil</h1>
+  <div class="countdown"><b id="daysout"></b> days to Finger Lakes 2026 (Sep 5) &middot; 2025 result: <b style="color:#6b46c1">3:50:00</b></div>
+</div>
+<div id="banner">Checking Strava access&hellip;</div>
+<div class="nav">
+  <button id="prev">&larr; earlier</button>
+  <div class="wk" id="wklabel"></div>
+  <button id="next">later &rarr;</button>
+  <button id="today">This week</button>
+</div>
+<div class="toggle">
+  <button id="h2h">Head-to-head (through today)</button>
+  <button id="full">Full week</button>
+</div>
+<div id="verdict"></div>
+<div class="grid">
+  <div class="panel past">
+    <h2>Past Phil &mdash; 2025</h2>
+    <div class="sub" id="pastsub"></div>
+    <div class="chartbox"><canvas id="pastChart"></canvas></div>
+    <table class="totals" id="pastTotals"></table>
+    <details class="sessions"><summary>Sessions</summary><ul id="pastList"></ul></details>
+  </div>
+  <div class="panel now">
+    <h2>Current Phil &mdash; 2026</h2>
+    <div class="sub" id="nowsub"></div>
+    <div class="chartbox"><canvas id="nowChart"></canvas></div>
+    <table class="totals" id="nowTotals"></table>
+    <details class="sessions"><summary>Sessions</summary><ul id="nowList"></ul></details>
+  </div>
+</div>
+<div class="scorebox">
+  <h2>Head-to-head scoreboard</h2>
+  <table class="score" id="scoreTable"></table>
+</div>
+<div class="foot">Windows aligned by days-to-race (2026 date minus 363 days = same days-out in 2025). Swim distance in yd; bike/run in mi.</div>
+
+<script>
+let DATA = [];
+const CUTOVER = "2026-01-01";
+const ELIG_TOOL = "mcp__d936fedc-fd98-48ba-b36c-8dc9ea31738e__eligibility";
+const OFFSET = 363; // days between 2026-09-05 and 2025-09-07
+const RACE26 = mkd(2026, 9, 5);
+const SPORTS = ["swim", "bike", "run"];
+const META = {
+  swim: { label: "Swim", color: "#0ea5e9", unit: "yd" },
+  bike: { label: "Bike", color: "#f59e0b", unit: "mi" },
+  run:  { label: "Run",  color: "#ef4444", unit: "mi" },
+  race: { label: "Race", color: "#8b5cf6", unit: "mi" },
+  other:{ label: "Other",color: "#94a3b8", unit: "mi" }
+};
+let SNAP_END = "0000";
+DATA.forEach(a => { if (a.d > SNAP_END) SNAP_END = a.d; });
+
+function mkd(y, m, d) { return new Date(y, m - 1, d); }
+function parse(s) { const p = s.split("-"); return mkd(+p[0], +p[1], +p[2]); }
+function iso(dt) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+function addDays(dt, n) { const x = new Date(dt); x.setDate(x.getDate() + n); return x; }
+function monday(dt) { return addDays(dt, -((dt.getDay() + 6) % 7)); }
+function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
+function fmtMin(m) { m = Math.round(m); return Math.floor(m / 60) + "h " + String(m % 60).padStart(2, "0") + "m"; }
+function fmtDate(dt) { return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+
+const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+document.getElementById("daysout").textContent = Math.max(0, daysBetween(TODAY, RACE26));
+
+let anchor = new Date(TODAY);
+let mode = localStorage.getItem("bpp-mode") || "h2h";
+let charts = {};
+
+function weekDates(mon) { return Array.from({ length: 7 }, (_, i) => addDays(mon, i)); }
+
+function agg(dates, cutoffIdx) {
+  // cutoffIdx: include days 0..cutoffIdx only (for head-to-head); 6 = full week
+  const isoSet = dates.map(iso);
+  const perDay = SPORTS.map(() => Array(7).fill(0)); // minutes
+  const totals = {}; SPORTS.forEach(s => totals[s] = { m: 0, dist: 0, n: 0 });
+  const sessions = [];
+  DATA.forEach(a => {
+    const idx = isoSet.indexOf(a.d);
+    if (idx < 0) return;
+    const s = (a.s === "race") ? null : a.s;
+    if (a.s !== "other") sessions.push({ ...a, idx });
+    const si = SPORTS.indexOf(a.s);
+    if (si >= 0) {
+      perDay[si][idx] += a.m;
+      if (idx <= cutoffIdx) { totals[a.s].m += a.m; totals[a.s].dist += a.dist; totals[a.s].n++; }
+    }
+    if (a.s === "race") { // count race toward all-sport time
+      if (idx <= cutoffIdx) { totals.run.m += 0; }
+    }
+  });
+  sessions.sort((x, y) => x.d < y.d ? -1 : 1);
+  return { perDay, totals, sessions };
+}
+
+function buildChart(canvasId, dates, perDay, cutoffIdx, raceDate) {
+  const labels = dates.map((dt, i) => {
+    const dOut = daysBetween(dt, raceDate);
+    return ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i] + " " + fmtDate(dt) + " · " + dOut + "d";
+  });
+  const dsets = SPORTS.map((s, si) => ({
+    label: META[s].label,
+    data: perDay[si],
+    backgroundColor: perDay[si].map((_, i) => i <= cutoffIdx ? META[s].color : META[s].color + "40"),
+    stack: "a", borderRadius: 3
+  }));
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: "bar",
+    data: { labels, datasets: dsets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 9.5 }, maxRotation: 60, minRotation: 45 }, grid: { display: false } },
+        y: { stacked: true, title: { display: true, text: "minutes", font: { size: 10 } }, ticks: { font: { size: 10 } } }
+      },
+      plugins: {
+        legend: { labels: { boxWidth: 10, font: { size: 11 } } },
+        tooltip: { callbacks: { footer: items => "Total: " + Math.round(items.reduce((a, b) => a + b.parsed.y, 0)) + " min" } }
+      }
+    }
+  });
+}
+
+function totalsTable(el, totals) {
+  let html = "<thead><tr><th>Sport</th><th>Sessions</th><th>Time</th><th>Distance</th></tr></thead><tbody>";
+  SPORTS.forEach(s => {
+    const t = totals[s];
+    html += `<tr><td><span class="dot" style="background:${META[s].color}"></span>${META[s].label}</td><td>${t.n}</td><td>${fmtMin(t.m)}</td><td>${t.dist.toLocaleString(undefined,{maximumFractionDigits:1})} ${META[s].unit}</td></tr>`;
+  });
+  const tm = SPORTS.reduce((a, s) => a + totals[s].m, 0);
+  const tn = SPORTS.reduce((a, s) => a + totals[s].n, 0);
+  html += `<tr style="font-weight:700"><td>Total</td><td>${tn}</td><td>${fmtMin(tm)}</td><td></td></tr></tbody>`;
+  el.innerHTML = html;
+}
+
+function sessionList(el, sessions) {
+  el.innerHTML = sessions.length ? sessions.map(a =>
+    `<li><span class="sd">${a.d.slice(5)}</span><span class="dot" style="background:${META[a.s].color};margin-top:4px"></span><span class="st">${a.t}</span><span class="sm">${fmtMin(a.m)} · ${a.dist.toLocaleString()} ${META[a.s].unit}</span></li>`
+  ).join("") : "<li style='color:#a0aec0'>No sessions</li>";
+}
+
+function render() {
+  const mon26 = monday(anchor);
+  const dates26 = weekDates(mon26);
+  const dates25 = dates26.map(d => addDays(d, -OFFSET));
+  const isCurrentWeek = iso(mon26) === iso(monday(TODAY));
+  const todayIdx = isCurrentWeek ? daysBetween(mon26, TODAY) : 6;
+  const cutoff = (mode === "h2h" && isCurrentWeek) ? todayIdx : 6;
+
+  document.getElementById("wklabel").textContent =
+    fmtDate(dates26[0]) + " – " + fmtDate(dates26[6]) + ", 2026";
+  const dOut25 = daysBetween(dates25[0], parse("2025-09-07"));
+  const dOut26 = daysBetween(dates26[0], RACE26);
+  document.getElementById("pastsub").textContent =
+    fmtDate(dates25[0]) + " – " + fmtDate(dates25[6]) + ", 2025 · week starts " + dOut25 + " days out";
+  document.getElementById("nowsub").textContent =
+    fmtDate(dates26[0]) + " – " + fmtDate(dates26[6]) + ", 2026 · week starts " + dOut26 + " days out";
+
+  const past = agg(dates25, cutoff);
+  const now = agg(dates26, cutoff);
+  buildChart("pastChart", dates25, past.perDay, cutoff, parse("2025-09-07"));
+  buildChart("nowChart", dates26, now.perDay, cutoff, RACE26);
+  totalsTable(document.getElementById("pastTotals"), past.totals);
+  totalsTable(document.getElementById("nowTotals"), now.totals);
+  sessionList(document.getElementById("pastList"), past.sessions);
+  sessionList(document.getElementById("nowList"), now.sessions);
+
+  // scoreboard
+  let html = "<thead><tr><th>Sport</th><th>2025 time</th><th>2026 time</th><th>&Delta; time</th><th>2025 dist</th><th>2026 dist</th><th>&Delta; dist</th></tr></thead><tbody>";
+  SPORTS.forEach(s => {
+    const p = past.totals[s], n = now.totals[s];
+    const dm = n.m - p.m, dd = n.dist - p.dist;
+    html += `<tr><td><span class="dot" style="background:${META[s].color}"></span>${META[s].label}</td>
+      <td>${fmtMin(p.m)}</td><td>${fmtMin(n.m)}</td><td class="${dm >= 0 ? "pos" : "neg"}">${dm >= 0 ? "+" : "−"}${fmtMin(Math.abs(dm))}</td>
+      <td>${p.dist.toLocaleString(undefined,{maximumFractionDigits:1})} ${META[s].unit}</td><td>${n.dist.toLocaleString(undefined,{maximumFractionDigits:1})} ${META[s].unit}</td>
+      <td class="${dd >= 0 ? "pos" : "neg"}">${dd >= 0 ? "+" : "−"}${Math.abs(dd).toLocaleString(undefined,{maximumFractionDigits:1})}</td></tr>`;
+  });
+  html += "</tbody>";
+  document.getElementById("scoreTable").innerHTML = html;
+
+  // verdict
+  const pm = SPORTS.reduce((a, s) => a + past.totals[s].m, 0);
+  const nm = SPORTS.reduce((a, s) => a + now.totals[s].m, 0);
+  const v = document.getElementById("verdict");
+  const scope = cutoff < 6 ? "through " + ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][cutoff] : "for the full week";
+  if (nm > pm + 5) { v.className = "win"; v.innerHTML = `You're beating Past Phil by ${fmtMin(nm - pm)} <span class="detail">${fmtMin(nm)} vs ${fmtMin(pm)} ${scope}. Keep the gap.</span>`; }
+  else if (pm > nm + 5) { v.className = "lose"; v.innerHTML = `Past Phil is ahead by ${fmtMin(pm - nm)} <span class="detail">${fmtMin(nm)} vs ${fmtMin(pm)} ${scope}. He's catchable.</span>`; }
+  else { v.className = "tie"; v.innerHTML = `Dead heat with Past Phil <span class="detail">${fmtMin(nm)} vs ${fmtMin(pm)} ${scope}.</span>`; }
+
+  document.getElementById("h2h").className = mode === "h2h" ? "on" : "";
+  document.getElementById("full").className = mode === "full" ? "on" : "";
+
+  // snapshot warning
+  if (dates26.some(d => iso(d) > SNAP_END)) {
+    document.getElementById("nowsub").textContent += " · data snapshot ends " + SNAP_END.slice(5);
+  }
+}
+
+document.getElementById("prev").onclick = () => { anchor = addDays(anchor, -7); render(); };
+document.getElementById("next").onclick = () => { anchor = addDays(anchor, 7); render(); };
+document.getElementById("today").onclick = () => { anchor = new Date(TODAY); render(); };
+document.getElementById("h2h").onclick = () => { mode = "h2h"; localStorage.setItem("bpp-mode", mode); render(); };
+document.getElementById("full").onclick = () => { mode = "full"; localStorage.setItem("bpp-mode", mode); render(); };
+
+async function loadData() {
+  const b = document.getElementById("banner");
+  try {
+    const bust = "?t=" + Date.now();
+    const hist = await (await fetch("data/history.json" + bust)).json();
+    let cur = { generated: null, acts: [] };
+    try { cur = await (await fetch("data/current.json" + bust)).json(); } catch (e) {}
+    DATA = hist.filter(a => a.d < CUTOVER).concat(cur.acts || []);
+    SNAP_END = "0000";
+    DATA.forEach(a => { if (a.d > SNAP_END) SNAP_END = a.d; });
+    b.textContent = cur.generated
+      ? "Auto-synced from Strava · last update " + cur.generated
+      : "2026 Strava data not available yet — run the GitHub Action once. Showing 2025 history only.";
+    if (cur.generated) b.className = "live";
+  } catch (e) {
+    b.textContent = "Could not load data files (data/history.json). If previewing locally, serve over HTTP: python3 -m http.server";
+  }
+  render();
+}
+loadData();
+</script>
+</body>
+</html>
