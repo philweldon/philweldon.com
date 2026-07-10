@@ -26,5 +26,5 @@ jobs:
           git config user.name "training-bot"
           git config user.email "actions@github.com"
           git add data/current.json
-          git diff --cached --quiet || git commit -m "Update training data [skip ci]"
+          git diff --cached --quiet || git commit -m "Update training data"
           git push
