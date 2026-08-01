@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apps — Phil Weldon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf9f7;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2);
+      --text: #1a1916;
+      --muted: #6b6960;
+      --hint: #a09e96;
+      --accent: #2d5be3;
+      --accent-bg: #eef2fd;
+      --success-bg: #edf7f0;
+      --success: #1a7a3f;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(250,249,247,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── AI-sparkle Apps link ── */
+    .nav-apps {
+      position: relative;
+      display: inline-block;
+      padding: 0 2px;
+    }
+    .nav-apps .apps-label { position: relative; z-index: 1; }
+    .nav-apps.active .apps-label { color: var(--text); font-weight: 500; }
+    .nav-apps:hover .apps-label {
+      background: linear-gradient(90deg, #ff5e5e, #ffb347, #ffe14d, #4dd97a, #4dc3ff, #a06bff, #ff5ecb, #ff5e5e);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      animation: apps-rainbow 2.2s linear infinite;
+      font-weight: 500;
+    }
+    @keyframes apps-rainbow {
+      from { background-position: 0% 50%; }
+      to   { background-position: 300% 50%; }
+    }
+    .nav-apps .sparkle {
+      position: absolute;
+      font-size: 8px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .nav-apps:hover .sparkle { animation: apps-twinkle 1.4s ease-in-out infinite; }
+    .nav-apps .s1 { top: -9px;  left: -6px;   color: #ffb347; }
+    .nav-apps .s2 { top: -11px; right: -4px;  color: #4dc3ff; animation-delay: 0.35s !important; font-size: 7px; }
+    .nav-apps .s3 { bottom: -9px; right: -9px; color: #ff5ecb; animation-delay: 0.7s !important; }
+    .nav-apps .s4 { bottom: -10px; left: 2px; color: #a06bff; animation-delay: 1.05s !important; font-size: 6px; }
+    @keyframes apps-twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+      50%      { opacity: 1; transform: scale(1.15) rotate(40deg); }
+    }
+
+    /* ── Page ── */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 9rem 2rem 5rem;
+    }
+    .eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--hint);
+      margin-bottom: 0.75rem;
+    }
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .page-intro {
+      color: var(--muted);
+      max-width: 34rem;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ── App cards ── */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.75rem;
+    }
+    .app-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-decoration: none;
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                  border-color 0.28s;
+      will-change: transform;
+    }
+    .app-card:hover,
+    .app-card:focus-visible {
+      transform: translateY(-8px);
+      box-shadow: 0 18px 40px -12px rgba(26,25,22,0.18),
+                  0 6px 14px -6px rgba(26,25,22,0.08);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .app-art {
+      width: 96px;
+      height: 96px;
+      border-radius: 22px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+      border: 0.5px solid var(--border);
+      background: var(--bg);
+      object-fit: cover;
+      display: block;
+    }
+    .app-store-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--hint);
+      margin-bottom: 0.4rem;
+    }
+    .app-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.6rem;
+    }
+    .app-tagline {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .app-desc {
+      font-size: 14.5px;
+      color: var(--muted);
+      flex-grow: 1;
+      margin-bottom: 1.4rem;
+    }
+    .free-badge {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--success-bg);
+      color: var(--success);
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      margin-bottom: 1.4rem;
+    }
+    .free-badge::before { content: "✓"; font-weight: 700; }
+    .app-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+    .app-cta::after {
+      content: "→";
+      transition: transform 0.2s;
+    }
+    .app-card:hover .app-cta::after { transform: translateX(4px); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2.5rem 1rem 3rem;
+      font-size: 12.5px;
+      color: var(--hint);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .app-card, .app-cta::after { transition: none; }
+      .app-card:hover { transform: none; }
+      .nav-apps:hover .apps-label { animation: none; }
+      .nav-apps:hover .sparkle { animation: none; opacity: 0.9; transform: none; }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { gap: 1.25rem; }
+      main { padding-top: 7.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Phil Weldon</a>
+    <ul class="nav-links">
+      <li><a href="Apps.html" class="nav-apps active"><span class="apps-label">Apps</span><span class="sparkle s1">✦</span><span class="sparkle s2">✧</span><span class="sparkle s3">✦</span><span class="sparkle s4">✧</span></a></li>
+      <li><a href="speaking.html">Speaking</a></li>
+      <li><a href="writing.html">Writing</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="https://www.philweldon.com/support.html">Support</a></li>
+      <li><a href="https://www.philweldon.com/privacy.html">Privacy</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <p class="eyebrow">Things I've built</p>
+    <h1>Apps</h1>
+    <p class="page-intro">Small, focused tools I've designed and shipped myself. Both are completely free — no tracking, no ads, no catch.</p>
+
+    <div class="app-grid">
+
+      <!-- iOS: KDCR Search Lab -->
+      <a class="app-card" href="https://apps.apple.com/us/app/kdcr-search-lab/id6778771999" target="_blank" rel="noopener">
+        <img class="app-art" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/40/23/09/40230999-055f-a101-facc-3648886721be/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/512x512bb.jpg" alt="KDCR Search Lab app icon">
+        <p class="app-store-tag">iOS · App Store</p>
+        <h2 class="app-name">KDCR Search Lab</h2>
+        <p class="app-tagline">Keyword dtSearch Concept Rag — Search Lab</p>
+        <p class="app-desc">An education app that teaches you how to really search — Boolean operators, search-term construction, and the query-building logic used in e-discovery, research, and OSINT. Learn by doing, right on your phone.</p>
+        <span class="free-badge">FREE — no tracking, no ads</span>
+        <span class="app-cta">Get it on the App Store</span>
+      </a>
+
+      <!-- Garmin: Connect IQ app -->
+      <a class="app-card" href="https://apps.garmin.com/en-US/apps/0d7d24c8-0902-4a35-826c-be12ea00dbc6" target="_blank" rel="noopener">
+        <svg class="app-art" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TriPhilTri watch face graphic">
+          <rect width="96" height="96" rx="22" fill="#1a1916"/>
+          <rect x="40" y="6" width="16" height="10" rx="3" fill="#3a3833"/>
+          <rect x="40" y="80" width="16" height="10" rx="3" fill="#3a3833"/>
+          <circle cx="48" cy="48" r="27" fill="#0d0d0b" stroke="#4dc3ff" stroke-width="2.5"/>
+          <circle cx="48" cy="48" r="27" fill="none" stroke="#2d5be3" stroke-width="2.5" stroke-dasharray="42 128" stroke-linecap="round" transform="rotate(-90 48 48)"/>
+          <line x1="48" y1="48" x2="48" y2="32" stroke="#faf9f7" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="48" y1="48" x2="59" y2="53" stroke="#faf9f7" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="48" cy="48" r="2.5" fill="#faf9f7"/>
+        </svg>
+        <p class="app-store-tag">Garmin · Connect IQ Store</p>
+        <h2 class="app-name">Garmin — TriPhilTri</h2>
+        <p class="app-desc">Instantly see your weekly Run, Bike, and Swim mileage, natively on your watch face to motivate you to the next level. Updates in seconds after a workout completes.</p>
+        <span class="free-badge">FREE — no tracking, no ads</span>
+        <span class="app-cta">Get it on Connect IQ</span>
+      </a>
+
+    </div>
+  </main>
+
+  <footer>
+    philweldon.com &nbsp;·&nbsp; Built with care (and a little AI)
+  </footer>
+
+</body>
+</html>
