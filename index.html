@@ -68,6 +68,48 @@
     }
     .nav-links a:hover { color: var(--text); }
 
+    /* ── AI-sparkle Apps link ── */
+    .nav-apps {
+      position: relative;
+      display: inline-block;
+      padding: 0 2px;
+    }
+    .nav-apps .apps-label { position: relative; z-index: 1; }
+    .nav-apps:hover .apps-label {
+      background: linear-gradient(90deg, #ff5e5e, #ffb347, #ffe14d, #4dd97a, #4dc3ff, #a06bff, #ff5ecb, #ff5e5e);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      animation: apps-rainbow 2.2s linear infinite;
+      font-weight: 500;
+    }
+    @keyframes apps-rainbow {
+      from { background-position: 0% 50%; }
+      to   { background-position: 300% 50%; }
+    }
+    .nav-apps .sparkle {
+      position: absolute;
+      font-size: 8px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .nav-apps:hover .sparkle { animation: apps-twinkle 1.4s ease-in-out infinite; }
+    .nav-apps .s1 { top: -9px;  left: -6px;   color: #ffb347; }
+    .nav-apps .s2 { top: -11px; right: -4px;  color: #4dc3ff; animation-delay: 0.35s !important; font-size: 7px; }
+    .nav-apps .s3 { bottom: -9px; right: -9px; color: #ff5ecb; animation-delay: 0.7s !important; }
+    .nav-apps .s4 { bottom: -10px; left: 2px; color: #a06bff; animation-delay: 1.05s !important; font-size: 6px; }
+    @keyframes apps-twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+      50%      { opacity: 1; transform: scale(1.15) rotate(40deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .nav-apps:hover .apps-label { animation: none; }
+      .nav-apps:hover .sparkle { animation: none; opacity: 0.9; transform: none; }
+    }
+
     /* ── Stage ── */
     #stage {
       min-height: 100vh;
@@ -334,6 +376,7 @@
   <nav>
     <a href="#" class="nav-logo">Phil Weldon</a>
     <ul class="nav-links">
+      <li><a href="Apps.html" class="nav-apps"><span class="apps-label">Apps</span><span class="sparkle s1">✦</span><span class="sparkle s2">✧</span><span class="sparkle s3">✦</span><span class="sparkle s4">✧</span></a></li>
       <li><a href="speaking.html">Speaking</a></li>
       <li><a href="writing.html">Writing</a></li>
       <li><a href="contact.html">Contact</a></li>
