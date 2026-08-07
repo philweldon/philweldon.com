@@ -1,583 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Speaking — Phil Weldon</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speaking &amp; Appearances</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Poppins:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F6F3;
+    --bar:#FBFAF8;
+    --ink:#14110E;
+    --navy:#26365B;
+    --cobalt:#1B45E5;
+    --muted:#6B6560;
+    --warm:#9C7048;
+    --accent:#D9541F;
+    --line:#E2DFD9;
+    --card:#FFFFFF;
+    --pill:#EEF1FB;
+    --display:'Playfair Display', Georgia, serif;
+    --body:'Poppins', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
 
-    :root {
-      --bg: #faf9f7;
-      --surface: #ffffff;
-      --border: rgba(0,0,0,0.1);
-      --border-strong: rgba(0,0,0,0.2);
-      --text: #1a1916;
-      --muted: #6b6960;
-      --hint: #a09e96;
-      --accent: #2d5be3;
-      --accent-bg: #eef2fd;
-      --radius: 14px;
-      --radius-sm: 8px;
-    }
+  /* ---------- Nav ---------- */
+  nav{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:18px 32px;
+    background:var(--bar);
+    border-bottom:1px solid var(--line);
+  }
+  .wordmark{
+    font-family:var(--display);font-weight:700;font-size:1.15rem;
+    color:var(--ink);text-decoration:none;letter-spacing:.01em;
+  }
+  .nav-links{display:flex;gap:36px}
+  .nav-links a{
+    font-size:.9rem;font-weight:400;
+    color:var(--muted);text-decoration:none;
+  }
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a[aria-current]{color:var(--ink);font-weight:500}
+  .nav-links a:focus-visible{outline:2px solid var(--cobalt);outline-offset:4px;border-radius:2px}
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 16px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1010px;margin:0 auto;padding:96px 32px 104px}
+  .hero-copy{margin-left:130px;max-width:520px}
+  .eyebrow{
+    font-size:.82rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);display:block;margin-bottom:30px;
+  }
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(2.4rem,4.6vw,3.4rem);
+    line-height:1.14;letter-spacing:-.015em;color:var(--ink);
+  }
+  h1 em{font-style:italic;font-weight:800}
+  .hero p{margin-top:28px;color:var(--warm);font-size:1.02rem;line-height:1.65}
+  .hero-cta{
+    margin-top:34px;display:inline-flex;align-items:center;gap:9px;
+    background:var(--cobalt);color:#fff;
+    font-size:.9rem;font-weight:600;text-decoration:none;
+    padding:14px 24px;border-radius:8px;
+    transition:background .2s ease, transform .2s ease;
+  }
+  .hero-cta svg{width:15px;height:15px}
+  .hero-cta:hover{background:#1637C4;transform:translateY(-1px)}
+  .hero-cta:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
-    /* ── Nav ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 2.5rem;
-      background: rgba(250,249,247,0.88);
-      backdrop-filter: blur(12px);
-      border-bottom: 0.5px solid var(--border);
-    }
-    .nav-logo {
-      font-family: 'DM Serif Display', serif;
-      font-size: 17px;
-      color: var(--text);
-      text-decoration: none;
-    }
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.15s;
-    }
-    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+  /* ---------- Stats bar ---------- */
+  .stats{
+    background:var(--bar);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:26px 32px;
+  }
+  .stats ul{display:flex;flex-wrap:wrap;gap:20px 58px;list-style:none}
+  .stat-num{
+    font-family:var(--display);font-weight:700;font-size:1.18rem;
+    color:var(--ink);line-height:1.2;
+  }
+  .stat-num i{font-style:normal;color:var(--accent)}
+  .stat-label{font-size:.79rem;color:var(--warm);margin-top:3px}
 
-    /* ── Hero ── */
-    .hero {
-      padding: 9rem 2.5rem 5rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .hero-eyebrow {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--hint);
-      margin-bottom: 1.25rem;
-    }
-    .hero h1 {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(32px, 5vw, 52px);
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
-    }
-    .hero p {
-      font-size: 18px;
-      font-weight: 300;
-      color: var(--muted);
-      max-width: 560px;
-      line-height: 1.7;
-      margin-bottom: 2rem;
-    }
-    .hero-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--accent);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: opacity 0.15s;
-    }
-    .hero-cta:hover { opacity: 0.88; }
+  /* ---------- Timeline ---------- */
+  section.timeline{max-width:960px;margin:0 auto;padding:76px 24px 60px}
+  .section-head{
+    display:flex;align-items:baseline;gap:16px;
+    border-top:1px solid var(--line);padding-top:28px;margin-bottom:48px;
+  }
+  .section-head h2{font-family:var(--display);font-weight:400;font-size:1.5rem}
+  .section-head span{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
 
-    /* ── Credential bar ── */
-    .cred-bar {
-      border-top: 0.5px solid var(--border);
-      border-bottom: 0.5px solid var(--border);
-      background: var(--surface);
-      padding: 1.25rem 2.5rem;
-      display: flex;
-      gap: 2.5rem;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .cred-bar::-webkit-scrollbar { display: none; }
-    .cred-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      flex-shrink: 0;
-    }
-    .cred-num {
-      font-family: 'DM Serif Display', serif;
-      font-size: 22px;
-      color: var(--text);
-      line-height: 1;
-    }
-    .cred-label {
-      font-size: 12px;
-      color: var(--hint);
-      white-space: nowrap;
-    }
+  .tl{position:relative;padding-left:0}
+  .tl::before{
+    content:"";position:absolute;top:6px;bottom:6px;left:118px;
+    width:1.5px;background:linear-gradient(var(--line) 0%, var(--line) 92%, transparent);
+  }
 
-    /* ── Section ── */
-    section {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 4rem 2.5rem;
-    }
-    .section-label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--hint);
-      margin-bottom: 2rem;
-    }
+  .tl-year{
+    position:relative;margin:56px 0 28px;
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.12em;color:var(--navy);
+    width:96px;text-align:right;
+  }
+  .tl-year:first-child{margin-top:0}
+  .tl-year::after{
+    content:"";position:absolute;left:112px;top:50%;transform:translateY(-50%);
+    width:13px;height:13px;border-radius:50%;
+    background:var(--paper);border:1.5px solid var(--navy);
+  }
+  .tl-year b{font-weight:500}
 
-    /* ── Talk cards ── */
-    .talks { display: flex; flex-direction: column; gap: 16px; }
-    .talk-card {
-      background: var(--surface);
-      border: 0.5px solid var(--border-strong);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      transition: border-color 0.15s;
-    }
-    .talk-card:hover { border-color: var(--accent); }
-    .talk-tag {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 3px 10px;
-      border-radius: 99px;
-      margin-bottom: 0.75rem;
-    }
-    .talk-tag.ai-work { background: #eef2fd; color: #2d5be3; }
-    .talk-tag.nontechnical { background: #edf7f0; color: #1a7a3f; }
-    .talk-tag.ediscovery { background: #fdf4e7; color: #92400e; }
-    .talk-card h3 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.6rem;
-      line-height: 1.25;
-    }
-    .talk-card p {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.7;
-      font-weight: 300;
-    }
-    .talk-formats {
-      display: flex;
-      gap: 8px;
-      margin-top: 1rem;
-      flex-wrap: wrap;
-    }
-    .talk-format {
-      font-size: 11px;
-      color: var(--hint);
-      border: 0.5px solid var(--border-strong);
-      border-radius: 99px;
-      padding: 2px 10px;
-    }
+  .tl-item{
+    position:relative;display:grid;
+    grid-template-columns:96px 1fr;gap:0 46px;
+    margin-bottom:22px;
+    transform:scale(var(--mag,1));
+    transform-origin:130px center;
+    transition:transform .15s ease-out;
+    will-change:transform;
+  }
+  .tl-date{
+    font-family:var(--mono);font-size:.8rem;color:var(--muted);
+    text-align:right;padding-top:22px;white-space:nowrap;
+  }
+  .tl-item::after{
+    content:"";position:absolute;left:114.5px;top:29px;
+    width:8px;height:8px;border-radius:50%;
+    background:var(--cobalt);
+    box-shadow:0 0 0 4px var(--paper);
+    transition:transform .25s ease;
+  }
+  .tl-item:hover::after{transform:scale(1.4)}
 
-    /* ── Credentials / past events ── */
-    .events { display: flex; flex-direction: column; gap: 0; }
-    .event-row {
-      display: flex;
-      align-items: baseline;
-      gap: 1rem;
-      padding: 0.9rem 0;
-      border-bottom: 0.5px solid var(--border);
-    }
-    .event-row:first-child { border-top: 0.5px solid var(--border); }
-    .event-year {
-      font-size: 12px;
-      color: var(--hint);
-      min-width: 36px;
-      font-weight: 500;
-    }
-    .event-name {
-      font-size: 14px;
-      color: var(--text);
-      flex: 1;
-      line-height: 1.5;
-    }
-    .event-name span {
-      font-size: 12px;
-      color: var(--hint);
-      display: block;
-      margin-top: 1px;
-    }
-    .event-badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 99px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .event-badge.award { background: #fdf4e7; color: #92400e; }
-    .event-badge.talk { background: #eef2fd; color: #2d5be3; }
-    .event-badge.media { background: #edf7f0; color: #1a7a3f; }
-    .event-badge.author { background: #f5f0fb; color: #5b3db5; }
+  .tl-card{
+    display:flex;gap:18px;align-items:flex-start;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:20px 24px 18px;
+    transition:transform .28s cubic-bezier(.2,.7,.3,1.1), box-shadow .28s ease, border-color .28s ease;
+    box-shadow:0 1px 2px rgba(27,33,48,.05);
+  }
+  .tl-item:hover .tl-card,
+  .tl-card:focus-within,
+  .tl-card:focus{
+    transform:translateY(-7px) rotate(-.35deg);
+    box-shadow:
+      0 22px 40px -18px rgba(38,54,91,.30),
+      0 8px 16px -8px rgba(38,54,91,.14);
+    border-color:#C6CCDA;
+    outline:none;
+  }
 
-    /* ── Lawdragon callout ── */
-    .award-callout {
-      background: var(--surface);
-      border: 0.5px solid var(--border-strong);
-      border-left: 3px solid #c9a84c;
-      border-radius: var(--radius-sm);
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 2rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-    .award-callout .award-icon { font-size: 24px; flex-shrink: 0; }
-    .award-callout h4 {
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 3px;
-    }
-    .award-callout p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  /* ---------- Icons ---------- */
+  .tl-icon{
+    flex:0 0 44px;width:44px;height:44px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);
+    background:#fff;
+    margin-top:2px;
+    transition:transform .28s ease;
+  }
+  .tl-item:hover .tl-icon{transform:scale(1.08)}
+  .tl-icon svg{width:24px;height:24px;display:block}
+  .tl-icon img{width:28px;height:28px;object-fit:contain;display:block}
+  /* Lettermark badges for orgs without an embedded logo */
+  .tl-icon.badge{
+    font-family:var(--mono);font-size:.72rem;font-weight:500;letter-spacing:.02em;
+    color:#fff;border:none;
+  }
+  .tl-icon.badge.ilta{background:#005A9C}          /* ILTA blue */
+  .tl-icon.rel-logo img{width:auto;height:26px}    /* Relativity logo */
+  .tl-icon.badge.lw{background:#1A1F2E}            /* Legalweek */
+  .tl-icon.badge.nysba{background:#00337F;font-size:.56rem;letter-spacing:.01em} /* NYSBA */
+  .tl-icon.badge.pod{background:#146C5B}           /* Podcast */
+  .tl-icon.badge svg{width:22px;height:22px}
 
-    /* ── Booking CTA ── */
-    .booking-block {
-      background: var(--text);
-      color: white;
-      border-radius: var(--radius);
-      padding: 3rem 2.5rem;
-      text-align: center;
-      margin: 0 2.5rem 4rem;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .booking-block h2 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 28px;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.75rem;
-    }
-    .booking-block p {
-      font-size: 15px;
-      color: rgba(255,255,255,0.65);
-      font-weight: 300;
-      margin-bottom: 2rem;
-      max-width: 420px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .booking-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: white;
-      color: var(--text);
-      padding: 0.8rem 1.75rem;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: opacity 0.15s;
-    }
-    .booking-btn:hover { opacity: 0.9; }
+  .tl-body{flex:1;min-width:0}
+  .tl-role{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--cobalt);
+  }
+  .tl-role.alt{color:#8A5A16}
+  .tl-title{
+    font-family:var(--display);font-style:italic;font-weight:400;
+    font-size:1.22rem;line-height:1.3;margin:6px 0 4px;
+  }
+  .tl-title.no-quote{font-style:normal}
+  .tl-event{font-size:.92rem;font-weight:600;color:var(--navy)}
+  .tl-venue{font-size:.88rem;color:var(--muted)}
+  .tl-meta{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{
+    font-family:var(--mono);font-size:.72rem;color:var(--navy);
+    background:var(--pill);border-radius:100px;padding:4px 11px;
+  }
 
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 12px;
-      color: var(--hint);
-      border-top: 0.5px solid var(--border);
-    }
+  /* ---------- Footer CTA ---------- */
+  footer{border-top:1px solid var(--line);margin-top:40px}
+  .foot-inner{max-width:960px;margin:0 auto;padding:64px 24px 80px}
+  .foot-inner h2{font-family:var(--display);font-weight:400;font-size:1.7rem;max-width:22ch}
+  .foot-inner p{color:var(--muted);margin-top:12px;max-width:50ch}
+  .foot-inner a{color:var(--cobalt);font-weight:600;text-decoration:none;border-bottom:1.5px solid currentColor;padding-bottom:1px}
+  .foot-inner a:focus-visible{outline:2px solid var(--cobalt);outline-offset:4px}
 
-    @media (max-width: 600px) {
-      nav { padding: 1rem 1.25rem; }
-      .nav-links { gap: 1.25rem; }
-      .hero { padding: 7rem 1.25rem 3rem; }
-      section { padding: 3rem 1.25rem; }
-      .cred-bar { padding: 1rem 1.25rem; }
-      .booking-block { margin: 0 1.25rem 3rem; padding: 2rem 1.5rem; }
-    }
-  </style>
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YN259X7CNJ"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag("js", new Date());
-    gtag("config", "G-YN259X7CNJ");
-  </script>
+  /* ---------- Mobile ---------- */
+  @media (max-width:900px){
+    .hero-copy{margin-left:0}
+  }
+  @media (max-width:640px){
+    nav{padding:16px 20px}
+    .wordmark{font-size:1.05rem}
+    .nav-links{gap:20px}
+    .nav-links a{font-size:.85rem}
+    header.hero{padding:56px 20px 60px}
+    .eyebrow{margin-bottom:20px}
+    .stats{padding:22px 20px}
+    .stats ul{gap:18px 34px}
+    section.timeline{padding:52px 20px 40px}
+    .tl::before{left:6px}
+    .tl-year{width:auto;text-align:left;padding-left:28px}
+    .tl-year::after{left:0}
+    .tl-item{grid-template-columns:1fr;gap:0;padding-left:28px;transform-origin:6px center}
+    .tl-item::after{left:2.5px;top:8px}
+    .tl-date{text-align:left;padding:0 0 6px;font-size:.75rem}
+    .tl-card{padding:16px 18px 15px;gap:14px}
+    .tl-icon{flex-basis:38px;width:38px;height:38px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .tl-item{transform:none !important;transition:none}
+    .tl-card,.tl-icon,.tl-item::after{transition:none}
+    .tl-item:hover .tl-card,.tl-item:hover .tl-icon{transform:none}
+  }
+</style>
 </head>
 <body>
 
-  <nav>
-    <a href="index.html" class="nav-logo">Phil Weldon</a>
-    <ul class="nav-links">
-      <li><a href="speaking.html" class="active">Speaking</a></li>
-      <li><a href="writing.html">Writing</a></li>
-      <li><a href="contact.html">Contact</a></li>
-    </ul>
-  </nav>
+<nav>
+  <a class="wordmark" href="index.html">Phil Weldon</a>
+  <div class="nav-links">
+    <a href="speaking.html" aria-current="page">Speaking</a>
+    <a href="writing.html">Writing</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</nav>
 
-  <!-- Hero -->
-  <div class="hero">
-    <p class="hero-eyebrow">Speaking</p>
+<header class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">Speaking</span>
     <h1>Making AI real<br>for the people<br><em>who need it most.</em></h1>
     <p>Phil speaks at conferences, panels, and private events for legal professionals, law firms, and enterprise teams — translating AI from buzzword to practical reality.</p>
-    <a href="contact.html" class="hero-cta">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+    <a class="hero-cta" href="contact.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
       Enquire about booking
     </a>
   </div>
+</header>
 
-  <!-- Credential bar -->
-  <div class="cred-bar">
-    <div class="cred-item">
-      <span class="cred-num">10+</span>
-      <span class="cred-label">Years speaking</span>
-    </div>
-    <div class="cred-item">
-      <span class="cred-num">2×</span>
-      <span class="cred-label">Lawdragon 100 AI & Legal Tech Advisor</span>
-    </div>
-    <div class="cred-item">
-      <span class="cred-num">1,500+</span>
-      <span class="cred-label">Attendees reached in 2025 alone</span>
-    </div>
-    <div class="cred-item">
-      <span class="cred-num">ILTA</span>
-      <span class="cred-label">Relativity · LegalWeek · Google · Microsoft</span>
-    </div>
+<div class="stats">
+  <ul>
+    <li>
+      <div class="stat-num">10+</div>
+      <div class="stat-label">Years speaking</div>
+    </li>
+    <li>
+      <div class="stat-num">2<i>&times;</i></div>
+      <div class="stat-label">Lawdragon 100 AI &amp; Legal Tech Advisor</div>
+    </li>
+    <li>
+      <div class="stat-num">1,500+</div>
+      <div class="stat-label">Attendees reached in 2025 alone</div>
+    </li>
+    <li>
+      <div class="stat-num">ILTA</div>
+      <div class="stat-label">Relativity &middot; LegalWeek &middot; Google &middot; Microsoft</div>
+    </li>
+  </ul>
+</div>
+
+<section class="timeline" aria-label="Past events and appearances">
+  <div class="section-head">
+    <h2>Past Events &amp; Appearances</h2>
+    <span>2019 — 2026</span>
   </div>
 
-  <!-- Talk topics -->
-  <section>
-    <p class="section-label">Talk topics</p>
+  <div class="tl" id="tl">
 
-    <div class="award-callout">
-      <span class="award-icon">🏆</span>
-      <div>
-        <h4>Lawdragon 100 Leading AI & Legal Tech Advisors — 2025 & 2026</h4>
-        <p>Named two years running to the definitive list of AI and legal technology leaders shaping the profession.</p>
-      </div>
-    </div>
+    <div class="tl-year"><b>2026</b></div>
 
-    <div class="talks">
-      <div class="talk-card">
-        <span class="talk-tag ediscovery">eDiscovery & AI</span>
-        <h3>From TAR to Generative AI: The New eDiscovery Playbook</h3>
-        <p>A grounded, practical guide to how generative AI is reshaping eDiscovery — from document review to legal hold strategy. Phil has been inside this transition since its earliest stages and speaks from real implementation experience, not theory.</p>
-        <div class="talk-formats">
-          <span class="talk-format">Panel</span>
-          <span class="talk-format">Roundtable</span>
-          <span class="talk-format">Keynote</span>
-        </div>
-      </div>
-
-      <div class="talk-card">
-        <span class="talk-tag ai-work">AI & the future of work</span>
-        <h3>How the Leanest Teams Are Using AI Right Now</h3>
-        <p>Not a vision piece — a practical look at how small, under-resourced legal and enterprise teams are using AI tools today to punch above their weight. Based on real case studies including a Relativity webinar with 246 registrants.</p>
-        <div class="talk-formats">
-          <span class="talk-format">Panel</span>
-          <span class="talk-format">Webinar</span>
-          <span class="talk-format">Workshop</span>
-        </div>
-      </div>
-
-      <div class="talk-card">
-        <span class="talk-tag nontechnical">AI for non-technical audiences</span>
-        <h3>Foundations of Artificial Intelligence</h3>
-        <p>A clear-eyed, jargon-free introduction to how AI actually works — designed for lawyers, executives, and professionals who need to make decisions about AI without a technical background. Delivered at NYBA/Perrin Conferences and private corporate events.</p>
-        <div class="talk-formats">
-          <span class="talk-format">Keynote</span>
-          <span class="talk-format">Panel</span>
-          <span class="talk-format">Private event</span>
-        </div>
-      </div>
-
-      <div class="talk-card">
-        <span class="talk-tag ediscovery">Security & AI risk</span>
-        <h3>The Dark Web, AI & Legal Risk</h3>
-        <p>An immersive look at the intersection of AI, cybersecurity, and legal exposure — including what firms don't know about their own data vulnerability. Originally delivered at the ILTA Evolve AI & Security Conference.</p>
-        <div class="talk-formats">
-          <span class="talk-format">Panel</span>
-          <span class="talk-format">Roundtable</span>
+    <div class="tl-item">
+      <div class="tl-date">Mar 2026</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge lw" aria-hidden="true">LW</div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;AI Escape Room&rdquo;</h3>
+          <div class="tl-event">Legalweek 2026</div>
+          <div class="tl-meta"><span class="pill">~75 attendees</span></div>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- Past events -->
-  <section style="padding-top: 0;">
-    <p class="section-label">Past events & appearances</p>
-
-    <div class="events">
-      <div class="event-row">
-        <span class="event-year">2026</span>
-        <span class="event-name">LegalWeek 2026 — "Artificial Intelligence Escape Room"
-          <span>~75 attendees</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2026</span>
-        <span class="event-name">Private Event, Google — St. John's Terminal, NYC
-          <span>~50 attendees</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2026</span>
-        <span class="event-name">CoPilot Case Study, Microsoft Technology Center, Chicago
-          <span>~150 live · 100 remote</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2026</span>
-        <span class="event-name">Lawdragon 100 Leading AI & Legal Tech Advisors</span>
-        <span class="event-badge award">Named</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2025</span>
-        <span class="event-name">ILTA Conference — "2025 E-Discovery & Litigation Support Roundtable: From TAR to Generative AI"
-          <span>~250 in-person attendees · covered by Law360, ComplexDiscovery, eDiscovery Today</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2025</span>
-        <span class="event-name">ILTA Evolve AI & Security Conference — "The Dark Web"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2025</span>
-        <span class="event-name">NYBA / Perrin Conferences — "Foundations of Artificial Intelligence"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2025</span>
-        <span class="event-name">The Legal Ops Podcast with Daryl Osuch (TLOP 2.0, Ep. 7)</span>
-        <span class="event-badge media">Guest</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2025</span>
-        <span class="event-name">Lawdragon 100 Leading AI & Legal Tech Advisors</span>
-        <span class="event-badge award">Named</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2024</span>
-        <span class="event-name">Relativity Webinar — "How the leanest teams are using Generative AI"
-          <span>246 registrants · 128 live attendees</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2023</span>
-        <span class="event-name">Relativity Fest — "Collaboration Tools: Challenges and Opportunities Facing Law Firms"
-          <span>~200 in-person attendees</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2023</span>
-        <span class="event-name">Relativity AI Bootcamp — "The Rise of Generative AI: Staying Ahead of the Curve"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2023</span>
-        <span class="event-name">Relativity Webinar — "On the Cutting Edge of Short Message Review"
-          <span>887 registrants · 458 live attendees</span>
-        </span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2023</span>
-        <span class="event-name">eDiscovery Leaders Live featuring George Socha</span>
-        <span class="event-badge media">Guest</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2023</span>
-        <span class="event-name">ILTA Conference — "Litigation Support Roundtable"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2021</span>
-        <span class="event-name">ALM LegalWeek (LegalTechNY) — "Anatomy of a Legal Hold"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2020</span>
-        <span class="event-name">ILTA Webinar — "E-Discovery Automation"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2019</span>
-        <span class="event-name">Relativity Fest — "Dangerous Data: Using Relativity to Succeed with Precarious Data Sets"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2019</span>
-        <span class="event-name">ILTA Conference — Organized inaugural #LitigationSupportDay
-          <span>Over 30 speakers</span>
-        </span>
-        <span class="event-badge award">Organizer</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2019</span>
-        <span class="event-name">Master's Conference NYC — "Investigate This!"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2018</span>
-        <span class="event-name">Master's Conference DC — "Rise of the Robolawyers"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2017</span>
-        <span class="event-name">Relativity Fest — "Creative Cost Control in e-Discovery"</span>
-        <span class="event-badge talk">Speaker</span>
-      </div>
-      <div class="event-row">
-        <span class="event-year">2016</span>
-        <span class="event-name">ILTA Conference — "Cyber Incident Response Tabletop Exercise"</span>
-        <span class="event-badge talk">Speaker</span>
+    <div class="tl-item">
+      <div class="tl-date">Mar 2026</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon" aria-hidden="true">
+          <!-- Google G -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.1A6.61 6.61 0 0 1 5.49 12c0-.73.13-1.43.35-2.1V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A10.99 10.99 0 0 0 12 1 11 11 0 0 0 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+        </div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title no-quote">Private Google Event</h3>
+          <div class="tl-event">Google — St. John's Terminal Office</div>
+          <div class="tl-venue">New York, NY</div>
+          <div class="tl-meta"><span class="pill">~50 attendees</span></div>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- Booking CTA -->
-  <div class="booking-block">
-    <h2>Let's work together.</h2>
-    <p>Available for panels, roundtables, private corporate events, and conference keynotes. Legal tech, AI, and eDiscovery audiences welcome.</p>
-    <a href="contact.html" class="booking-btn">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
-      Get in touch
-    </a>
+    <div class="tl-item">
+      <div class="tl-date">Feb 2026</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon" aria-hidden="true">
+          <!-- Microsoft -->
+          <svg viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+            <rect x="12" y="1" width="10" height="10" fill="#7FBA00"/>
+            <rect x="1" y="12" width="10" height="10" fill="#00A4EF"/>
+            <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+          </svg>
+        </div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title no-quote">Copilot Case Study</h3>
+          <div class="tl-event">ILTA Copilot Symposium</div>
+          <div class="tl-venue">Microsoft Technology Center, Chicago, IL</div>
+          <div class="tl-meta"><span class="pill">~150 live</span><span class="pill">100 remote</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-year"><b>2025</b></div>
+
+    <div class="tl-item">
+      <div class="tl-date">Sep 2025</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge pod" aria-hidden="true">
+          <!-- Microphone -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="2" width="6" height="12" rx="3" fill="#fff" stroke="none"/>
+            <path d="M5 11a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+            <line x1="8.5" y1="22" x2="15.5" y2="22"/>
+          </svg>
+        </div>
+        <div class="tl-body">
+          <span class="tl-role alt">Podcast Guest</span>
+          <h3 class="tl-title no-quote">The Legal Ops Podcast with Daryl Osuch</h3>
+          <div class="tl-event">TLOP 2.0, Episode 7</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Aug 2025</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge ilta" aria-hidden="true">ILTA</div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;From TAR to Generative AI&rdquo;</h3>
+          <div class="tl-event">Litigation Support Roundtable — ILTACon</div>
+          <div class="tl-meta"><span class="pill">~350 live attendees</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Apr 2025</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge ilta" aria-hidden="true">ILTA</div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;The Dark Web&rdquo;</h3>
+          <div class="tl-event">ILTA Evolve Conference</div>
+          <div class="tl-meta"><span class="pill">~100 live attendees</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Apr 2025</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge nysba" aria-hidden="true">NYSBA</div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;Foundations of Artificial Intelligence&rdquo;</h3>
+          <div class="tl-event">New York State Bar Association / Perrin</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-year"><b>2024</b></div>
+
+    <div class="tl-item">
+      <div class="tl-date">Apr 2024</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon rel-logo" aria-hidden="true"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAuCAIAAADVxcwnAAADKklEQVR42mN8Hy/IQC5g5BNl5OJn5BZkllBmVjZhUTJmVtAnVi8lFmMxjleYwyOb3SWVgZ2brhZDAScfh3cBh08B3S1mYGBgYGCS1ebOmM0srYFdloFm4N/jq5+rrX6f2kBviyHg64zU31f2DYDFDP/+fu0J+fvgIt0thvh7Ttb/f38HwOJ/T67/2j1zACxmYGD4san3////A2Dx/6/v/905BeeyENTAU7iCgZ2LoLK/z259X1SCX82vs1s5Vc2Jtfjvy3vsbhkElbFo2Pz/9unHmiZ8Rt07Q0JQ/0RNFHgAh0syAxu+sPn37hkJFv97/fD3uW3E2czLbheN1+Kn8PRFVOL6uXMakZ4mECn//jJ8fU+CxX9uHsMserCXwGKKrAbu+ColHiHSstPPvXOI9nQmnuqS5Hz86/DS/1/eEaOSRcuOCVdVKCRFTgHy88AiYpO3exZWcVZNW7Is3jOLSJVsdjHwuESxWNeZHIv/f3jx++wWYmPaKQmzOcas40RmWf1z/3xiLXZORg9/z1xGZhYyLf5zZf//d0+Jam7yi7NZhSF5V4TdKZGiavHH3rnEetojG87mSpvOwMFLkcW/9s9n+P2DGJXMcrqsRt4MDAzszinIyYr85i1XfC+bYyKxbY8Xd5gkVLBkd4I6WQ092d1RCiMmHqGvU+L/f35LuAQVV+ZKmoi9nCGcKe3jWDRs0INRQvnHmc2E/XvzGLO0Bpq7iY1jRmZmbLklhdjEuGMquQ16pBYawjWCUqzGPkQVO++f/T6ziSyLGRmx5xbXdGKLnV0zqdmTYNGwxlULoRc7t47/e3KNOkENLQWJ9vSPndOp2YVhtY5AK49wFjvHV//78p46cczAwMDIyo5WAuMO7l+/DiykWlAzMDCwO6ficRlqEpv+/98/6viYgYGBSVia1dCTqHz16fWfs5up5mMGBgZ2l1RikxhSvqJCp41Fy55JSp0YlX9vn/j76DJ1ghrWeSHW0/AOERWCmsR8tQaSr6jTP2Zk52K3jyE2X+2fR7WgZmBgYHdJI7pTMo+BiiMCTKLyrPpuxDWTn/8+tZ6aQxHE11c/ds8GAOCs/nmVyDo8AAAAAElFTkSuQmCC" alt=""></div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;How the Leanest Teams Are Using Generative AI&rdquo;</h3>
+          <div class="tl-event">Relativity Webinar</div>
+          <div class="tl-meta"><span class="pill">246 registrants</span><span class="pill">128 live</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-year"><b>2023</b></div>
+
+    <div class="tl-item">
+      <div class="tl-date">Oct 2023</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon rel-logo" aria-hidden="true"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAuCAIAAADVxcwnAAADKklEQVR42mN8Hy/IQC5g5BNl5OJn5BZkllBmVjZhUTJmVtAnVi8lFmMxjleYwyOb3SWVgZ2brhZDAScfh3cBh08B3S1mYGBgYGCS1ebOmM0srYFdloFm4N/jq5+rrX6f2kBviyHg64zU31f2DYDFDP/+fu0J+fvgIt0thvh7Ttb/f38HwOJ/T67/2j1zACxmYGD4san3////A2Dx/6/v/905BeeyENTAU7iCgZ2LoLK/z259X1SCX82vs1s5Vc2Jtfjvy3vsbhkElbFo2Pz/9unHmiZ8Rt07Q0JQ/0RNFHgAh0syAxu+sPn37hkJFv97/fD3uW3E2czLbheN1+Kn8PRFVOL6uXMakZ4mECn//jJ8fU+CxX9uHsMserCXwGKKrAbu+ColHiHSstPPvXOI9nQmnuqS5Hz86/DS/1/eEaOSRcuOCVdVKCRFTgHy88AiYpO3exZWcVZNW7Is3jOLSJVsdjHwuESxWNeZHIv/f3jx++wWYmPaKQmzOcas40RmWf1z/3xiLXZORg9/z1xGZhYyLf5zZf//d0+Jam7yi7NZhSF5V4TdKZGiavHH3rnEetojG87mSpvOwMFLkcW/9s9n+P2DGJXMcrqsRt4MDAzszinIyYr85i1XfC+bYyKxbY8Xd5gkVLBkd4I6WQ092d1RCiMmHqGvU+L/f35LuAQVV+ZKmoi9nCGcKe3jWDRs0INRQvnHmc2E/XvzGLO0Bpq7iY1jRmZmbLklhdjEuGMquQ16pBYawjWCUqzGPkQVO++f/T6ziSyLGRmx5xbXdGKLnV0zqdmTYNGwxlULoRc7t47/e3KNOkENLQWJ9vSPndOp2YVhtY5AK49wFjvHV//78p46cczAwMDIyo5WAuMO7l+/DiykWlAzMDCwO6ficRlqEpv+/98/6viYgYGBSVia1dCTqHz16fWfs5up5mMGBgZ2l1RikxhSvqJCp41Fy55JSp0YlX9vn/j76DJ1ghrWeSHW0/AOERWCmsR8tQaSr6jTP2Zk52K3jyE2X+2fR7WgZmBgYHdJI7pTMo+BiiMCTKLyrPpuxDWTn/8+tZ6aQxHE11c/ds8GAOCs/nmVyDo8AAAAAElFTkSuQmCC" alt=""></div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;The Rise of Generative AI: Staying Ahead of the Curve&rdquo;</h3>
+          <div class="tl-event">Relativity AI Bootcamp</div>
+          <div class="tl-meta"><span class="pill">~50 in person</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Sep 2023</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon rel-logo" aria-hidden="true"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAuCAIAAADVxcwnAAADKklEQVR42mN8Hy/IQC5g5BNl5OJn5BZkllBmVjZhUTJmVtAnVi8lFmMxjleYwyOb3SWVgZ2brhZDAScfh3cBh08B3S1mYGBgYGCS1ebOmM0srYFdloFm4N/jq5+rrX6f2kBviyHg64zU31f2DYDFDP/+fu0J+fvgIt0thvh7Ttb/f38HwOJ/T67/2j1zACxmYGD4san3////A2Dx/6/v/905BeeyENTAU7iCgZ2LoLK/z259X1SCX82vs1s5Vc2Jtfjvy3vsbhkElbFo2Pz/9unHmiZ8Rt07Q0JQ/0RNFHgAh0syAxu+sPn37hkJFv97/fD3uW3E2czLbheN1+Kn8PRFVOL6uXMakZ4mECn//jJ8fU+CxX9uHsMserCXwGKKrAbu+ColHiHSstPPvXOI9nQmnuqS5Hz86/DS/1/eEaOSRcuOCVdVKCRFTgHy88AiYpO3exZWcVZNW7Is3jOLSJVsdjHwuESxWNeZHIv/f3jx++wWYmPaKQmzOcas40RmWf1z/3xiLXZORg9/z1xGZhYyLf5zZf//d0+Jam7yi7NZhSF5V4TdKZGiavHH3rnEetojG87mSpvOwMFLkcW/9s9n+P2DGJXMcrqsRt4MDAzszinIyYr85i1XfC+bYyKxbY8Xd5gkVLBkd4I6WQ092d1RCiMmHqGvU+L/f35LuAQVV+ZKmoi9nCGcKe3jWDRs0INRQvnHmc2E/XvzGLO0Bpq7iY1jRmZmbLklhdjEuGMquQ16pBYawjWCUqzGPkQVO++f/T6ziSyLGRmx5xbXdGKLnV0zqdmTYNGwxlULoRc7t47/e3KNOkENLQWJ9vSPndOp2YVhtY5AK49wFjvHV//78p46cczAwMDIyo5WAuMO7l+/DiykWlAzMDCwO6ficRlqEpv+/98/6viYgYGBSVia1dCTqHz16fWfs5up5mMGBgZ2l1RikxhSvqJCp41Fy55JSp0YlX9vn/j76DJ1ghrWeSHW0/AOERWCmsR8tQaSr6jTP2Zk52K3jyE2X+2fR7WgZmBgYHdJI7pTMo+BiiMCTKLyrPpuxDWTn/8+tZ6aQxHE11c/ds8GAOCs/nmVyDo8AAAAAElFTkSuQmCC" alt=""></div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;Collaboration Tools: The Challenges and Opportunities Facing Law Firms&rdquo;</h3>
+          <div class="tl-event">Relativity Fest Conference</div>
+          <div class="tl-meta"><span class="pill">~200 in person</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Aug 2023</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge ilta" aria-hidden="true">ILTA</div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title no-quote">Litigation Support Roundtable</h3>
+          <div class="tl-event">ILTA Conference</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Feb 2023</div>
+      <div class="tl-card" tabindex="0">
+<div class="tl-icon rel-logo" aria-hidden="true"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAuCAIAAADVxcwnAAADKklEQVR42mN8Hy/IQC5g5BNl5OJn5BZkllBmVjZhUTJmVtAnVi8lFmMxjleYwyOb3SWVgZ2brhZDAScfh3cBh08B3S1mYGBgYGCS1ebOmM0srYFdloFm4N/jq5+rrX6f2kBviyHg64zU31f2DYDFDP/+fu0J+fvgIt0thvh7Ttb/f38HwOJ/T67/2j1zACxmYGD4san3////A2Dx/6/v/905BeeyENTAU7iCgZ2LoLK/z259X1SCX82vs1s5Vc2Jtfjvy3vsbhkElbFo2Pz/9unHmiZ8Rt07Q0JQ/0RNFHgAh0syAxu+sPn37hkJFv97/fD3uW3E2czLbheN1+Kn8PRFVOL6uXMakZ4mECn//jJ8fU+CxX9uHsMserCXwGKKrAbu+ColHiHSstPPvXOI9nQmnuqS5Hz86/DS/1/eEaOSRcuOCVdVKCRFTgHy88AiYpO3exZWcVZNW7Is3jOLSJVsdjHwuESxWNeZHIv/f3jx++wWYmPaKQmzOcas40RmWf1z/3xiLXZORg9/z1xGZhYyLf5zZf//d0+Jam7yi7NZhSF5V4TdKZGiavHH3rnEetojG87mSpvOwMFLkcW/9s9n+P2DGJXMcrqsRt4MDAzszinIyYr85i1XfC+bYyKxbY8Xd5gkVLBkd4I6WQ092d1RCiMmHqGvU+L/f35LuAQVV+ZKmoi9nCGcKe3jWDRs0INRQvnHmc2E/XvzGLO0Bpq7iY1jRmZmbLklhdjEuGMquQ16pBYawjWCUqzGPkQVO++f/T6ziSyLGRmx5xbXdGKLnV0zqdmTYNGwxlULoRc7t47/e3KNOkENLQWJ9vSPndOp2YVhtY5AK49wFjvHV//78p46cczAwMDIyo5WAuMO7l+/DiykWlAzMDCwO6ficRlqEpv+/98/6viYgYGBSVia1dCTqHz16fWfs5up5mMGBgZ2l1RikxhSvqJCp41Fy55JSp0YlX9vn/j76DJ1ghrWeSHW0/AOERWCmsR8tQaSr6jTP2Zk52K3jyE2X+2fR7WgZmBgYHdJI7pTMo+BiiMCTKLyrPpuxDWTn/8+tZ6aQxHE11c/ds8GAOCs/nmVyDo8AAAAAElFTkSuQmCC" alt=""></div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;On the Cutting Edge of Short Message Review: RSMF Slicing, Searching, and More!&rdquo;</h3>
+          <div class="tl-event">Relativity Webinar</div>
+          <div class="tl-meta"><span class="pill">887 registrants</span><span class="pill">458 live</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-year"><b>2019</b></div>
+
+    <div class="tl-item">
+      <div class="tl-date">Oct 2019</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon rel-logo" aria-hidden="true"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAuCAIAAADVxcwnAAADKklEQVR42mN8Hy/IQC5g5BNl5OJn5BZkllBmVjZhUTJmVtAnVi8lFmMxjleYwyOb3SWVgZ2brhZDAScfh3cBh08B3S1mYGBgYGCS1ebOmM0srYFdloFm4N/jq5+rrX6f2kBviyHg64zU31f2DYDFDP/+fu0J+fvgIt0thvh7Ttb/f38HwOJ/T67/2j1zACxmYGD4san3////A2Dx/6/v/905BeeyENTAU7iCgZ2LoLK/z259X1SCX82vs1s5Vc2Jtfjvy3vsbhkElbFo2Pz/9unHmiZ8Rt07Q0JQ/0RNFHgAh0syAxu+sPn37hkJFv97/fD3uW3E2czLbheN1+Kn8PRFVOL6uXMakZ4mECn//jJ8fU+CxX9uHsMserCXwGKKrAbu+ColHiHSstPPvXOI9nQmnuqS5Hz86/DS/1/eEaOSRcuOCVdVKCRFTgHy88AiYpO3exZWcVZNW7Is3jOLSJVsdjHwuESxWNeZHIv/f3jx++wWYmPaKQmzOcas40RmWf1z/3xiLXZORg9/z1xGZhYyLf5zZf//d0+Jam7yi7NZhSF5V4TdKZGiavHH3rnEetojG87mSpvOwMFLkcW/9s9n+P2DGJXMcrqsRt4MDAzszinIyYr85i1XfC+bYyKxbY8Xd5gkVLBkd4I6WQ092d1RCiMmHqGvU+L/f35LuAQVV+ZKmoi9nCGcKe3jWDRs0INRQvnHmc2E/XvzGLO0Bpq7iY1jRmZmbLklhdjEuGMquQ16pBYawjWCUqzGPkQVO++f/T6ziSyLGRmx5xbXdGKLnV0zqdmTYNGwxlULoRc7t47/e3KNOkENLQWJ9vSPndOp2YVhtY5AK49wFjvHV//78p46cczAwMDIyo5WAuMO7l+/DiykWlAzMDCwO6ficRlqEpv+/98/6viYgYGBSVia1dCTqHz16fWfs5up5mMGBgZ2l1RikxhSvqJCp41Fy55JSp0YlX9vn/j76DJ1ghrWeSHW0/AOERWCmsR8tQaSr6jTP2Zk52K3jyE2X+2fR7WgZmBgYHdJI7pTMo+BiiMCTKLyrPpuxDWTn/8+tZ6aQxHE11c/ds8GAOCs/nmVyDo8AAAAAElFTkSuQmCC" alt=""></div>
+        <div class="tl-body">
+          <span class="tl-role">Speaker</span>
+          <h3 class="tl-title">&ldquo;Dangerous Data: Using Relativity to Succeed with Precarious Data Sets&rdquo;</h3>
+          <div class="tl-event">Relativity Fest Conference</div>
+          <div class="tl-meta"><span class="pill">~200 in person</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">Aug 2019</div>
+      <div class="tl-card" tabindex="0">
+        <div class="tl-icon badge ilta" aria-hidden="true">ILTA</div>
+        <div class="tl-body">
+          <span class="tl-role alt">Speaker &amp; Organizer</span>
+          <h3 class="tl-title no-quote">Inaugural Litigation Support Day</h3>
+          <div class="tl-event">ILTA Conference</div>
+          <div class="tl-venue">Orlando, FL</div>
+        </div>
+      </div>
+    </div>
+
   </div>
+</section>
 
-  <footer>
-    philweldon.com &nbsp;·&nbsp; Built with care (and a little AI)
-  </footer>
+<footer>
+  <div class="foot-inner">
+    <h2>Planning a panel, webinar, or workshop?</h2>
+    <p>I speak on generative AI in legal, eDiscovery, litigation support, and collaboration data. <a href="contact.html">Get in touch</a> and let's find the right format for your audience.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var items = Array.prototype.slice.call(document.querySelectorAll('.tl-item'));
+  var ticking = false;
+
+  // macOS-dock-style magnification: cards nearest the viewport's focal
+  // point scale up, falling off with a gaussian curve.
+  var MAX_BOOST = 0.06;   // center card grows to 1.06x
+  var SIGMA = 0.16;       // how quickly the effect falls off
+
+  function update(){
+    ticking = false;
+    var vh = window.innerHeight;
+    var focal = vh * 0.42; // slightly above center feels natural while scrolling down
+    for (var i = 0; i < items.length; i++){
+      var r = items[i].getBoundingClientRect();
+      var c = r.top + r.height / 2;
+      var d = Math.abs(c - focal) / vh;
+      var s = 1 + MAX_BOOST * Math.exp(-(d * d) / (2 * SIGMA * SIGMA));
+      items[i].style.setProperty('--mag', s.toFixed(4));
+    }
+  }
+
+  function onScroll(){
+    if (!ticking){
+      ticking = true;
+      window.requestAnimationFrame(update);
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  update();
+})();
+</script>
 
 </body>
 </html>
