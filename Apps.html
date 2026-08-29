@@ -231,6 +231,107 @@
     }
     .app-card:hover .app-cta::after { transform: translateX(4px); }
 
+    /* small print under a card */
+    .app-note {
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: var(--hint);
+      margin-top: 1rem;
+    }
+
+    /* SVG icon that sits in the same slot as .app-art */
+    svg.app-art {
+      padding: 0;
+      background: linear-gradient(150deg, #3a68e8 0%, #1e40b0 100%);
+      color: #fff;
+      border-color: rgba(0,0,0,0.18);
+    }
+
+    /* ── Secret card ── */
+    .secret-card {
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      background: #0e0d0c;
+      border: 0.5px solid rgba(255,255,255,0.14);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3.5rem 2rem;
+      min-height: 100%;
+      gap: 1.1rem;
+    }
+    .secret-headline {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .secret-date {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.72);
+    }
+    .secret-card:hover {
+      border-color: rgba(255,255,255,0.3);
+      box-shadow: 0 18px 40px -12px rgba(0,0,0,0.4),
+                  0 6px 14px -6px rgba(0,0,0,0.25);
+    }
+
+    /* a single pass of glitter on hover, then it settles again */
+    .secret-card .glint {
+      position: absolute;
+      color: #fff;
+      font-size: 11px;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      text-shadow: 0 0 6px rgba(255,255,255,0.85);
+    }
+    .secret-card:hover .glint {
+      animation: glint-pop 1.15s ease-out 1 both;
+    }
+    @keyframes glint-pop {
+      0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
+      35%  { opacity: 1; transform: scale(1.15) rotate(35deg); }
+      100% { opacity: 0; transform: scale(0.4) rotate(70deg); }
+    }
+    .secret-card .g1 { top: 22%;  left: 16%; animation-delay: 0.00s !important; }
+    .secret-card .g2 { top: 34%;  right: 20%; font-size: 9px;  animation-delay: 0.12s !important; }
+    .secret-card .g3 { top: 58%;  left: 26%; font-size: 8px;  animation-delay: 0.30s !important; }
+    .secret-card .g4 { bottom: 24%; right: 26%; animation-delay: 0.20s !important; }
+    .secret-card .g5 { top: 46%;  left: 62%; font-size: 13px; animation-delay: 0.38s !important; }
+    .secret-card .g6 { bottom: 32%; left: 44%; font-size: 9px; animation-delay: 0.50s !important; }
+    .secret-card .g7 { top: 26%;  right: 42%; font-size: 8px;  animation-delay: 0.44s !important; }
+
+    /* one soft sweep of light across the card */
+    .secret-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg,
+        transparent 38%,
+        rgba(255,255,255,0.10) 48%,
+        rgba(255,255,255,0.02) 56%,
+        transparent 64%);
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .secret-card:hover::after {
+      animation: glint-sweep 1.15s ease-out 1 both;
+    }
+    @keyframes glint-sweep {
+      0%   { opacity: 0; transform: translateX(-100%); }
+      15%  { opacity: 1; }
+      85%  { opacity: 1; }
+      100% { opacity: 0; transform: translateX(100%); }
+    }
+
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -244,6 +345,8 @@
       .app-card:hover { transform: none; }
       .nav-apps:hover .apps-label { animation: none; }
       .nav-apps:hover .sparkle { animation: none; opacity: 0.9; transform: none; }
+      .secret-card:hover .glint { animation: none; opacity: 0; }
+      .secret-card:hover::after { animation: none; opacity: 0; }
     }
     @media (max-width: 640px) {
       nav { padding: 1rem 1.25rem; }
@@ -293,6 +396,35 @@
         <span class="free-badge">FREE — no tracking, no ads</span>
         <span class="app-cta">Get it on Connect IQ</span>
       </a>
+
+      <!-- Web: Search Term Validator for Relativity -->
+      <a class="app-card" href="STR.html">
+        <svg class="app-art" viewBox="0 0 96 96" role="img" aria-label="Search Term Validator icon">
+          <rect x="18" y="18" width="60" height="60" rx="14" fill="none" stroke="currentColor" stroke-width="5"/>
+          <path d="M32 49l11 11 22-24" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="app-store-tag">Web · Browser or offline</p>
+        <h2 class="app-name">Search Term Validator</h2>
+        <p class="app-tagline">For dtSearch &amp; RelativityOne</p>
+        <p class="app-desc">Paste a list of search terms and get every line checked against dtSearch and RelativityOne rules — Westlaw habits like <em>&amp;</em>, <em>term!</em>, <em>/5</em> and <em>/p</em> are converted for you, while unbalanced quotes, leading wildcards, noise-word phrases, and over-long terms are flagged with the rule behind each one. Filter by rule, dedupe subsets, and export a CSV or Markdown report for the record. Run it right here in your browser, or download the single file and run it locally — offline, on your own machine.</p>
+        <span class="free-badge">FREE — no tracking, no ads</span>
+        <span class="app-cta">Open the validator</span>
+        <p class="app-note">An independent project. Not affiliated with, sponsored by, or endorsed by Relativity ODA LLC. Relativity®, RelativityOne®, and dtSearch® are trademarks of their respective owners.</p>
+      </a>
+
+      <!-- Secret app -->
+      <div class="app-card secret-card" aria-label="Unannounced app, coming spring 2027">
+        <span class="glint g1" aria-hidden="true">✦</span>
+        <span class="glint g2" aria-hidden="true">✧</span>
+        <span class="glint g3" aria-hidden="true">✦</span>
+        <span class="glint g4" aria-hidden="true">✧</span>
+        <span class="glint g5" aria-hidden="true">✦</span>
+        <span class="glint g6" aria-hidden="true">✧</span>
+        <span class="glint g7" aria-hidden="true">✦</span>
+
+        <p class="secret-headline">Coming Soon</p>
+        <p class="secret-date">Spring 2027</p>
+      </div>
 
     </div>
   </main>
