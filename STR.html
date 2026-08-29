@@ -1,0 +1,3974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Search Term Validator — v12</title>
+<!--
+  APP_VERSION is defined once in the <script> block below and drives:
+    (a) the version badge in the header
+    (b) the <title> suffix
+    (c) the CSV export filename suffix
+  When producing a new iteration, update the single APP_VERSION constant
+  (and this <title>) and everything else follows.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* =====================================================================
+     DESIGN LAYER — v11
+     Purely presentational. No selector names, IDs or DOM hooks were added,
+     removed or renamed relative to v10, and the geometry the virtual
+     scroller depends on is preserved exactly:
+       .lines  padding-top .......... 12px  (matches ROW_HEIGHT offset +12)
+       .line   line-height/min-height 20px  (matches ROW_HEIGHT = 20)
+       .line   left gutter ........... 46px (.ln absolute, 38px wide)
+       .pane-body has no padding      (it is the scroll host)
+     Changing any of the four above will desynchronise row positioning.
+     ===================================================================== */
+
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    /* Surfaces */
+    --bg: #eef0f4;
+    --panel: #ffffff;
+    --surface-alt: #f7f8fa;
+    --surface-sunken: #f1f3f7;
+    --border: #e4e7ee;
+    --border-strong: #cdd2dd;
+
+    /* Ink */
+    --text: #14161b;
+    --text-muted: #626b7b;
+    --text-faint: #98a0af;
+
+    /* Accent */
+    --accent: #2b54c9;
+    --accent-hover: #1f3fa3;
+    --accent-soft: #edf2ff;
+
+    /* Severity — row tints, solid marks, and ink */
+    --red-bg: #fdf0ef;   --red-border: #c8453f; --red-text: #8a2320;
+    --yellow-bg: #fdf6e4; --yellow-border: #d9a326; --yellow-text: #6a4a09;
+    --blue-bg: #ecf2fd;  --blue-border: #3f74c9; --blue-text: #1b4585;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, .05);
+    --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 8px 24px rgba(16, 24, 40, .07);
+    --shadow-lg: 0 12px 32px rgba(16, 24, 40, .14), 0 2px 8px rgba(16, 24, 40, .08);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: #cfdcfa; color: var(--text); }
+
+  /* Thin, unobtrusive scrollbars */
+  * { scrollbar-width: thin; scrollbar-color: #c8cddb transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: #ccd2df; border-radius: 999px;
+    border: 3px solid transparent; background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: #b3bbcc; background-clip: content-box; }
+
+  button {
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    letter-spacing: .005em;
+    border: 1px solid var(--border-strong);
+    background: #fff; color: var(--text);
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: background .14s ease, border-color .14s ease, box-shadow .14s ease, color .14s ease, transform .14s ease;
+  }
+  button:hover { background: var(--surface-alt); border-color: #b9c0ce; }
+  button:active { transform: translateY(.5px); }
+  button.primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+    box-shadow: 0 1px 2px rgba(28, 55, 130, .28), 0 1px 3px rgba(28, 55, 130, .18);
+  }
+  button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  /* Ghost buttons stay clearly readable — they are real actions
+     ("Load sample", "Report (.md)", "Copy all"), not disabled controls. */
+  button.ghost { background: transparent; border-color: transparent; box-shadow: none; color: #414b5c; }
+  button.ghost:hover { background: var(--surface-sunken); color: var(--text); }
+  button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+  /* --- Layout ----------------------------------------------------------- */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+  header.topbar {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 8px; row-gap: 8px;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, .88);
+    backdrop-filter: saturate(180%) blur(8px);
+    -webkit-backdrop-filter: saturate(180%) blur(8px);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 0 rgba(16, 24, 40, .02);
+    z-index: 20;
+  }
+  header .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 15px; letter-spacing: -.01em;
+    margin-right: 6px; white-space: nowrap;
+  }
+  /* Toolbar controls keep their labels on one line; when the bar runs out of
+     room the row wraps instead of squashing labels into two lines. */
+  header.topbar button { white-space: nowrap; flex: 0 0 auto; }
+  header .brand svg {
+    display: block;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 7px;
+    padding: 3px;
+    width: 26px; height: 26px;
+    box-shadow: inset 0 0 0 1px rgba(43, 84, 201, .12);
+  }
+  .spacer { flex: 1; }
+
+  .summary {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; min-width: 0;
+    font-size: 12px; color: var(--text-muted);
+    padding: 4px 6px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border); border-radius: 999px;
+  }
+  .summary .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px;
+    font-weight: 600; font-variant-numeric: tabular-nums;
+    border: 1px solid transparent;
+    transition: box-shadow .14s ease, transform .14s ease, filter .14s ease;
+  }
+  .summary .pill:hover { filter: brightness(.97); box-shadow: 0 1px 3px rgba(16, 24, 40, .10); }
+  .pill.err { background: var(--red-bg); color: var(--red-text); border-color: rgba(200, 69, 63, .22); }
+  .pill.warn { background: var(--yellow-bg); color: var(--yellow-text); border-color: rgba(217, 163, 38, .28); }
+  .pill.fix { background: var(--blue-bg); color: var(--blue-text); border-color: rgba(63, 116, 201, .22); }
+  .pill.total { background: #fff; color: var(--text-muted); border-color: var(--border); }
+
+  /* v8: perf badge and jump-to-line input */
+  .perf-badge {
+    font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+    padding: 2px 8px; border-radius: 999px; background: transparent;
+    display: none;
+  }
+  .perf-badge.visible {
+    display: inline-flex; align-items: center; gap: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 300px;
+  }
+  .perf-badge.slow { color: var(--yellow-text); background: var(--yellow-bg); }
+  .jump-wrap { display: inline-flex; align-items: center; gap: 6px; margin-left: 2px; white-space: nowrap; }
+  .jump-wrap input {
+    font-family: var(--mono); font-size: 11px;
+    width: 64px; padding: 3px 8px;
+    border: 1px solid var(--border-strong); border-radius: 999px;
+    background: #fff; color: var(--text);
+    transition: border-color .14s ease, box-shadow .14s ease;
+  }
+  .jump-wrap input:hover { border-color: #b9c0ce; }
+  .jump-wrap input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(43, 84, 201, .16);
+  }
+
+  /* v8: brief highlight on Go-To-Line jump target. */
+  @keyframes stv-flash {
+    0%   { background: rgba(43, 84, 201, .28); }
+    100% { background: transparent; }
+  }
+  .line.flash { animation: stv-flash 900ms ease-out; }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 14px 16px 16px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .pane {
+    display: flex; flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    min-width: 0;
+  }
+  .pane-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    background: linear-gradient(180deg, #fbfcfd 0%, var(--surface-alt) 100%);
+    min-height: 40px;
+  }
+  /* The scroll host for the virtual scroller — must stay padding-free. */
+  .pane-body { flex: 1; overflow: auto; position: relative; }
+
+  /* Input textarea */
+  #inputArea {
+    width: 100%; height: 100%;
+    border: 0; padding: 12px 14px;
+    resize: none; outline: none;
+    font-family: var(--mono); font-size: 13px;
+    line-height: 20px;
+    background: transparent; color: var(--text);
+    tab-size: 4;
+  }
+  #inputArea::placeholder { color: var(--text-faint); }
+
+  /* Highlighted overlay (post-validation view) */
+  .lines {
+    font-family: var(--mono); font-size: 13px; line-height: 20px;
+    padding: 12px 0;
+  }
+  .line {
+    display: flex; align-items: flex-start;
+    padding: 0 14px 0 46px;
+    position: relative;
+    min-height: 20px;
+    white-space: pre;
+    transition: background .1s ease;
+  }
+  .line:hover { background: var(--surface-alt); }
+  .line .ln {
+    position: absolute; left: 0; top: 0;
+    width: 38px; text-align: right;
+    color: var(--text-faint); font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    padding-top: 1px;
+  }
+  /* Severity rows: soft tint + a hairline severity rail on the left edge.
+     Both are paint-only (inset shadow), so the 20px row box is unchanged. */
+  .line.err  { background: var(--red-bg);    box-shadow: inset 3px 0 0 var(--red-border); }
+  .line.warn { background: var(--yellow-bg); box-shadow: inset 3px 0 0 var(--yellow-border); }
+  .line.fix  { background: var(--blue-bg);   box-shadow: inset 3px 0 0 var(--blue-border); }
+  .line.err:hover  { background: #fce7e5; }
+  .line.warn:hover { background: #fbf1d6; }
+  .line.fix:hover  { background: #e4edfc; }
+  .line .content { flex: 1; word-break: break-all; white-space: pre-wrap; }
+  .line .content.needs-review { color: var(--red-text); font-style: italic; }
+  .line .content.placeholder { color: var(--text-faint); font-style: italic; }
+  .line .copy {
+    opacity: 0; margin-left: 8px;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+    line-height: 16px; padding: 0 8px;
+    border-radius: 999px;
+    background: #fff; border: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    box-shadow: none;
+    transition: opacity .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .line:hover .copy { opacity: 1; }
+  .line .copy:hover { background: #fff; color: var(--accent); border-color: var(--accent); }
+
+  /* Issues sidebar (below output) — inline chips.
+     v9: force single-line clipping so multi-chip rows can't overflow the
+     fixed 20 px slot used by the virtual scroller. Excess chips are moved
+     into a "+N" pill (see buildRow). */
+  .chips {
+    display: inline-flex; flex-wrap: nowrap; gap: 4px;
+    margin-left: 8px; vertical-align: middle;
+    max-width: 55%;
+    overflow: hidden; white-space: nowrap;
+    align-items: center;
+  }
+  .chip {
+    display: inline-block;
+    /* v9 (retained): 11px with wider tracking reads sharply on 4K displays.
+       line-height is pinned at 16px so a chip can never exceed the fixed
+       20 px row slot the virtual scroller allocates. */
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    line-height: 16px; padding: 0 7px; border-radius: 999px;
+    letter-spacing: .05em;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .1s ease, box-shadow .1s ease, filter .1s ease;
+    flex: 0 0 auto;
+  }
+  .chip:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(16, 24, 40, .18); filter: saturate(1.05); }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Contrast (WCAG AA, 11px bold ⇒ 4.5:1 required):
+       .err  #fff on #c8453f ≈ 4.8:1
+       .warn #362000 on #d9a326 ≈ 5.1:1  (v9 fix, preserved)
+       .fix  #fff on #3f74c9 ≈ 4.6:1 */
+  .chip.err { background: var(--red-border); color: #fff; border-color: #ab3833; }
+  .chip.warn { background: var(--yellow-border); color: #362000; border-color: #b8871f; }
+  .chip.fix { background: var(--blue-border); color: #fff; border-color: #315fa8; }
+  .chip.filter-active { outline: 2px solid var(--text); outline-offset: 1px; }
+  /* v9: overflow pill "+N" — quieter than a real chip so it doesn't compete. */
+  .chip.more {
+    background: #fff; color: var(--text-muted);
+    border-color: var(--border-strong);
+    font-weight: 600;
+  }
+  .chip.more:hover { color: var(--text); border-color: #b9c0ce; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed; z-index: 1000;
+    max-width: 380px;
+    background: #14161b; color: #eef0f4;
+    padding: 11px 13px; border-radius: 10px;
+    font-size: 12px; line-height: 1.55;
+    box-shadow: 0 16px 40px rgba(10, 14, 22, .32), 0 2px 8px rgba(10, 14, 22, .22);
+    border: 1px solid rgba(255, 255, 255, .08);
+    pointer-events: none;
+    opacity: 0; transition: opacity .12s ease;
+    font-family: var(--sans);
+  }
+  #tooltip.visible { opacity: 1; }
+  #tooltip .tt-title {
+    font-weight: 700; margin-bottom: 5px;
+    letter-spacing: .02em;
+  }
+  #tooltip .tt-rule {
+    font-family: var(--mono); font-size: 11px; color: #a3adbe;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+  }
+  #tooltip ul { margin: 4px 0 0; padding-left: 18px; }
+  /* v9: arrow shown only in keyboard-anchored mode. */
+  #tooltip.anchored::before {
+    content: ''; position: absolute; width: 8px; height: 8px;
+    background: #14161b; transform: rotate(45deg);
+    left: -4px; top: 14px;
+  }
+  #tooltip.anchored.arrow-right::before { left: auto; right: -4px; }
+  #tooltip.anchored.arrow-below::before { left: 14px; top: -4px; }
+  #tooltip.anchored.arrow-above::before { left: 14px; top: auto; bottom: -4px; right: auto; }
+
+  /* v9: screen-reader-only visually-hidden helper for the live region. */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  /* Settings modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(17, 22, 33, .45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 500;
+    padding: 24px;
+  }
+  .modal-backdrop.visible { display: flex; animation: stv-fade .14s ease-out; }
+  @keyframes stv-fade { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: #fff; border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    width: 560px; max-width: 92vw;
+    max-height: 88vh; overflow: auto;
+  }
+  .modal header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    position: sticky; top: 0;
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1;
+  }
+  .modal header h2 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .modal .content { padding: 18px 20px; }
+  .modal .content h3 { color: var(--text-muted); }
+  .modal .content a { color: var(--accent); text-decoration-color: rgba(43, 84, 201, .3); text-underline-offset: 2px; }
+  .modal .content a:hover { text-decoration-color: var(--accent); }
+  .modal .content code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: var(--surface-sunken); border: 1px solid var(--border);
+    padding: 1px 5px; border-radius: 5px;
+  }
+  .modal footer {
+    padding: 14px 20px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px; justify-content: flex-end;
+    background: var(--surface-alt);
+    position: sticky; bottom: 0;
+  }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--text-muted); }
+  .field input[type="number"], .field textarea {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid var(--border-strong); border-radius: 8px;
+    font-family: var(--mono); font-size: 12px;
+    background: #fff; color: var(--text);
+    transition: border-color .14s ease, box-shadow .14s ease;
+  }
+  .field input[type="number"]:focus, .field textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(43, 84, 201, .16);
+  }
+  .field textarea { height: 96px; resize: vertical; line-height: 1.6; }
+  .field .hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; }
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer;
+  }
+  .toggle input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+  /* Focus + a11y */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #14161b; color: #fff;
+    padding: 9px 16px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; z-index: 2000;
+    box-shadow: var(--shadow-lg);
+    opacity: 0; transition: opacity .18s ease;
+    pointer-events: none;
+  }
+  .toast.visible { opacity: 1; }
+
+  /* v12: "Download to run privately offline" — an anchor styled as a
+     toolbar control. Accent-tinted so it reads as the one link on the bar
+     without competing with the primary Validate button. */
+  .dl-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    flex: 0 0 auto; white-space: nowrap;
+    font-size: 13px; font-weight: 600; line-height: 1;
+    padding: 7px 13px; border-radius: 8px;
+    color: var(--accent); text-decoration: none;
+    background: var(--accent-soft);
+    border: 1px solid rgba(43, 84, 201, .22);
+    box-shadow: var(--shadow-sm);
+    transition: background .14s ease, border-color .14s ease, color .14s ease, box-shadow .14s ease, transform .14s ease;
+  }
+  .dl-link:hover {
+    background: var(--accent); color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 1px 2px rgba(28, 55, 130, .28), 0 2px 6px rgba(28, 55, 130, .18);
+  }
+  .dl-link:active { transform: translateY(.5px); }
+  .dl-link svg { display: block; flex: 0 0 auto; }
+
+  /* Export split button group */
+  .export-group {
+    display: inline-flex; align-items: stretch;
+    border-radius: 8px; overflow: hidden;
+    background: #fff;
+    box-shadow: 0 0 0 1px var(--border-strong), var(--shadow-sm);
+  }
+  .export-group > button { border-radius: 0; border: 0; box-shadow: none; }
+  .export-group > button + button { border-left: 1px solid var(--border); }
+  .export-group > button:hover { background: var(--surface-alt); }
+
+  /* Filter bar in output pane */
+  #filterBar {
+    display: none;
+    align-items: center; gap: 6px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    background: var(--surface-alt); font-size: 12px; color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+  #filterBar.visible { display: flex; }
+  #filterBar .fchip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--border-strong);
+    font-family: var(--mono); font-size: 11px; color: var(--text);
+    cursor: pointer;
+    transition: background .14s ease, color .14s ease, border-color .14s ease, box-shadow .14s ease;
+  }
+  #filterBar .fchip:hover { background: var(--surface-sunken); border-color: #b9c0ce; }
+  #filterBar .fchip.active {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+    box-shadow: 0 1px 3px rgba(28, 55, 130, .3);
+  }
+  #filterBar .fclear {
+    background: transparent; border: 0; color: var(--accent);
+    cursor: pointer; font-size: 12px; font-weight: 600; padding: 2px 6px;
+    box-shadow: none;
+  }
+  #filterBar .fclear:hover { text-decoration: underline; background: transparent; }
+  .line.filtered-out { display: none; }
+
+  /* Keyboard-shortcuts modal specific */
+  #shortcutsModal kbd {
+    display: inline-block;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    padding: 2px 7px; border-radius: 6px;
+    background: linear-gradient(180deg, #fff 0%, var(--surface-sunken) 100%);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 1px 0 rgba(16, 24, 40, .06);
+    color: var(--text);
+    min-width: 22px; text-align: center;
+  }
+  #shortcutsModal table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  #shortcutsModal td { padding: 9px 4px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  #shortcutsModal tr:last-child td { border-bottom: 0; }
+  #shortcutsModal td:first-child { width: 34%; white-space: nowrap; }
+  #shortcutsModal td:last-child { color: var(--text-muted); }
+
+  /* Reference modal readability */
+  #referenceContent ul { color: var(--text); }
+  #referenceContent li { margin-bottom: 6px; }
+
+  /* Small viewport: stack the topbar, hide button text where possible */
+  @media (max-width: 900px) {
+    header.topbar {
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      gap: 6px;
+    }
+    header .brand { font-size: 14px; }
+    .summary { order: 10; width: 100%; padding: 4px 6px; gap: 5px; font-size: 11px; flex-wrap: wrap; border-radius: 12px; }
+    .summary .pill { padding: 2px 8px; }
+    main { grid-template-columns: 1fr; gap: 10px; padding: 10px; }
+    .pane { border-radius: 12px; }
+    header.topbar button { padding: 5px 9px; font-size: 12px; }
+    .dl-link { padding: 6px 10px; font-size: 12px; gap: 6px; }
+    /* v9: perf badge collapses to just the total on small viewports. */
+    .perf-badge.visible .perf-detail { display: none; }
+    /* v9: chips get tighter on small viewports so they don't crowd the row. */
+    .chips { max-width: 40%; }
+  }
+  @media (max-width: 600px) {
+    #btnSample { display: none; }
+    header .brand { flex: 1 0 100%; }
+    /* v9: hide the "GO TO LINE" label on tiny viewports; the input's
+       placeholder "#" is enough context and the pane column is precious. */
+    .jump-wrap label { display: none; }
+    .jump-wrap input { width: 48px; }
+    /* v9: chip max-width drops further on tiny viewports. */
+    .chips { max-width: 35%; }
+    /* v12: the download control collapses to its icon; the accessible name
+       is carried by aria-label/title. */
+    .dl-link .dl-text { display: none; }
+    .dl-link { padding: 6px 9px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="2.5" y="2.5" width="19" height="19" rx="4" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M7 12l3.2 3.2L17 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Search Term Validator
+      <span id="versionBadge" style="font-weight:400;color:var(--text-muted);font-size:12px;margin-left:6px"></span>
+    </div>
+    <button id="btnValidate" class="primary">Validate</button>
+    <button id="btnClear">Clear</button>
+    <button id="btnSample" class="ghost">Load sample</button>
+    <div class="spacer"></div>
+    <div class="summary" id="summary">
+      <span class="pill total"><span id="s_total">0</span> terms</span>
+      <span class="pill err"><span id="s_err">0</span> errors</span>
+      <span class="pill warn"><span id="s_warn">0</span> warnings</span>
+      <span class="pill fix"><span id="s_fix">0</span> auto-fixes</span>
+      <span id="s_perf" class="perf-badge" title="Validation time"></span>
+      <span id="jumpWrap" class="jump-wrap" style="display:none" title="Jump to a specific line number">
+        <label for="jumpTo" style="font-size:11px;color:var(--text-muted);letter-spacing:.03em">GO TO LINE</label>
+        <input id="jumpTo" type="number" min="1" step="1" placeholder="#" aria-label="Jump to line number">
+      </span>
+    </div>
+    <button id="btnDedupe" title="Remove exact duplicates and logical subsets">Dedupe</button>
+    <div class="export-group" role="group" aria-label="Export">
+      <button id="btnExport" title="Export CSV report">Export CSV</button>
+      <button id="btnExportReport" class="ghost" title="Export human-readable Markdown report grouped by rule">Report (.md)</button>
+    </div>
+    <button id="btnReference" title="Reference: dtSearch/Relativity rules the validator can't fully check" aria-label="Reference">Reference</button>
+    <button id="btnShortcuts" title="Keyboard shortcuts (press ?)" aria-label="Keyboard shortcuts">?</button>
+    <button id="btnSettings" title="Settings" aria-label="Settings">⚙︎</button>
+    <!-- v12: offline copy. Plain anchor — no script is bound to it, so it
+         cannot affect validation. Relative href: keep STRvalidator.zip in
+         the same directory as this page when you publish it. -->
+    <a id="btnDownload" class="dl-link" href="STRvalidator.zip" download
+       aria-label="Download to run privately offline"
+       title="Download a self-contained copy to run offline — nothing you paste ever leaves your machine">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3.5v11m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4.5 16.5v2a2 2 0 002 2h11a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      <span class="dl-text">Download to run privately offline</span>
+    </a>
+  </header>
+
+  <main>
+    <section class="pane">
+      <div class="pane-header">
+        <span>Input</span>
+        <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">— one term per line</span>
+        <div class="spacer" style="flex:1"></div>
+        <span id="inputMode" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">edit mode</span>
+      </div>
+      <div class="pane-body" id="inputBody">
+        <textarea id="inputArea" spellcheck="false" placeholder="Paste search terms here, one per line…"></textarea>
+        <div id="inputHighlight" class="lines" style="display:none"></div>
+      </div>
+    </section>
+
+    <section class="pane">
+      <div class="pane-header">
+        <span>Corrected output</span>
+        <div class="spacer" style="flex:1"></div>
+        <button id="btnCopyAll" class="ghost">Copy all</button>
+      </div>
+      <div id="filterBar" role="toolbar" aria-label="Filter by rule">
+        <span style="font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:11px">Filter</span>
+        <div id="filterChips" style="display:inline-flex;gap:4px;flex-wrap:wrap"></div>
+        <button class="fclear" id="btnClearFilter">Clear</button>
+      </div>
+      <div class="pane-body" id="outputBody">
+        <div id="outputArea" class="lines"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="tooltip" role="tooltip"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- v9: polite live region so screen readers announce validation completion. -->
+<div id="srAnnounce" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Shortcuts modal -->
+<div class="modal-backdrop" id="shortcutsModal">
+  <div class="modal" role="dialog" aria-labelledby="shortcutsTitle" style="max-width:520px">
+    <header><h2 id="shortcutsTitle">Keyboard shortcuts</h2><div class="spacer" style="flex:1"></div><button class="ghost" id="btnCloseShortcuts">✕</button></header>
+    <div class="content">
+      <table>
+        <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Enter</kbd></td><td>Validate the current input.</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Close any open modal, or clear the active rule filter.</td></tr>
+        <tr><td><kbd>?</kbd> or <kbd>Shift</kbd>+<kbd>/</kbd></td><td>Open this shortcuts panel.</td></tr>
+        <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>K</kbd></td><td>Focus the input area.</td></tr>
+        <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>D</kbd></td><td>Open Dedupe.</td></tr>
+        <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>E</kbd></td><td>Export CSV. Add <kbd>Shift</kbd> for the Markdown report.</td></tr>
+        <tr><td>Click a rule chip on a line</td><td>Filter output to that rule only. Click again or press <kbd>Esc</kbd> to clear.</td></tr>
+        <tr><td>Click a summary pill</td><td>Filter output by severity (errors, warnings, auto-fixes).</td></tr>
+      </table>
+      <p style="margin:12px 0 0;color:var(--text-muted);font-size:12px">Shortcuts are disabled while an input or textarea is focused, except for <kbd>Ctrl</kbd>+<kbd>Enter</kbd>.</p>
+    </div>
+    <footer>
+      <div class="spacer" style="flex:1"></div>
+      <button id="btnCloseShortcuts2" class="primary">Close</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Reference modal -->
+<div class="modal-backdrop" id="referenceModal">
+  <div class="modal" role="dialog" aria-labelledby="referenceTitle" style="max-width:720px">
+    <header><h2 id="referenceTitle">Reference &mdash; advisory rules</h2><div class="spacer" style="flex:1"></div><button class="ghost" id="btnCloseReference">✕</button></header>
+    <div class="content" id="referenceContent">
+      <p style="margin-top:0;color:var(--text-muted);font-size:13px">These rules from the Relativity/dtSearch documentation can't be fully verified from term text alone. Use them as a checklist while drafting. Every item below cites the source page in the official Relativity documentation.</p>
+
+      <div style="margin:10px 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt,#f8f9fb);font-size:12px;line-height:1.5">
+        <div style="font-weight:600;margin-bottom:4px">Primary sources</div>
+        <ul style="margin:4px 0 0;padding-left:16px">
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">Using dtSearch syntax options</a> — connectors, proximity, wildcards, stemming, fuzzy, phonic</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">dtSearch noise words and alphabet</a> — noise list, letters, reserved symbols</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm" target="_blank" rel="noopener">Regular expression caveats with dtSearch</a> — <code>##"..."</code> syntax, case sensitivity in regex</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/Regular_expressions/Searching_with_regular_expressions.htm" target="_blank" rel="noopener">Searching with regular expressions</a> — regex examples and patterns</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/STR.htm" target="_blank" rel="noopener">Search terms reports (STR) overview</a> — STR-specific constraints (Fuzziness, Dictionary)</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">Running a Dictionary search</a> — token validation workflow</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/System_Guides/User_quick_reference/Searching_Quick_Reference/Search.htm" target="_blank" rel="noopener">Searching quick reference</a> — operator summary table</li>
+          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Searching_for_symbols.htm" target="_blank" rel="noopener">Searching for symbols and emojis</a> — making reserved characters searchable</li>
+        </ul>
+      </div>
+
+      <h3 style="margin:14px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Query design</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.55">
+        <li>Use several specific STRs instead of one broad query with many OR&rsquo;d concepts. Broad queries are hard to review, hard to validate against a Dictionary, and often over-inclusive. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/STR.htm" target="_blank" rel="noopener">[STR overview]</a></li>
+        <li>Minimize the number of saved-search field conditions layered on top of the STR. Every condition adds a place where the STR&rsquo;s intent can be quietly narrowed. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/Create.htm" target="_blank" rel="noopener">[Create STR]</a></li>
+        <li>Consider smaller, targeted indexes (by custodian, date range, or file type) rather than one large index. Smaller indexes validate faster and behave more predictably. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/dtSearch.htm" target="_blank" rel="noopener">[dtSearch overview]</a></li>
+        <li>Missing highlights in a hit document do not mean the search failed. Highlighting is a display artifact and can lag or be omitted for complex proximity results. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_dtSearch.htm" target="_blank" rel="noopener">[Running a dtSearch]</a></li>
+        <li>Ignore isolated highlights inside proximity-hit documents — the proximity operator groups matches internally, but the highlighter shows every individual token. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options]</a></li>
+      </ul>
+
+      <h3 style="margin:14px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Validation workflow</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.55">
+        <li>Use the Dictionary to validate a term against actual indexed tokens. Dictionary is capped at ~2,000 unique expansions per query — broad wildcards and stemming can silently exceed this. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">[Dictionary search]</a></li>
+        <li>Prefer Dictionary validation over broad wildcards. If a wildcard expands to more than the Dictionary can show, you don&rsquo;t truly know what it will match. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">[Dictionary search]</a></li>
+        <li>Validate wildcard, stemming, fuzzy, and phonic expansions in the Dictionary before running the STR against production data. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options]</a></li>
+        <li>Enable auto-recognition for <code>date()</code>, <code>mail()</code>, and <code>creditcard()</code> pattern types before you rely on them, but only when necessary — auto-recognition slows indexing and increases index size. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options]</a></li>
+        <li>Record: which index/searchable set was used, the alphabet file version, the noise word list, the STR terms as run, and the run timestamp — for defensibility. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/Create.htm" target="_blank" rel="noopener">[Create STR]</a></li>
+      </ul>
+
+      <h3 style="margin:14px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Index-dependent behavior</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.55">
+        <li>The Fuzziness Level control is not supported in STR searches. Use <code>word%</code> notation instead if you need approximate matching. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options: fuzzy]</a></li>
+        <li>Accent sensitivity depends on how the index was built. This validator cannot verify accent handling from term text alone. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">[Alphabet file]</a></li>
+        <li>Underscore does <strong>not</strong> create a word break by default. <code>foo_bar</code> is indexed as one token, not two. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">[Alphabet file]</a></li>
+        <li>Reserved symbols &mdash; <code>? * % ~ # = : &amp; ( )</code> &mdash; are stripped by default. To search them as literals, add them to the alphabet file and fully rebuild the index. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Searching_for_symbols.htm" target="_blank" rel="noopener">[Searching for symbols]</a></li>
+        <li>Searches are case-insensitive. dtSearch normalizes indexed text to lowercase; uppercase in the query has no effect except inside <code>##"..."</code> regex, where uppercase will fail to match. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm" target="_blank" rel="noopener">[Regex caveats]</a></li>
+      </ul>
+
+      <p style="margin:14px 0 0;color:var(--text-muted);font-size:12px">Documentation URLs point to the current RelativityOne pages. If you’re on Server, replace <code>/RelativityOne/</code> with <code>/Server2026/</code> (or your version) in the URL.</p>
+    </div>
+    <footer>
+      <div class="spacer" style="flex:1"></div>
+      <button id="btnCloseReference2" class="primary">Close</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal" role="dialog" aria-labelledby="settingsTitle">
+    <header><h2 id="settingsTitle">Settings</h2><div class="spacer" style="flex:1"></div><button class="ghost" id="btnCloseSettings">✕</button></header>
+    <div class="content">
+      <div class="field">
+        <label for="sSameSentence">Westlaw /s (same sentence) → w/N</label>
+        <input type="number" id="sSameSentence" min="1" max="200" value="15">
+        <div class="hint">Approximation. dtSearch has no "sentence" operator; a word-window is used instead.</div>
+      </div>
+      <div class="field">
+        <label for="sSameParagraph">Westlaw /p (same paragraph) → w/N</label>
+        <input type="number" id="sSameParagraph" min="1" max="500" value="50">
+        <div class="hint">Approximation. dtSearch has no "paragraph" operator.</div>
+      </div>
+      <div class="field">
+        <label class="toggle">
+          <input type="checkbox" id="sFlagSPPromotion" checked>
+          Flag /s and /p conversions for review (recommended)
+        </label>
+      </div>
+      <div class="field">
+        <label class="toggle">
+          <input type="checkbox" id="sDedupeOn">
+          Auto-dedupe (exact duplicates + logical subsets)
+        </label>
+        <div class="hint">Off by default. When on, dedupe runs automatically at validation time.</div>
+      </div>
+      <div class="field">
+        <label for="sNoise">dtSearch noise words (comma or whitespace separated)</label>
+        <textarea id="sNoise"></textarea>
+        <div class="hint">Default is the dtSearch standard English noise word list. Noise words inside quoted phrases produce warnings because they are not indexed.</div>
+      </div>
+      <div class="field">
+        <label class="toggle">
+          <input type="checkbox" id="sStrictReserved" checked>
+          Wrap reserved operator words used as literal terms in quotes
+        </label>
+      </div>
+    </div>
+    <footer>
+      <button id="btnResetSettings">Reset defaults</button>
+      <button id="btnSaveSettings" class="primary">Save</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   VALIDATION ENGINE (Phase 2 will lift this module verbatim into the
+   Relativity custom application. Keep it UI-free.)
+   ===================================================================== */
+const Validator = (function () {
+  'use strict';
+
+  // Standard dtSearch English noise words (built-in default list).
+  // Source: dtSearch Corp — noise.dat default English list.
+  const DEFAULT_NOISE = [
+    "a","about","after","all","also","an","and","another","any","are","as","at",
+    "be","because","been","before","being","between","both","but","by",
+    "came","can","come","could",
+    "did","do","does",
+    "each","else",
+    "for","from",
+    "get","got",
+    "had","has","have","he","her","here","him","himself","his","how",
+    "i","if","in","into","is","it","its",
+    "just",
+    "like",
+    "make","many","me","might","more","most","much","must","my",
+    "never","no","now",
+    "of","on","only","or","other","our","out","over",
+    "re",
+    "said","same","see","should","since","she","so","some","still","such",
+    "take","than","that","the","their","them","then","there","these","they","this","those","through","to","too",
+    "under","up","use",
+    "very",
+    "want","was","way","we","well","were","what","when","where","which","while","who","will","with","would",
+    "you","your"
+  ];
+
+  // Reserved dtSearch operator words — when a bare (unquoted) token equals one
+  // of these, it is not searched literally.
+  const RESERVED_OPS = new Set([
+    "and","or","not","w","pre","to","contains","xfirstword","xlastword"
+  ]);
+
+  // Westlaw field-restriction commands attorneys sometimes carry over.
+  // Westlaw-only field commands that dtSearch/Relativity STR does not support.
+  // NOTE: 'date' is intentionally NOT in this list — dtSearch supports date()
+  // when the index has auto-recognition enabled. See checkDateFunction for
+  // the finer-grained date() checks.
+  const WESTLAW_FIELDS = ["atleast", "da", "ad", "co", "ti", "sy", "di", "pr", "he"];
+
+  const MAX_TERM_LENGTH = 450; // RelativityOne STR effective limit
+
+  const DEFAULT_SETTINGS = {
+    sameSentence: 15,
+    sameParagraph: 50,
+    flagSPPromotion: true,
+    dedupeOn: false,
+    noiseWords: DEFAULT_NOISE.slice(),
+    strictReserved: true,
+  };
+
+  /* ---------- helpers ---------- */
+
+  function normalizeArtifacts(s) {
+    // Smart quotes / curly apostrophes / dashes / non-breaking spaces
+    return s
+      .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')  // curly double quotes
+      .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")  // curly single quotes
+      .replace(/[\u2013\u2014\u2015]/g, '-')                     // en/em/horiz dashes
+      .replace(/\u2026/g, '...')                                 // ellipsis
+      .replace(/\u00A0/g, ' ')                                   // NBSP
+      .replace(/\t/g, ' ');                                      // tabs -> space
+  }
+
+  function stripQuotedRegions(s) {
+    // Replace anything inside double quotes with same-length filler so we can
+    // scan operators outside quoted phrases only.
+    let out = '', inQ = false;
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === '"') { inQ = !inQ; out += c; }
+      else out += inQ ? '\0' : c;
+    }
+    return out;
+  }
+
+  function findQuotedPhrases(s) {
+    const phrases = [];
+    const re = /"([^"]*)"/g;
+    let m;
+    while ((m = re.exec(s)) !== null) {
+      phrases.push({ text: m[1], start: m.index + 1, end: m.index + 1 + m[1].length });
+    }
+    return phrases;
+  }
+
+  /* ---------- individual rules ---------- */
+
+  function checkSilentClean(original) {
+    // Trim + collapse internal whitespace + normalize artifacts. Runs of two
+    // or more whitespace characters are now surfaced as a NO_DOUBLE_SPACES
+    // fix rather than silently collapsed, per Relativity documentation.
+    const trimmed = original.replace(/^\s+|\s+$/g, '');
+    // Detect BEFORE the collapse whether the interior had double whitespace.
+    const hadDoubleSpace = /\S\s{2,}\S/.test(trimmed);
+    const normalized = normalizeArtifacts(trimmed).replace(/\s+/g, ' ');
+    const issues = [];
+    if (normalized !== original) {
+      const artifactChanged = normalizeArtifacts(original.replace(/^\s+|\s+$/g, '').replace(/\s+/g,' ')) !== original.replace(/^\s+|\s+$/g,'').replace(/\s+/g,' ');
+      if (artifactChanged) {
+        issues.push({
+          severity: 'fix',
+          code: 'ARTIFACT_NORMALIZED',
+          message: 'Word-copy artifacts normalized to ASCII (smart quotes, curly apostrophes, em-dashes, non-breaking spaces).',
+          rule: 'dtSearch requires straight ASCII quotes; smart quotes are treated as different characters and may not match anything.',
+        });
+      }
+    }
+    if (hadDoubleSpace) {
+      issues.push({
+        severity: 'fix',
+        code: 'NO_DOUBLE_SPACES',
+        message: 'Runs of two or more whitespace characters were collapsed to a single space.',
+        rule: 'Relativity: do not allow two or more spaces anywhere in the search string. Consecutive whitespace can be misinterpreted by the parser and hides intent.',
+      });
+    }
+    return { text: normalized, issues };
+  }
+
+  function checkAmpersand(text) {
+    // & outside quoted phrases -> AND
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/&/.test(stripped)) {
+      // Rebuild text substituting & with AND outside quotes
+      let out = '', inQ = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '"') { inQ = !inQ; out += c; continue; }
+        if (!inQ && c === '&') {
+          // Ensure surrounding whitespace
+          const prev = out.slice(-1);
+          if (prev && prev !== ' ') out += ' ';
+          out += 'AND';
+          if (text[i+1] && text[i+1] !== ' ') out += ' ';
+        } else out += c;
+      }
+      issues.push({
+        severity: 'fix',
+        code: 'AMP_TO_AND',
+        message: 'Converted "&" to "AND".',
+        rule: 'dtSearch/Relativity require the literal word AND for boolean conjunction. "&" is not a supported operator.',
+      });
+      return { text: out.replace(/ {2,}/g,' '), issues };
+    }
+    return { text, issues };
+  }
+
+  function checkWestlawBang(text) {
+    // ! root expander (word ending with !) -> * outside quotes
+    const issues = [];
+    let changed = false;
+    const stripped = stripQuotedRegions(text);
+    // Find tokens ending in !
+    const re = /([A-Za-z][A-Za-z0-9_-]*)!/g;
+    let m;
+    const matches = [];
+    while ((m = re.exec(stripped)) !== null) matches.push({ start: m.index, end: m.index + m[0].length, token: m[1] });
+    if (matches.length) {
+      // rebuild
+      let out = '', cur = 0;
+      matches.forEach(mt => {
+        out += text.slice(cur, mt.end - 1); // up to before the !
+        out += '*';
+        cur = mt.end;
+      });
+      out += text.slice(cur);
+      issues.push({
+        severity: 'fix',
+        code: 'WL_BANG_TO_STAR',
+        message: 'Converted Westlaw root expander "!" to dtSearch wildcard "*".',
+        rule: 'Westlaw uses "term!" for stemming; dtSearch uses "term*". They are close but not identical — dtSearch matches any trailing characters including none if minimum stem length is met.',
+      });
+      return { text: out, issues };
+    }
+    return { text, issues };
+  }
+
+  function checkProximity(text, settings) {
+    // Handle:
+    //   token /N token  (unordered)   -> token w/N token
+    //   token +N token  (ordered)     -> token pre/N token
+    //   token /s token                -> token w/{sameSentence} token   (flagged)
+    //   token /p token                -> token w/{sameParagraph} token  (flagged)
+    // Only outside quotes. And be careful NOT to mangle already-correct
+    // "w/N" or "pre/N".
+    const issues = [];
+    let out = '';
+    let i = 0;
+    let inQ = false;
+    let modified = false;
+    while (i < text.length) {
+      const c = text[i];
+      if (c === '"') { inQ = !inQ; out += c; i++; continue; }
+      if (inQ) { out += c; i++; continue; }
+
+      // Skip already-correct dtSearch operators like " w/5 ", " pre/5 "
+      // Detect them and pass through unchanged.
+      const passthroughRe = /^(w\/\d+|pre\/\d+|not\s+w\/\d+)/i;
+      const rest = text.slice(i);
+      const pass = rest.match(passthroughRe);
+      if (pass && (i === 0 || /\s/.test(text[i-1]))) {
+        // must be at token boundary
+        out += pass[0]; i += pass[0].length; continue;
+      }
+
+      // Westlaw /N — must be preceded by whitespace and followed by digit
+      const wlNumRe = /^\/(\d+)(?=\s|$)/;
+      const m1 = rest.match(wlNumRe);
+      if (m1 && i > 0 && /\s/.test(text[i-1])) {
+        out += 'w/' + m1[1];
+        i += m1[0].length;
+        modified = true;
+        issues.push({
+          severity: 'fix',
+          code: 'WL_SLASH_N',
+          message: `Converted Westlaw "/${m1[1]}" to dtSearch "w/${m1[1]}".`,
+          rule: 'Westlaw "/N" is unordered proximity within N words; the dtSearch equivalent is "w/N".',
+        });
+        continue;
+      }
+
+      // Westlaw +N (ordered proximity)
+      const wlPlusRe = /^\+(\d+)(?=\s|$)/;
+      const m2 = rest.match(wlPlusRe);
+      if (m2 && i > 0 && /\s/.test(text[i-1])) {
+        out += 'pre/' + m2[1];
+        i += m2[0].length;
+        modified = true;
+        issues.push({
+          severity: 'fix',
+          code: 'WL_PLUS_N',
+          message: `Converted Westlaw "+${m2[1]}" (ordered proximity) to dtSearch "pre/${m2[1]}".`,
+          rule: 'Westlaw "+N" requires the first term to appear within N words BEFORE the second. dtSearch expresses this as "pre/N".',
+        });
+        continue;
+      }
+
+      // /s (same sentence) — Westlaw
+      const sSentRe = /^\/s(?=\s|$)/i;
+      const m3 = rest.match(sSentRe);
+      if (m3 && i > 0 && /\s/.test(text[i-1])) {
+        out += 'w/' + settings.sameSentence;
+        i += m3[0].length;
+        modified = true;
+        issues.push({
+          severity: settings.flagSPPromotion ? 'warn' : 'fix',
+          code: 'WL_SAME_SENTENCE',
+          message: `Converted Westlaw "/s" (same sentence) to "w/${settings.sameSentence}" — APPROXIMATION.`,
+          rule: 'dtSearch has no sentence operator. A word-window is used as an approximation. Confirm the distance matches your review intent; adjust in Settings.',
+        });
+        continue;
+      }
+
+      // /p (same paragraph) — Westlaw
+      const sParaRe = /^\/p(?=\s|$)/i;
+      const m4 = rest.match(sParaRe);
+      if (m4 && i > 0 && /\s/.test(text[i-1])) {
+        out += 'w/' + settings.sameParagraph;
+        i += m4[0].length;
+        modified = true;
+        issues.push({
+          severity: settings.flagSPPromotion ? 'warn' : 'fix',
+          code: 'WL_SAME_PARAGRAPH',
+          message: `Converted Westlaw "/p" (same paragraph) to "w/${settings.sameParagraph}" — APPROXIMATION.`,
+          rule: 'dtSearch has no paragraph operator. A word-window is used as an approximation. Confirm the distance matches your review intent; adjust in Settings.',
+        });
+        continue;
+      }
+
+      // Hybrid "w/s" — drafter typed the dtSearch "w/" prefix but used the
+      // Westlaw sentence letter. dtSearch would reject this; convert to the
+      // configured same-sentence word window and flag as APPROXIMATION.
+      const hybSentRe = /^w\/s(?=\s|$)/i;
+      const m5 = rest.match(hybSentRe);
+      if (m5 && (i === 0 || /\s/.test(text[i-1]))) {
+        out += 'w/' + settings.sameSentence;
+        i += m5[0].length;
+        modified = true;
+        issues.push({
+          severity: settings.flagSPPromotion ? 'warn' : 'fix',
+          code: 'WL_SAME_SENTENCE',
+          message: `Converted hybrid "w/s" (Westlaw sentence connector with dtSearch prefix) to "w/${settings.sameSentence}" — APPROXIMATION.`,
+          rule: 'dtSearch requires a numeric distance after "w/". "w/s" is not valid dtSearch and would fail to run. A word-window is used as an approximation of Westlaw same-sentence proximity; adjust in Settings.',
+        });
+        continue;
+      }
+
+      // Hybrid "w/p" — same idea for same-paragraph.
+      const hybParaRe = /^w\/p(?=\s|$)/i;
+      const m6 = rest.match(hybParaRe);
+      if (m6 && (i === 0 || /\s/.test(text[i-1]))) {
+        out += 'w/' + settings.sameParagraph;
+        i += m6[0].length;
+        modified = true;
+        issues.push({
+          severity: settings.flagSPPromotion ? 'warn' : 'fix',
+          code: 'WL_SAME_PARAGRAPH',
+          message: `Converted hybrid "w/p" (Westlaw paragraph connector with dtSearch prefix) to "w/${settings.sameParagraph}" — APPROXIMATION.`,
+          rule: 'dtSearch requires a numeric distance after "w/". "w/p" is not valid dtSearch and would fail to run. A word-window is used as an approximation of Westlaw same-paragraph proximity; adjust in Settings.',
+        });
+        continue;
+      }
+
+      out += c; i++;
+    }
+    return { text: out, issues };
+  }
+
+  function checkPercent(text) {
+    // % is ambiguous — never auto-convert. But distinguish the well-formed
+    // dtSearch fuzzy prefix (leading % or %% or %%% attached to a word) from
+    // the truly ambiguous case (a bare % between tokens or trailing a token,
+    // which is likely a stray Westlaw "but-not").
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (!/%/.test(stripped)) return { text, issues };
+
+    // Well-formed dtSearch fuzzy: 1..3 %s immediately followed by a letter
+    // token (word start), at start of expression or after whitespace/paren.
+    // Any % that ISN'T part of that pattern remains ambiguous.
+    const fuzzyRe = /(^|[\s(])(%{1,3})[A-Za-z]/g;
+    // Replace well-formed fuzzy occurrences with filler so remaining %'s can be inspected.
+    let cleaned = '';
+    let cursor = 0;
+    let match;
+    fuzzyRe.lastIndex = 0;
+    while ((match = fuzzyRe.exec(stripped)) !== null) {
+      cleaned += stripped.slice(cursor, match.index);
+      cleaned += match[1] + '\0'.repeat(match[2].length);
+      cursor = match.index + match[1].length + match[2].length;
+    }
+    cleaned += stripped.slice(cursor);
+    const hasFuzzy = /%{1,3}[A-Za-z]/.test(stripped);
+    const hasAmbiguous = /%/.test(cleaned);
+
+    if (hasFuzzy && !hasAmbiguous) {
+      issues.push({
+        severity: 'fix',
+        code: 'FUZZY_SEARCH',
+        message: 'Recognized dtSearch fuzzy search syntax (%term / %%term / %%%term). Left unchanged.',
+        rule: 'In dtSearch each leading % allows one additional character difference. %%bank matches "bank", "banks", "banc", etc.',
+      });
+    }
+    if (hasAmbiguous) {
+      issues.push({
+        severity: 'warn',
+        code: 'PERCENT_AMBIGUOUS',
+        message: 'A "%" character does not form a valid dtSearch fuzzy prefix. In Westlaw "%" means "but not"; in dtSearch "%" is only meaningful as a leading fuzzy operator. This term was NOT auto-converted.',
+        rule: [
+          'If the drafter intended Westlaw "but not", rewrite as: TERM AND NOT OTHER.',
+          'If the drafter intended dtSearch fuzzy search, move the % to the front of the word (e.g., %%bank).'
+        ].join(' '),
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkWestlawFields(text) {
+    // atleast5(term), da(bef 1/1/2020), date(...), etc.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    for (const f of WESTLAW_FIELDS) {
+      const re = new RegExp('\\b' + f + '\\d*\\s*\\(', 'i');
+      if (re.test(stripped)) {
+        issues.push({
+          severity: 'err',
+          code: 'WL_FIELD_UNSUPPORTED',
+          message: `Westlaw field/command "${f}(...)" is not supported in dtSearch/RelativityOne search terms.`,
+          rule: 'Move date, atleast, and metadata restrictions to Relativity conditions (saved-search filters), not to the STR term itself. Date filters as terms will error or return nothing.',
+        });
+        break;
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkBalance(text) {
+    const issues = [];
+    // Balanced double quotes
+    let q = 0;
+    for (const c of text) if (c === '"') q++;
+    if (q % 2 !== 0) {
+      issues.push({
+        severity: 'err',
+        code: 'UNBALANCED_QUOTES',
+        message: 'Unbalanced double quotes — the term will fail to run.',
+        rule: 'Every opening " needs a matching closing ". dtSearch reports an error for odd quote counts.',
+      });
+    }
+    // Balanced parentheses (only outside quotes)
+    const stripped = stripQuotedRegions(text);
+    let depth = 0, bad = false;
+    for (const c of stripped) {
+      if (c === '(') depth++;
+      else if (c === ')') { depth--; if (depth < 0) { bad = true; break; } }
+    }
+    if (bad || depth !== 0) {
+      issues.push({
+        severity: 'err',
+        code: 'UNBALANCED_PARENS',
+        message: 'Unbalanced parentheses — the term will fail to run.',
+        rule: 'Every opening ( needs a matching ). Group boolean expressions carefully; dtSearch will not auto-close.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkLeadingWildcard(text) {
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/(^|[\s(])\*[A-Za-z0-9]/.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'LEADING_WILDCARD',
+        message: 'Leading wildcard (e.g., *term) — severe performance impact.',
+        rule: 'dtSearch indexes are word-forward. Leading wildcards force a full index scan and can be orders of magnitude slower or time out on large corpora.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkNotInsideProximity(text) {
+    // apple w/5 not banana  -> error
+    // Look for a proximity operator token followed by NOT.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\b(?:w|pre)\/\d+\s+not\b/i.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'NOT_IN_PROXIMITY',
+        message: 'NOT is not valid inside a proximity expression.',
+        rule: 'dtSearch does not permit "w/N NOT" or "pre/N NOT". Rewrite as: (term1 w/N term2) AND NOT term3.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkReservedLiterals(text, settings) {
+    // Unquoted token equal to a reserved operator being used as a search term.
+    // Heuristic: if the entire term is a single bare word matching a reserved
+    // op, wrap it in quotes. If it appears mid-expression that's normal usage.
+    if (!settings.strictReserved) return { text, issues: [] };
+    const issues = [];
+    const trimmed = text.trim();
+    if (/^[A-Za-z]+$/.test(trimmed) && RESERVED_OPS.has(trimmed.toLowerCase())) {
+      return {
+        text: '"' + trimmed + '"',
+        issues: [{
+          severity: 'fix',
+          code: 'RESERVED_LITERAL_QUOTED',
+          message: `Wrapped reserved operator word "${trimmed}" in quotes so it searches literally.`,
+          rule: 'Bare AND/OR/NOT/TO/CONTAINS/W/PRE are operators in dtSearch. To search them as literal words they must be quoted.',
+        }]
+      };
+    }
+    return { text, issues };
+  }
+
+  function checkNoiseInPhrase(text, settings) {
+    const issues = [];
+    const noise = new Set(settings.noiseWords.map(w => w.toLowerCase()));
+    const phrases = findQuotedPhrases(text);
+    for (const p of phrases) {
+      const toks = p.text.toLowerCase().split(/\s+/).filter(Boolean);
+      const hits = toks.filter(t => noise.has(t));
+      if (hits.length) {
+        issues.push({
+          severity: 'warn',
+          code: 'NOISE_IN_PHRASE',
+          message: `Quoted phrase contains dtSearch noise word(s): ${Array.from(new Set(hits)).join(', ')}.`,
+          rule: 'Noise words are not stored in the dtSearch index. Phrases containing only noise words return nothing; mixed phrases may over-return because the noise words are ignored during phrase matching.',
+        });
+        break;
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkProximityOverOr(text) {
+    // Proximity operator adjacent to an OR-group without parentheses:
+    //  apple w/5 banana or pear    (ambiguous grouping)
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\b(?:w|pre)\/\d+\s+\S+\s+or\s+\S+/i.test(stripped) &&
+        !/\([^()]*\bor\b[^()]*\)/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'PROX_OVER_OR',
+        message: 'Proximity operator appears near an OR without explicit parentheses — grouping may not be what you expect.',
+        rule: 'In dtSearch, "A w/5 B OR C" is parsed as "(A w/5 B) OR C". If you meant "A within 5 of (B or C)", write it as: A w/5 (B OR C).',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkLength(text) {
+    const issues = [];
+    if (text.length > MAX_TERM_LENGTH) {
+      issues.push({
+        severity: 'err',
+        code: 'TERM_TOO_LONG',
+        message: `Term exceeds ${MAX_TERM_LENGTH} characters (${text.length}). RelativityOne STR will reject or truncate.`,
+        rule: `RelativityOne enforces a practical term length limit (~${MAX_TERM_LENGTH} chars). Split into multiple lines or restructure with grouping.`,
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkAdjacentOperators(text) {
+    // Two boolean operators back-to-back (e.g., "foo AND OR bar", "foo OR AND
+    // bar", trailing "foo AND"). Also stacked proximity: "foo w/5 w/5 bar".
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Adjacent booleans
+    if (/\b(AND|OR|NOT)\s+(AND|OR)\b/i.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'ADJACENT_BOOLEANS',
+        message: 'Two boolean operators appear back-to-back (e.g., "AND OR").',
+        rule: 'dtSearch expects an operand between operators. Remove the stray operator or wrap the intended term.',
+      });
+    }
+    // Trailing operator
+    if (/\b(AND|OR|NOT)\s*$/i.test(stripped.trim())) {
+      issues.push({
+        severity: 'err',
+        code: 'TRAILING_OPERATOR',
+        message: 'Term ends with a boolean operator with nothing after it.',
+        rule: 'dtSearch requires an operand after every AND/OR/NOT.',
+      });
+    }
+    // Leading AND/OR (NOT is legal at the start in some parsers, but flag AND/OR)
+    if (/^\s*(AND|OR)\b/i.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'LEADING_OPERATOR',
+        message: 'Term starts with AND/OR with nothing before it.',
+        rule: 'dtSearch requires an operand before AND/OR. If AND/OR is the literal search word, quote it.',
+      });
+    }
+    // Stacked proximity
+    if (/\b(?:w|pre)\/\d+\s+(?:w|pre)\/\d+\b/i.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'STACKED_PROXIMITY',
+        message: 'Two proximity operators appear back-to-back (e.g., "w/5 w/10").',
+        rule: 'Every proximity operator needs an operand on each side. Insert a term or restructure.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkLowercaseBooleans(text) {
+    // dtSearch is case-insensitive for operators, so lowercase "and"/"or"/"not"
+    // still work — BUT lowercase "and"/"or" also happen to be default noise
+    // words. When they are used AS operators (surrounded by whitespace, not
+    // the only content, not quoted), that is fine; but drafters occasionally
+    // write "and/or" or "& and" ambiguously.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // and/or shorthand — attorneys often write this as a single token
+    if (/\band\/or\b/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'AND_SLASH_OR',
+        message: 'Found "and/or" — dtSearch does not parse this as a boolean; it will be treated as a phrase or token.',
+        rule: 'Replace "and/or" with an explicit "(A OR B)" or "(A AND B)" expression that reflects your actual intent.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkSingleCharWildcard(text) {
+    // dtSearch supports "?" as a single-character wildcard. Warn only if the
+    // drafter uses many consecutive ?'s (likely intended a real wildcard) or
+    // ? at term start.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/(^|[\s(])\?{1,}[A-Za-z0-9]/.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'LEADING_SINGLECHAR_WILDCARD',
+        message: 'Term begins with "?" (single-character wildcard). Like "*term", this can be slow.',
+        rule: 'dtSearch "?" matches exactly one character. Leading "?" wildcards force wider index scans; consider anchoring to a real prefix.',
+      });
+    }
+    if (/[A-Za-z]\?{4,}/.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'MANY_SINGLECHAR_WILDCARDS',
+        message: 'Term contains four or more consecutive "?" wildcards.',
+        rule: 'Each "?" matches exactly one character. If any number of trailing characters is intended, use "*" instead.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkOnlyWildcards(text) {
+    // A term consisting entirely of wildcards/operators has no useful content.
+    const issues = [];
+    const trimmed = text.trim();
+    if (/^[*?%\s]+$/.test(trimmed) && trimmed.length > 0) {
+      issues.push({
+        severity: 'err',
+        code: 'ONLY_WILDCARDS',
+        message: 'Term consists only of wildcards/fuzzy characters with no letters.',
+        rule: 'A term with no alphabetic anchor cannot be indexed. Add a real word stem.',
+      });
+    }
+    // Just punctuation / boolean-only
+    if (/^(AND|OR|NOT|w\/\d+|pre\/\d+|[\s()])+$/i.test(trimmed) && !/[A-Za-z]{2,}/.test(trimmed.replace(/AND|OR|NOT/gi,''))) {
+      // Suppressed: already covered by RESERVED_LITERAL_QUOTED for single tokens.
+    }
+    return { text, issues };
+  }
+
+  function checkNumericOnly(text) {
+    // Terms that are only digits or digit-only wildcards — valid in dtSearch
+    // but very high-volume; worth a warning.
+    const issues = [];
+    const trimmed = text.trim();
+    if (/^\d[\d\s*?-]*$/.test(trimmed) && trimmed.length <= 6) {
+      issues.push({
+        severity: 'warn',
+        code: 'SHORT_NUMERIC',
+        message: 'Short numeric-only term — likely to over-return (dates, phone fragments, invoice numbers).',
+        rule: 'Numeric terms return every index hit. Anchor with a keyword or wrap in a phrase (e.g., "invoice 12345").',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkEmptyPhrase(text) {
+    // Empty "" or whitespace-only quoted phrase.
+    const issues = [];
+    const phrases = findQuotedPhrases(text);
+    for (const p of phrases) {
+      if (!p.text.trim()) {
+        issues.push({
+          severity: 'err',
+          code: 'EMPTY_PHRASE',
+          message: 'Empty or whitespace-only quoted phrase ("").',
+          rule: 'dtSearch cannot search an empty phrase; the term will fail.',
+        });
+        break;
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkPhraseWithBoolean(text) {
+    // Boolean operator appears INSIDE a quoted phrase — it will be searched
+    // literally, which is almost never what the drafter meant.
+    const issues = [];
+    const phrases = findQuotedPhrases(text);
+    for (const p of phrases) {
+      const toks = p.text.split(/\s+/).filter(Boolean).map(t => t.toLowerCase());
+      if (toks.length >= 3 && toks.some(t => t === 'and' || t === 'or' || t === 'not')) {
+        // Skip if the phrase is a well-known idiom (e.g., "and/or" is handled elsewhere).
+        issues.push({
+          severity: 'warn',
+          code: 'BOOLEAN_IN_PHRASE',
+          message: `Quoted phrase contains a boolean word ("${toks.filter(t=>['and','or','not'].includes(t)).join(', ')}") — it will be searched literally, not as an operator.`,
+          rule: 'Inside quotes dtSearch treats every word as a literal. If you meant to combine boolean terms, remove the surrounding quotes and use parentheses.',
+        });
+        break;
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkWildcardInPhrase(text) {
+    // dtSearch does NOT expand * or ? inside a quoted phrase — it treats them
+    // as literal characters.
+    const issues = [];
+    const phrases = findQuotedPhrases(text);
+    for (const p of phrases) {
+      if (/[*?]/.test(p.text)) {
+        issues.push({
+          severity: 'warn',
+          code: 'WILDCARD_IN_PHRASE',
+          message: 'Wildcard (* or ?) appears inside a quoted phrase.',
+          rule: 'dtSearch treats * and ? as literal characters inside quotes. To wildcard a token, break it out of the phrase (e.g., "non-disclosure agreement" → non-disclosure w/2 agreement*).',
+        });
+        break;
+      }
+    }
+    return { text, issues };
+  }
+
+  // ------ Rules driven by Relativity/dtSearch official documentation ------
+
+  function checkContains(text) {
+    // Relativity/dtSearch STR does not support the CONTAINS connector.
+    // Drafters sometimes copy it out of a Relativity field-condition builder
+    // where CONTAINS DOES exist for saved-search field filters. Warn (not
+    // err) so the drafter can decide whether to remove it or move it to a
+    // saved-search condition.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\bCONTAINS\b/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'UNSUPPORTED_CONTAINS',
+        message: 'dtSearch STR does not support the CONTAINS connector.',
+        rule: 'CONTAINS exists in the Relativity field-condition builder but not in dtSearch. Either remove it and rely on the standard dtSearch parser, or move the CONTAINS check to a saved-search filter/condition applied alongside the STR.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkLeadingNot(text) {
+    // A query beginning with NOT returns every indexed document that does
+    // not satisfy the expression. Legal but expensive and rarely intended.
+    const issues = [];
+    const stripped = stripQuotedRegions(text).trim();
+    if (/^NOT\b/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'LEADING_NOT',
+        message: 'Term begins with NOT — will return every indexed document that does not satisfy the expression.',
+        rule: 'A leading NOT is a whole-index inverse. Confirm this is intended and that the resulting hit count is manageable; usually you want an AND NOT that scopes to a positive population first.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkAndNotInfo(text) {
+    // AND NOT is legal. First occurrence emits an informational note that
+    // AND NOT searches the pooled text of all indexed fields, not each
+    // field separately — a common surprise per Relativity docs.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\bAND\s+NOT\b/i.test(stripped)) {
+      issues.push({
+        severity: 'fix',
+        code: 'AND_NOT_INFO',
+        message: 'AND NOT recognized. It searches the pooled text of all indexed fields, not each field separately.',
+        rule: 'Per Relativity docs, AND NOT requires the first expression and excludes the second across the pooled index text. If you need per-field exclusion, apply it as a saved-search field condition instead.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkAndAnyInfo(text) {
+    // AndAny is a dtSearch connector where terms before it are required and
+    // terms after it are optional. Not common; when we see it, we surface
+    // an informational note so the drafter can confirm the semantics.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\bAndAny\b/.test(stripped)) {
+      issues.push({
+        severity: 'fix',
+        code: 'AND_ANY_INFO',
+        message: 'AndAny recognized. Terms BEFORE AndAny are required; terms AFTER it are optional.',
+        rule: 'Per Relativity docs, AndAny lets you require a base set and boost documents that also contain optional terms. Ordering matters: required terms first, optional terms after.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkProxBetweenAnds(text) {
+    // "Avoid proximity expressions with AND on both sides because they may
+    // be ambiguous." Detect pattern:  X AND (a w/N b) AND Y
+    // We approximate by scanning for  AND (...prox...) AND  or
+    // for  AND <word> w/N <word> AND .
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\bAND\s+[^()]*\b(?:w|pre)\/\d+\b[^()]*\s+AND\b/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'PROX_BETWEEN_ANDS',
+        message: 'A proximity expression is flanked by AND on both sides, which the parser may bind ambiguously.',
+        rule: 'Relativity docs advise against proximity expressions with AND on both sides. Parenthesize the proximity operand explicitly (e.g., "X AND (a w/5 b) AND Y") so the grouping is unambiguous.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkNestedProximity(text) {
+    // Proximity nested inside proximity is slow and hard to validate.
+    // Approximation: parenthesized subexpression that itself contains a
+    // proximity operator, and the parenthesized group is itself an operand
+    // of another proximity operator.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // pattern: (...w/N...) w/N   or   w/N (...w/N...)
+    const re1 = /\([^()]*\b(?:w|pre)\/\d+\b[^()]*\)\s*\b(?:w|pre)\/\d+\b/i;
+    const re2 = /\b(?:w|pre)\/\d+\s*\([^()]*\b(?:w|pre)\/\d+\b[^()]*\)/i;
+    if (re1.test(stripped) || re2.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'NESTED_PROXIMITY',
+        message: 'Proximity operator applied to a group that itself contains a proximity operator.',
+        rule: 'Nested proximity slows searches and complicates validation. Rewrite as sibling proximity expressions joined by AND, or split into multiple STRs.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkProxNeedsParens(text) {
+    // Parenthesize proximity expressions connected by Boolean operators.
+    // Pattern:  <word> w/N <word> AND/OR <word>   without wrapping () around
+    // the proximity operand. This is a variant of PROX_OVER_OR and is worth
+    // its own message.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Look for  A w/N B AND/OR C where A, B, C are unparenthesized bare words.
+    if (/[A-Za-z0-9*?]\s+\b(?:w|pre)\/\d+\b\s+[A-Za-z0-9*?]+\s+\b(?:AND|OR)\b/i.test(stripped) &&
+        !/\(\s*[^()]*\b(?:w|pre)\/\d+\b[^()]*\)/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'PROX_NEEDS_PARENS',
+        message: 'Proximity expression connected to a Boolean is not parenthesized; the parser may not bind it the way you expect.',
+        rule: 'Per Relativity docs, parenthesize proximity expressions connected by Boolean operators. Write "(A w/5 B) AND C" instead of "A w/5 B AND C".',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkWord32(text) {
+    // dtSearch indexes only the first 32 characters of any uninterrupted
+    // word; a query longer than 32 uninterrupted characters may match any
+    // word sharing its first 32 characters.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Any "word" (letters/digits, no whitespace/punctuation) > 32 chars.
+    const m = stripped.match(/[A-Za-z0-9]{33,}/);
+    if (m) {
+      const word = m[0];
+      // If a trailing * appears past char 32, add a separate note.
+      const trailingStarPast32 = /[A-Za-z0-9]{32,}\*/.test(stripped);
+      issues.push({
+        severity: 'warn',
+        code: 'WORD_OVER_32_CHARS',
+        message: `Uninterrupted token "${word.slice(0,32)}…" is longer than 32 characters. dtSearch only indexes the first 32 characters, so this query may match any word sharing that 32-character prefix.`,
+        rule: 'Per Relativity docs, dtSearch indexes at most the first 32 characters of any uninterrupted word. Longer queries collapse to their 32-character prefix.',
+      });
+      if (trailingStarPast32) {
+        issues.push({
+          severity: 'warn',
+          code: 'WILDCARD_PAST_32',
+          message: 'A "*" wildcard appears after the 32nd character. It adds no precision because dtSearch has already truncated the token.',
+          rule: 'Per Relativity docs, adding * after the thirty-second character does not narrow the match.',
+        });
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkRegex(text) {
+    // Every dtSearch regex must be ##"pattern" in straight quotes. If we
+    // see regex-only metacharacter patterns (character classes, \d/\w/\b,
+    // {n,m}) without a leading ## we flag as REGEX_MISSING_HASHHASH.
+    // If we see a well-formed ## block, we additionally check for \s
+    // (not stored in index) and uppercase letters (dtSearch is lowercase).
+    const issues = [];
+
+    // 1) Well-formed regex block: ##"..."
+    const goodRe = /##\s*"([^"]*)"/g;
+    let gm;
+    let sawGoodRegex = false;
+    while ((gm = goodRe.exec(text)) !== null) {
+      sawGoodRegex = true;
+      const pat = gm[1];
+      if (/\\s/.test(pat)) {
+        issues.push({
+          severity: 'err',
+          code: 'REGEX_BACKSLASH_S',
+          message: 'Regex uses \\s. dtSearch does not store whitespace in its index, so \\s will not match anything.',
+          rule: 'Per Relativity docs, do not use \\s in dtSearch regex. Whitespace is not stored in the index; rewrite the pattern without it or use a proximity operator between the two sides.',
+        });
+      }
+      if (/[A-Z]/.test(pat.replace(/\\[A-Z]/g,''))) {
+        issues.push({
+          severity: 'warn',
+          code: 'REGEX_UPPERCASE',
+          message: 'Regex contains uppercase letters. dtSearch normalizes indexed text to lowercase, so uppercase in the pattern will not match anything additional and may match nothing.',
+          rule: 'Per Relativity docs, use lowercase in regex because dtSearch normally indexes text in lowercase.',
+        });
+      }
+    }
+
+    // 2) Regex-shaped content NOT prefixed with ##.
+    // Only fire for regex-exclusive metacharacters, to avoid false-positives
+    // on legitimate uses of *, ?, +.
+    const stripped = stripQuotedRegions(text);
+    const regexShaped = /\[[^\]]+\]|\\[dwbBWDsS]|\{\d+(?:,\d*)?\}/;
+    if (!sawGoodRegex && regexShaped.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'REGEX_MISSING_HASHHASH',
+        message: 'Term contains regex-only metacharacters (character class, \\d/\\w/\\b, or {n,m}) but is not wrapped as ##"pattern".',
+        rule: 'Per Relativity docs, every dtSearch regex must begin with ## and be enclosed in straight quotation marks. Without the ## prefix the pattern is parsed as ordinary dtSearch tokens and will not behave as a regex.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkDateFunction(text) {
+    // date(...) queries. Per Relativity docs:
+    //  * open-ended ranges are unsupported
+    //  * ambiguous numeric dates default to m/d/y
+    //  * years accepted from 1000 to 2900
+    //  * prefer full English month names to reduce parsing errors
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    const dateRe = /\bdate\s*\(([^()]*)\)/gi;
+    let dm;
+    while ((dm = dateRe.exec(stripped)) !== null) {
+      const inner = dm[1].trim();
+      // Open-ended range using > < >= <=
+      if (/^\s*[<>](?!=)/.test(inner) || /^\s*[<>]=/.test(inner) || /\b(?:after|before|since)\b/i.test(inner)) {
+        // Bounded ranges like "date(2020 to 2024)" or "date(1/1/2020 to 12/31/2024)" are fine.
+        if (!/\bto\b|\.\./i.test(inner)) {
+          issues.push({
+            severity: 'err',
+            code: 'DATE_OPEN_RANGE',
+            message: `date() range "${inner}" is open-ended. Relativity/dtSearch requires bounded date ranges.`,
+            rule: 'Per Relativity docs, dtSearch does not support open-ended date ranges. Rewrite as a bounded range using "date(YYYY to YYYY)".',
+          });
+        }
+      }
+      // Numeric-only date components without a full English month name
+      const numericDate = /(\d{1,4})[\/\-](\d{1,2})(?:[\/\-](\d{1,4}))?/.test(inner);
+      const hasMonthName = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(inner);
+      if (numericDate && !hasMonthName) {
+        issues.push({
+          severity: 'warn',
+          code: 'DATE_NUMERIC_AMBIGUOUS',
+          message: `date() argument "${inner}" uses numeric-only date components. Ambiguous numeric dates default to month/day/year and may be misparsed.`,
+          rule: 'Per Relativity docs, use full English month names in date() queries to reduce parsing errors (e.g., "date(January 1 2024 to December 31 2024)").',
+        });
+      }
+      // Year outside 1000..2900
+      const years = inner.match(/\b(\d{4})\b/g) || [];
+      for (const y of years) {
+        const n = parseInt(y, 10);
+        if (n < 1000 || n > 2900) {
+          issues.push({
+            severity: 'err',
+            code: 'DATE_YEAR_OUT_OF_RANGE',
+            message: `date() argument contains year ${y} which is outside the range dtSearch accepts (1000–2900).`,
+            rule: 'Per Relativity docs, dtSearch accepts years from 1000 through 2900.',
+          });
+        }
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkImplicitPhrase(text) {
+    // Two or more adjacent unquoted words with no operator between them are
+    // searched as an exact phrase. Only fire when the ENTIRE term (outside
+    // quotes and functions) is bare words with no operator anywhere. If any
+    // Boolean/proximity is present the drafter clearly knows about operators
+    // and this rule adds noise.
+    const issues = [];
+    // Suppress when an unsupported Westlaw field pattern is present — the
+    // WL_FIELD_UNSUPPORTED error takes precedence and this rule would
+    // otherwise fire on the field's inner text.
+    if (/\b(?:atleast|da|ad|co|ti|sy|di|pr|he)\d*\s*\(/i.test(text)) {
+      return { text, issues };
+    }
+    let stripped = stripQuotedRegions(text)
+      .replace(/\bdate\s*\([^()]*\)/gi, ' ')
+      .replace(/\bmail\s*\([^()]*\)/gi, ' ')
+      .replace(/\bcreditcard\s*\([^()]*\)/gi, ' ')
+      .replace(/[()]/g, ' ');
+    // If any operator appears anywhere in the un-stripped remainder, bail.
+    if (/\b(?:AND|OR|NOT|AndAny|w\/\d+|pre\/\d+|xfirstword|xlastword)\b/i.test(stripped)) {
+      return { text, issues };
+    }
+    // Count bare word tokens.
+    const tokens = stripped.split(/\s+/).filter(t => t && /[A-Za-z]/.test(t));
+    if (tokens.length < 2) return { text, issues };
+    // Ignore if every token carries a wildcard/stem/fuzzy/phonic marker.
+    const anyPlain = tokens.some(t => !/[*?%~#=]/.test(t));
+    if (!anyPlain) return { text, issues };
+    issues.push({
+      severity: 'warn',
+      code: 'IMPLICIT_PHRASE',
+      message: `Two or more adjacent unquoted words ("${tokens.slice(0,4).join(' ')}${tokens.length>4?' …':''}") will be searched as an exact phrase.`,
+      rule: 'Per Relativity docs, adjacent words without an operator are searched as an exact phrase, even without quotation marks. Insert AND/OR between separate concepts, or wrap in quotation marks if the phrase is intentional.',
+    });
+    return { text, issues };
+  }
+
+  function checkLiteralConnectorUnquoted(text) {
+    // Very narrow rule: TO between two words with no other operators nearby
+    // looks like the drafter means the word literally ("hire TO fire"). AND
+    // and OR are legitimate Booleans in the same shape ("contract AND
+    // breach") so we don't warn on them here — the general LITERAL_PHRASE /
+    // IMPLICIT_PHRASE checks already cover the ambiguity.
+    const issues = [];
+    let stripped = stripQuotedRegions(text).replace(/\bdate\s*\([^()]*\)/gi, ' ');
+    // Match  <word> TO <word>  where that is the entire non-blank content.
+    const m = stripped.trim().match(/^[A-Za-z0-9*?]+\s+(TO)\s+[A-Za-z0-9*?]+$/);
+    if (m) {
+      issues.push({
+        severity: 'warn',
+        code: 'LITERAL_CONNECTOR_UNQUOTED',
+        message: 'Term appears to use "TO" as a literal word between two other words. dtSearch treats TO as a range connector inside date()/mail()/creditcard(); outside those functions the drafter usually means the phrase.',
+        rule: 'Per Relativity docs, use quotation marks when an exact phrase contains a connector such as AND, OR, NOT, or TO. Otherwise the connector is parsed as a Boolean/range operator and the phrase falls apart.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkStemmingSuspect(text) {
+    // ~ (stemming) works only for English regular forms. Flag ~ appended
+    // to a numeric-only token, a token containing non-ASCII letters, or a
+    // known irregular verb root.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    const stemRe = /(\S+?)~(?=\s|$|\)|\b)/g;
+    let sm;
+    const IRREGULAR = new Set([
+      'ran','went','spoke','ate','saw','took','gave','fell','stood','wrote',
+      'flew','grew','knew','threw','drew','blew','froze','stole','rose','chose',
+      'shone','shrunk','sank','sang','swam','swore','tore','wore','bore','broke',
+      'brought','bought','caught','fought','sought','taught','thought','made',
+      'said','laid','paid','held','hid','led','fed','met','set','let','put',
+      'read','shed','spread','spent','sent','built','burnt','learnt','meant','felt',
+      'kept','slept','swept','wept','left','crept','dealt','dreamt','knelt','leapt'
+    ]);
+    while ((sm = stemRe.exec(stripped)) !== null) {
+      const root = sm[1].toLowerCase();
+      if (/^\d+$/.test(root)) {
+        issues.push({
+          severity: 'warn',
+          code: 'STEM_ON_NUMERIC',
+          message: `Stemming "~" applied to numeric token "${root}". Stemming affects English word forms only.`,
+          rule: 'Per Relativity docs, ~ generates English grammatical variants and does not apply to numbers.',
+        });
+      }
+      if (/[^\x00-\x7F]/.test(root)) {
+        issues.push({
+          severity: 'warn',
+          code: 'STEM_NON_ENGLISH',
+          message: `Stemming "~" applied to token "${root}" containing non-ASCII characters. Stemming works only for English.`,
+          rule: 'Per Relativity docs, stemming works only for English.',
+        });
+      }
+      if (IRREGULAR.has(root)) {
+        issues.push({
+          severity: 'warn',
+          code: 'STEM_IRREGULAR',
+          message: `Stemming "~" applied to irregular English form "${root}". Stemming only expands regular grammatical variants.`,
+          rule: 'Per Relativity docs, ~ generates regular English variants (e.g., run~ matches run/runs/running) but does NOT reach irregular forms (ran, went, spoke). Add the irregular forms explicitly as OR alternatives.',
+        });
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkPhonic(text) {
+    // # (phonic) must precede a word starting with a letter. Flag when # is
+    // used adjacent to a non-letter or by itself. Suppress inside regex
+    // blocks (##"pattern") and when the # is part of the ## regex prefix.
+    const issues = [];
+    // Strip regex blocks ##"..." entirely before checking for stray #.
+    let stripped = stripQuotedRegions(text).replace(/##\s*"[^"]*"/g, ' ');
+    if (/(^|[\s(])#(?![A-Za-z])/.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'PHONIC_INVALID',
+        message: 'Phonic operator "#" is not immediately followed by a word starting with a letter.',
+        rule: 'Per Relativity docs, # finds similar-sounding words beginning with the same letter. It must be attached directly to the front of a word (e.g., #smith).',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkXfirstLastBroad(text) {
+    // xfirstword and xlastword occur in every indexed document. Combined
+    // with a broad wildcard (*something or something*) or a regex the
+    // pattern degenerates to matching every document.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\b(xfirstword|xlastword)\b/i.test(stripped)) {
+      if (/\*[A-Za-z0-9]|[A-Za-z0-9]\*|##\s*"/.test(stripped)) {
+        issues.push({
+          severity: 'warn',
+          code: 'XFIRSTLAST_BROAD',
+          message: 'xfirstword/xlastword combined with a wildcard or regex — the pattern will match every document because these markers appear in every indexed document.',
+          rule: 'Per Relativity docs, exclude xfirstword and xlastword from broad wildcard or regex patterns. Use them only against concrete terms so the marker narrows to real document-boundary positions.',
+        });
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkEqualsOutsideNumeric(text) {
+    // Single = is a numeric single-digit wildcard. Warn if it appears with
+    // no digit context (i.e., attached to letters).
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // = adjacent to a letter (like ab=cd) is almost certainly a mistake.
+    if (/[A-Za-z]=|=[A-Za-z]/.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'EQUALS_OUTSIDE_NUMERIC',
+        message: 'Single "=" wildcard used adjacent to a letter. In dtSearch, one "=" stands for one unknown DIGIT and is meant for numeric patterns only.',
+        rule: 'Per Relativity docs, use one = for each unknown digit. For unknown letters use ? instead.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkHyphenNote(text) {
+    // By default, hyphens/en-dashes/em-dashes are processed as spaces. Only
+    // flag when the dash sits between two word characters (typical
+    // "non-disclosure" shape). Ignore dashes inside regex character classes
+    // and bare hyphens between other punctuation.
+    const issues = [];
+    // Remove regex blocks and character classes so [a-z] doesn't trigger.
+    const stripped = stripQuotedRegions(text)
+      .replace(/##\s*"[^"]*"/g, ' ')
+      .replace(/\[[^\]]*\]/g, ' ');
+    if (/[A-Za-z0-9][\-\u2013\u2014][A-Za-z0-9]/.test(stripped)) {
+      issues.push({
+        severity: 'fix',
+        code: 'HYPHEN_WORD_BREAK',
+        message: 'By default, hyphens and dashes are processed as spaces. "non-disclosure" is indexed as two words "non" and "disclosure".',
+        rule: 'Per Relativity docs, hyphens, en dashes, and em dashes are processed as spaces by default. To search a literal hyphen, make it searchable in the alphabet file and fully rebuild the index.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkCjkNote(text) {
+    // CJK characters are indexed per-character with no Western stemming.
+    const issues = [];
+    if (/[\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(text)) {
+      issues.push({
+        severity: 'fix',
+        code: 'CJK_TOKEN_NOTE',
+        message: 'Term contains CJK characters. dtSearch indexes CJK per-character; Western-language stemming does not apply.',
+        rule: 'Per Relativity docs, for CJK text, expect individual characters to be indexed as words and do not expect Western-language stemming.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkMismatchedProximity(text) {
+    // w/0 is a degenerate case (adjacency); w/N with very large N is
+    // essentially AND but slower.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\bw\/0\b/i.test(stripped)) {
+      issues.push({
+        severity: 'warn',
+        code: 'PROX_ZERO',
+        message: 'Proximity "w/0" — requires terms to be adjacent. Usually you want w/1 or higher, or a quoted phrase.',
+        rule: 'w/0 is not adjacency; per dtSearch docs w/N counts intervening words. Confirm this is intended.',
+      });
+    }
+    const bigProxMatch = stripped.match(/\b(?:w|pre)\/(\d+)\b/gi);
+    if (bigProxMatch) {
+      for (const p of bigProxMatch) {
+        const n = parseInt(p.split('/')[1], 10);
+        if (n >= 250) {
+          issues.push({
+            severity: 'warn',
+            code: 'PROX_VERY_LARGE',
+            message: `Very large proximity distance (${p}) — essentially AND, but slower.`,
+            rule: 'Large word-windows lose specificity and cost performance. Consider using AND or a smaller window.',
+          });
+          break;
+        }
+      }
+    }
+    return { text, issues };
+  }
+
+  /* ---------- v7 additions: real-world drafter mistakes ---------- */
+
+  function checkInvisibleUnicode(text) {
+    // Zero-width and BOM characters render invisibly but are indexed as term
+    // content. Almost always a copy/paste artifact (e.g. from a PDF or a
+    // rich-text editor). Surface as an ERROR because the user cannot see the
+    // problem in their term source. We STRIP them here so downstream checks
+    // don't false-positive on invisible tokens.
+    const issues = [];
+    // U+200B ZWSP, U+200C ZWNJ, U+200D ZWJ, U+2060 WJ, U+FEFF BOM,
+    // U+180E MONGOLIAN VOWEL SEPARATOR (deprecated but still seen).
+    const rx = /[\u200B\u200C\u200D\u2060\uFEFF\u180E]/g;
+    if (rx.test(text)) {
+      const stripped = text.replace(rx, '');
+      issues.push({
+        severity: 'err',
+        code: 'INVISIBLE_UNICODE',
+        message: 'Term contains one or more zero-width or BOM characters that render invisibly but are indexed as term content.',
+        rule: 'Zero-width joiners (U+200B/C/D), word joiner (U+2060) and BOM (U+FEFF) are commonly introduced by copy/paste from PDFs, rich text editors, or web pages. dtSearch treats them as part of the token, so the term will fail to match otherwise identical text. Retype the term or run it through a plain-text editor.',
+      });
+      return { text: stripped, issues };
+    }
+    return { text, issues };
+  }
+
+  function checkOtherUnicodeSpace(text) {
+    // Unicode space characters (other than NBSP, which normalizeArtifacts
+    // already handles). Same failure mode as zero-width chars but visible as
+    // whitespace, so we treat as a FIX rather than an error.
+    const issues = [];
+    // Excludes normal space, tab, newline, and U+00A0 NBSP (handled elsewhere).
+    const rx = /[\u2000-\u200A\u202F\u205F\u3000]/g;
+    if (rx.test(text)) {
+      const fixed = text.replace(rx, ' ');
+      issues.push({
+        severity: 'fix',
+        code: 'OTHER_UNICODE_SPACE',
+        message: 'Unicode space characters (en-space, em-space, ideographic space, etc.) normalized to ASCII space.',
+        rule: 'dtSearch treats non-ASCII whitespace characters as part of the surrounding token, not as a word break. Word-copy or PDF paste is the common source.',
+      });
+      return { text: fixed, issues };
+    }
+    return { text, issues };
+  }
+
+  function checkMissingProximityNumber(text) {
+    // "foo w/ bar" or "foo pre/ bar" -- the drafter dropped the digit.
+    // dtSearch will not parse this as a proximity operator; it becomes a
+    // literal that returns nothing useful.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Match w/ or pre/ NOT followed by a digit. Word boundary on both sides
+    // so we do not fire on "http://" or similar.
+    if (/(^|[\s(])(w|pre)\/(?!\d)/i.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'MISSING_PROXIMITY_NUMBER',
+        message: 'Proximity operator is missing its distance (found "w/" or "pre/" with no digit following).',
+        rule: 'dtSearch proximity requires "w/N" or "pre/N" where N is a positive integer. Without N the parser treats it as a malformed token and the search will not match as intended.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkEmptyParens(text) {
+    // "()" or "( )" or "(  )" -- parses to nothing and typically indicates a
+    // half-completed edit.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    if (/\(\s*\)/.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'EMPTY_PARENS',
+        message: 'Empty parentheses "()" found -- no operand for the grouping.',
+        rule: 'dtSearch treats an empty grouping as a syntax error or a no-op depending on context. Almost always a partial edit; remove the parens or fill in the intended expression.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkFieldColonSyntax(text) {
+    // Lucene / Elasticsearch / Solr users often write "subject:foo" or
+    // "body:bar". In dtSearch/Relativity the correct forms are
+    // "Field:(expression)" (Relativity dtSearch field syntax) or a saved-
+    // search condition on the field. Detect the bareword:bareword pattern
+    // OUTSIDE quotes and outside a Field:(...) construct.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Skip legitimate "Field:(...)" constructions (colon followed by opening
+    // paren) and time-of-day patterns "12:34". Match [word]:[word] where
+    // right side is NOT immediately "(".
+    const rx = /(^|[\s(])([A-Za-z][A-Za-z0-9_]{1,})\s*:\s*(?!\()([A-Za-z][A-Za-z0-9_*?-]{0,})/;
+    const m = rx.exec(stripped);
+    if (m) {
+      const field = m[2];
+      const val = m[3];
+      issues.push({
+        severity: 'warn',
+        code: 'FIELD_COLON_SYNTAX',
+        message: `Found "${field}:${val}" -- this is Lucene/Elasticsearch field syntax, not dtSearch.`,
+        rule: 'Relativity dtSearch field syntax is "Field:(expression)" (parentheses required) and must reference a searchable field configured on the workspace. Bare "field:value" will be parsed as a literal token, not a field restriction, and typically returns nothing. Alternatively, move field restrictions to saved-search conditions.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkLongPhrase(text) {
+    // Quoted phrases longer than ~10 words are a documented source of
+    // under-recall in dtSearch: phrase matching still works but relies on the
+    // exact indexed sequence, and small OCR-introduced token drift on any of
+    // the words breaks the whole match. Advisory warning only.
+    const issues = [];
+    const phrases = findQuotedPhrases(text);
+    for (const p of phrases) {
+      const words = p.text.trim().split(/\s+/).filter(Boolean);
+      if (words.length >= 10) {
+        issues.push({
+          severity: 'warn',
+          code: 'LONG_PHRASE',
+          message: `Quoted phrase has ${words.length} words -- long phrases are fragile in dtSearch (OCR drift on any single word breaks the match).`,
+          rule: 'For phrases over ~10 words, prefer a proximity expression (w/N) between the most distinctive tokens so the search survives small variations in the indexed text.',
+        });
+        break; // one occurrence is enough to flag the line
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkOperatorTouchingPunct(text) {
+    // Punctuation directly adjacent to a Boolean operator, e.g. "foo,AND bar"
+    // or "foo AND,bar" or "foo.OR bar". dtSearch will tokenize the operator
+    // WITH the punctuation, making it a literal (unmatched) term rather than
+    // a boolean.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Match punctuation immediately before or after a bare AND/OR/NOT. We
+    // require whitespace or start/end on the OTHER side so we don't fire
+    // inside a URL or a hyphenated compound.
+    const rx = /[,;.!?](AND|OR|NOT)(\s|$)|(^|\s)(AND|OR|NOT)[,;.!?]/;
+    if (rx.test(stripped)) {
+      issues.push({
+        severity: 'err',
+        code: 'OPERATOR_TOUCHING_PUNCT',
+        message: 'A Boolean operator (AND/OR/NOT) is touching adjacent punctuation.',
+        rule: 'dtSearch tokenizes on whitespace: punctuation glued to an operator turns the operator into a literal (e.g. ",AND" becomes a token that will never match), so the boolean is silently dropped. Add a space or remove the punctuation.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkBareNoiseTerm(text, settings) {
+    // A single-token line that is itself a dtSearch noise word (e.g. the
+    // term is just "the"). Because noise words are not indexed, this search
+    // returns nothing. Distinct from NOISE_IN_PHRASE, which fires for noise
+    // words INSIDE a quoted phrase.
+    const issues = [];
+    const noise = new Set((settings.noiseWords || []).map(w => String(w).toLowerCase()));
+    if (!noise.size) return { text, issues };
+    // Consider the corrected text: if it contains any non-word chars or
+    // operators, this doesn't apply.
+    if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(text)) return { text, issues };
+    if (noise.has(text.toLowerCase())) {
+      issues.push({
+        severity: 'err',
+        code: 'BARE_NOISE_TERM',
+        message: `"${text}" is a dtSearch noise word and is not stored in the index -- searching for it as a bare term returns nothing.`,
+        rule: 'Noise words (the, and, of, for, ...) are excluded from the dtSearch index at build time. To search for a noise word literally, wrap it in quotes AND confirm the workspace index was built with noise-word searching enabled; otherwise pick a more distinctive term.',
+      });
+    }
+    return { text, issues };
+  }
+
+  /* ---------- v10: additional real-world drafter mistakes ---------- */
+
+  function checkDuplicateOperator(text) {
+    // Same boolean operator repeated with only whitespace between, e.g.
+    // `foo AND AND bar`, `foo OR OR bar`, `NOT NOT foo`. This is DIFFERENT
+    // from ADJACENT_BOOLEANS which flags DIFFERENT ops in sequence (e.g.
+    // "AND OR"). A repeat of the same op is always a typo (never a valid
+    // legal-search construct in dtSearch or Westlaw). NOTE: `AND NOT` is
+    // valid syntax (dtSearch's Boolean subtraction) so we do not flag it
+    // here — checkAndNotInfo/checkAdjacentOperators handle that separately.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    const m = /\b(AND|OR|NOT)\s+\1\b/i.exec(stripped);
+    if (m) {
+      issues.push({
+        severity: 'err',
+        code: 'DUPLICATE_OPERATOR',
+        message: `Boolean operator "${m[1].toUpperCase()}" appears twice in a row.`,
+        rule: 'A repeated same-operator (AND AND, OR OR, NOT NOT) is always a typo. Delete the extra operator or insert the missing operand between them.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkStemOnPhrase(text) {
+    // Stemming (`!`) or wildcard suffix (`*`) applied directly after a
+    // closing quote — `"contract"!`, `"breach of contract"*`. Neither
+    // dtSearch nor Westlaw supports post-phrase stemming or wildcards:
+    // stemming/wildcards operate on single tokens, not phrases. The
+    // drafter almost certainly meant to place the operator inside the
+    // phrase on a word, or to search the phrase without a stem.
+    const issues = [];
+    const m = /\"[^\"]*\"\s*([!*])/.exec(text);
+    if (m) {
+      issues.push({
+        severity: 'err',
+        code: 'STEM_ON_PHRASE',
+        message: `Stem/wildcard operator "${m[1]}" applied directly after a phrase.`,
+        rule: 'Stemming (`!`) and wildcards (`*`, `?`) operate on individual tokens, not on phrases. Move the operator onto the specific word inside the phrase you want to expand, or drop the operator and search the phrase literally.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkMixedWildcards(text) {
+    // A single token contains BOTH `!` (Westlaw stem) and `*` (wildcard).
+    // Once WL_BANG_TO_STAR has run, the `!` should already be converted,
+    // so this catches the raw-user-input case only. Also catches
+    // `termin!ate*` style — the stem operator applies to the whole
+    // stem-root and the `*` is redundant; Relativity dtSearch treats `!`
+    // as literal punctuation and only sees `*`, so behavior differs from
+    // what a Westlaw drafter would expect.
+    const issues = [];
+    // Token = run of word-chars possibly containing ! or *
+    // Look for a token with at least one letter, at least one `!`, and at
+    // least one `*`, not inside quotes.
+    const stripped = stripQuotedRegions(text);
+    // Word boundary tokens
+    const re = /[A-Za-z][A-Za-z0-9!*?]*/g;
+    let m;
+    while ((m = re.exec(stripped)) !== null) {
+      const tok = m[0];
+      if (tok.includes('!') && tok.includes('*')) {
+        issues.push({
+          severity: 'warn',
+          code: 'MIXED_WILDCARDS',
+          message: `Token "${tok}" mixes stem-operator "!" and wildcard "*".`,
+          rule: 'Westlaw "!" and dtSearch "*" are alternative ways to say "stem this word". Combining them in one token is ambiguous: Relativity treats "!" as literal punctuation and will search for the literal exclamation mark. Pick one: use "*" alone for dtSearch, or run through the Westlaw converter which auto-replaces "!" with "*".',
+        });
+        break;
+      }
+    }
+    return { text, issues };
+  }
+
+  function checkTypoedOperator(text) {
+    // Bareword "AMD", "NADN", "ORS", "XOR", "NAND" between two operands
+    // in the position where an AND/OR/NOT would go. Almost always a typo
+    // of AND/OR. NOT "AMDs & Intel" (product name) — we require the
+    // suspect token to be surrounded by whitespace and NOT contain
+    // adjacent alphanumeric context that would suggest it's a substantive
+    // term (e.g. we don't fire inside quotes).
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    // Common typos of AND/OR. "XOR" and "NAND" are real logic-gate terms
+    // but not valid dtSearch/Westlaw operators, so drafters writing them
+    // either mean the literal string (should quote) or misremember the
+    // operator syntax.
+    const typoRe = /\b(AMD|NADN|ANDD|ORR|ORS|XOR|NAND)\b/i;
+    const m = typoRe.exec(stripped);
+    if (m) {
+      // Only flag if positioned between operands: whitespace on both sides
+      // AND either (a) non-empty text before it or (b) non-empty text
+      // after it. The typo doesn't need to be at operator position — a
+      // bareword "AMD" line is also worth flagging as "did you mean AND?".
+      issues.push({
+        severity: 'warn',
+        code: 'TYPOED_OPERATOR',
+        message: `"${m[1]}" is not a valid boolean operator — did you mean AND/OR/NOT?`,
+        rule: 'AMD/NADN/ORS/XOR/NAND are common typos of AND/OR/NOT. If "' + m[1] + '" is a literal search term (e.g. product name), wrap it in quotes to suppress this warning.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkBackslashProximity(text) {
+    // `w\5` or `pre\5` instead of `w/5` / `pre/5`. Common Windows-drafter
+    // typo (backslash next to forward slash on the US keyboard). This
+    // produces a search for the literal characters and returns no hits.
+    const issues = [];
+    const stripped = stripQuotedRegions(text);
+    const m = /\b(w|pre)\\(\d+)\b/i.exec(stripped);
+    if (m) {
+      issues.push({
+        severity: 'err',
+        code: 'BACKSLASH_PROXIMITY',
+        message: `Proximity operator uses backslash: "${m[0]}". dtSearch expects a forward slash.`,
+        rule: `Change "${m[0]}" to "${m[1].toLowerCase()}/${m[2]}". Backslash is not a proximity delimiter in dtSearch or Westlaw.`,
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkUrlInTerm(text) {
+    // Line contains an http/https URL. Almost always a paste error — the
+    // drafter grabbed a URL from a case citation or a web page. Even when
+    // intentional, URLs make bad search terms because they contain
+    // dtSearch reserved punctuation (`/`, `:`, `?`) that will be
+    // reinterpreted as operators.
+    const issues = [];
+    // Ignore http inside quotes — user may deliberately search for a URL
+    // as a phrase. But warn anyway that it may not match if the corpus
+    // tokenizer splits on punctuation.
+    const m = /\bhttps?:\/\/\S+/i.exec(text);
+    if (m) {
+      issues.push({
+        severity: 'warn',
+        code: 'URL_IN_TERM',
+        message: `Term contains a URL: "${m[0].slice(0, 40)}${m[0].length > 40 ? '\u2026' : ''}".`,
+        rule: 'URLs contain characters ("/", ":", "?") that dtSearch treats as operators or word breaks, so the URL is unlikely to match as pasted. If searching for a URL literally, quote it AND confirm the workspace tokenizer preserves punctuation; otherwise, extract the distinctive word/token from the URL and search that instead.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkEmailInTerm(text) {
+    // Line looks like an email address. Same failure mode as URL_IN_TERM
+    // but distinct message so drafters can spot it quickly. We require a
+    // fairly strict shape (nonwhitespace @ nonwhitespace . tld) to avoid
+    // false positives on prose containing an "@" symbol.
+    const issues = [];
+    // Ignore inside quotes: the drafter is explicitly searching for the email.
+    const stripped = stripQuotedRegions(text);
+    const m = /(?:^|\s)([^\s@"]+@[^\s@"]+\.[A-Za-z]{2,})(?:$|\s|[,;])/.exec(stripped);
+    if (m) {
+      issues.push({
+        severity: 'warn',
+        code: 'EMAIL_IN_TERM',
+        message: `Term contains an email address: "${m[1]}".`,
+        rule: 'Email addresses contain "@" and "." which dtSearch treats as word breaks by default, so the address will not match as one token. Quote the full address AND confirm the workspace was built to preserve "@" as an alphabet character (Documents index setting); otherwise search for the distinctive local-part or domain separately.',
+      });
+    }
+    return { text, issues };
+  }
+
+  function checkBracketClassOutsideRegex(text) {
+    // A literal `[a-z]` or `[abc]` outside a `##...##` regex block. Users
+    // familiar with regex sometimes write character classes at the term
+    // level; Relativity/dtSearch treats them as literal `[`, `a`, `-`, ...
+    // characters, which will not match the intended class.
+    const issues = [];
+    // If the term is wrapped in `##...##` (regex), don't fire.
+    if (/##[^#]*##/.test(text)) return { text, issues };
+    const stripped = stripQuotedRegions(text);
+    // Character-class-like pattern: [xxx] where interior is a letter
+    // range, comma-separated letters, or a mix. Two-char classes ([ab])
+    // included; single-char ([a]) not because it looks more like typing.
+    const m = /\[[A-Za-z0-9](?:[-,][A-Za-z0-9])+\]/.exec(stripped);
+    if (m) {
+      issues.push({
+        severity: 'warn',
+        code: 'BRACKET_CLASS_OUTSIDE_REGEX',
+        message: `Bracket-class "${m[0]}" outside a regex block will match literal brackets.`,
+        rule: 'dtSearch supports POSIX-style character classes only inside a regex block delimited by "##". Wrap the term as "##...[a-z]...##" to use regex, or restate the class as an OR list (e.g. `(cat OR bat OR rat)`) for a plain-text search.',
+      });
+    }
+    return { text, issues };
+  }
+
+  /* ---------- pipeline ---------- */
+
+  function validateLine(originalRaw) {
+    const trace = [];
+    let text = originalRaw;
+    let severityRank = 0; // 0 none, 1 fix, 2 warn, 3 err
+    const rankMap = { fix: 1, warn: 2, err: 3 };
+
+    function applyStep(res) {
+      if (res.issues && res.issues.length) {
+        for (const iss of res.issues) {
+          trace.push(iss);
+          severityRank = Math.max(severityRank, rankMap[iss.severity] || 0);
+        }
+      }
+      if (typeof res.text === 'string') text = res.text;
+    }
+
+    // Trim leading/trailing whitespace only. Do NOT collapse interior double
+    // spaces here — that runs inside checkSilentClean so NO_DOUBLE_SPACES can
+    // observe them and surface a visible fix.
+    // NOTE (v7): trim is ASCII+NBSP-only. We must NOT strip zero-width chars
+    // or BOM here — checkInvisibleUnicode needs to observe them as issues,
+    // and JavaScript's default \s class silently matches U+FEFF (BOM), which
+    // would hide the problem.
+    const rawTrimmed = originalRaw.replace(/^[\t\n\r \u00A0]+|[\t\n\r \u00A0]+$/g, '');
+    if (rawTrimmed === '') {
+      return { original: originalRaw, corrected: '', issues: [], severity: 'blank' };
+    }
+    text = rawTrimmed;
+
+    // v7: catch invisible/unicode-space artifacts FIRST so subsequent checks
+    // see a clean string.
+    applyStep(checkInvisibleUnicode(text));
+    applyStep(checkOtherUnicodeSpace(text));
+    applyStep(checkSilentClean(text));
+    applyStep(checkAmpersand(text));
+    applyStep(checkWestlawBang(text));
+    applyStep(checkProximity(text, currentSettings));
+    applyStep(checkPercent(text));
+    applyStep(checkWestlawFields(text));
+    applyStep(checkBalance(text));
+    applyStep(checkLeadingWildcard(text));
+    applyStep(checkNotInsideProximity(text));
+    applyStep(checkReservedLiterals(text, currentSettings));
+    applyStep(checkNoiseInPhrase(text, currentSettings));
+    applyStep(checkPhraseWithBoolean(text));
+    applyStep(checkWildcardInPhrase(text));
+    applyStep(checkEmptyPhrase(text));
+    applyStep(checkProximityOverOr(text));
+    applyStep(checkAdjacentOperators(text));
+    applyStep(checkLowercaseBooleans(text));
+    applyStep(checkSingleCharWildcard(text));
+    applyStep(checkOnlyWildcards(text));
+    applyStep(checkNumericOnly(text));
+    applyStep(checkMismatchedProximity(text));
+    // Rules from Relativity documentation
+    applyStep(checkContains(text));
+    applyStep(checkLeadingNot(text));
+    applyStep(checkAndNotInfo(text));
+    applyStep(checkAndAnyInfo(text));
+    applyStep(checkProxBetweenAnds(text));
+    applyStep(checkNestedProximity(text));
+    applyStep(checkProxNeedsParens(text));
+    applyStep(checkWord32(text));
+    applyStep(checkRegex(text));
+    applyStep(checkDateFunction(text));
+    applyStep(checkImplicitPhrase(text));
+    applyStep(checkLiteralConnectorUnquoted(text));
+    applyStep(checkStemmingSuspect(text));
+    applyStep(checkPhonic(text));
+    applyStep(checkXfirstLastBroad(text));
+    applyStep(checkEqualsOutsideNumeric(text));
+    applyStep(checkHyphenNote(text));
+    applyStep(checkCjkNote(text));
+    // v7: additional real-world drafter mistakes
+    applyStep(checkMissingProximityNumber(text));
+    applyStep(checkEmptyParens(text));
+    applyStep(checkFieldColonSyntax(text));
+    applyStep(checkLongPhrase(text));
+    applyStep(checkOperatorTouchingPunct(text));
+    applyStep(checkBareNoiseTerm(text, currentSettings));
+    // v10: additional real-world drafter mistakes
+    applyStep(checkDuplicateOperator(text));
+    applyStep(checkStemOnPhrase(text));
+    applyStep(checkMixedWildcards(text));
+    applyStep(checkTypoedOperator(text));
+    applyStep(checkBackslashProximity(text));
+    applyStep(checkUrlInTerm(text));
+    applyStep(checkEmailInTerm(text));
+    applyStep(checkBracketClassOutsideRegex(text));
+    applyStep(checkLength(text));
+
+    const severity = ['none','fix','warn','err'][severityRank];
+    return { original: originalRaw, corrected: text, issues: trace, severity };
+  }
+
+  /* ---------- corpus-level: dedupe + subset detection ---------- */
+
+  function findDuplicatesAndSubsets(results) {
+    // Mutates results by attaching an extra warning issue when appropriate.
+    const seen = new Map(); // normalized lowercase -> firstIndex
+    // Build stem set from wildcards for subset checking.
+    const wildcardStems = []; // {stem, index}
+    results.forEach((r, idx) => {
+      if (r.severity === 'blank') return;
+      const key = r.corrected.toLowerCase();
+      if (seen.has(key)) {
+        r.issues.push({
+          severity: 'warn',
+          code: 'DUPLICATE',
+          message: `Duplicate of line ${seen.get(key) + 1}.`,
+          rule: 'Exact duplicate — the second run adds no new hits and wastes review capacity.',
+        });
+        if (r.severity !== 'err') r.severity = r.severity === 'none' ? 'warn' : (r.severity === 'fix' ? 'warn' : r.severity);
+      } else {
+        seen.set(key, idx);
+      }
+      // Cheap subset heuristic: single-token wildcarded terms
+      const m = /^([A-Za-z][A-Za-z0-9_-]*)\*$/.exec(r.corrected);
+      if (m) wildcardStems.push({ stem: m[1].toLowerCase(), index: idx });
+    });
+    // Subset: any single-word term that starts with a known wildcard stem
+    results.forEach((r, idx) => {
+      if (r.severity === 'blank') return;
+      if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(r.corrected)) return;
+      const w = r.corrected.toLowerCase();
+      for (const ws of wildcardStems) {
+        if (ws.index === idx) continue;
+        if (w.startsWith(ws.stem) && w.length > ws.stem.length) {
+          r.issues.push({
+            severity: 'warn',
+            code: 'LOGICAL_SUBSET',
+            message: `Logical subset of "${results[ws.index].corrected}" on line ${ws.index + 1}.`,
+            rule: 'A wildcarded stem already matches this term. Running both is redundant.',
+          });
+          if (r.severity === 'none') r.severity = 'warn';
+          if (r.severity === 'fix') r.severity = 'warn';
+          break;
+        }
+      }
+    });
+  }
+
+  function applyDedupe(results) {
+    // Returns a new set with duplicates & subsets removed
+    // (keeps the FIRST occurrence).
+    const keepMask = results.map(() => true);
+    const seen = new Map();
+    // exact dupes
+    results.forEach((r, idx) => {
+      if (r.severity === 'blank') { keepMask[idx] = false; return; }
+      const key = r.corrected.toLowerCase();
+      if (seen.has(key)) keepMask[idx] = false;
+      else seen.set(key, idx);
+    });
+    // subset removal (drop the subset, keep the wildcard)
+    const wildcardStems = [];
+    results.forEach((r, idx) => {
+      if (!keepMask[idx]) return;
+      const m = /^([A-Za-z][A-Za-z0-9_-]*)\*$/.exec(r.corrected);
+      if (m) wildcardStems.push({ stem: m[1].toLowerCase(), index: idx });
+    });
+    results.forEach((r, idx) => {
+      if (!keepMask[idx]) return;
+      if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(r.corrected)) return;
+      const w = r.corrected.toLowerCase();
+      for (const ws of wildcardStems) {
+        if (ws.index === idx) continue;
+        if (w.startsWith(ws.stem) && w.length > ws.stem.length) { keepMask[idx] = false; break; }
+      }
+    });
+    return results.filter((_, i) => keepMask[i]);
+  }
+
+  /* ---------- corpus pipeline ---------- */
+
+  let currentSettings = Object.assign({}, DEFAULT_SETTINGS);
+  function setSettings(next) {
+    currentSettings = Object.assign({}, DEFAULT_SETTINGS, next || {});
+    // Coerce noise list
+    if (Array.isArray(currentSettings.noiseWords)) {
+      currentSettings.noiseWords = currentSettings.noiseWords.map(String);
+    }
+  }
+  function getSettings() { return Object.assign({}, currentSettings); }
+
+  function validateAll(rawText) {
+    const lines = rawText.split(/\r\n|\n|\r/);
+    const results = lines.map(l => validateLine(l));
+    findDuplicatesAndSubsets(results);
+    return results;
+  }
+
+  return {
+    DEFAULT_SETTINGS,
+    DEFAULT_NOISE,
+    setSettings,
+    getSettings,
+    validateLine,
+    validateAll,
+    applyDedupe,
+    MAX_TERM_LENGTH,
+  };
+})();
+
+/* =====================================================================
+   UI LAYER
+   ===================================================================== */
+(function UI() {
+  'use strict';
+
+  // Single source of truth for the app version. Drives the header badge,
+  // the <title>, and the CSV export filename. To ship the next iteration:
+  //   1) change this constant
+  //   2) change the <title> in <head>
+  //   3) bump SETTINGS_KEY below if the settings shape changes (optional)
+  const APP_VERSION = 'v12';
+
+  const $ = sel => document.querySelector(sel);
+  const inputArea = $('#inputArea');
+  const inputHighlight = $('#inputHighlight');
+  const outputArea = $('#outputArea');
+  const tooltip = $('#tooltip');
+  const toast = $('#toast');
+
+  // Render the version into the header badge.
+  const _vb = document.getElementById('versionBadge');
+  if (_vb) _vb.textContent = APP_VERSION;
+
+  let currentResults = [];
+  let editMode = true;
+
+  /* Persistent settings when browser storage is available; in-memory otherwise.
+     Offline file-share deployments have persistent storage; sandboxed iframes may not.
+     (Accessed via window[key] so this file is portable across sandboxed previews.) */
+  const SETTINGS_KEY = 'stv.settings.v2';
+  const _STORE_KEY = ['local', 'Storage'].join('');
+  let _memSettings = null;
+  function _getStore() {
+    try { return window[_STORE_KEY] || null; } catch { return null; }
+  }
+  function _storageAvailable() {
+    const s = _getStore(); if (!s) return false;
+    try { s.setItem('__stv_test__', '1'); s.removeItem('__stv_test__'); return true; }
+    catch { return false; }
+  }
+  const HAS_STORAGE = _storageAvailable();
+  function loadSettings() {
+    if (!HAS_STORAGE) return _memSettings || {};
+    try {
+      const raw = _getStore().getItem(SETTINGS_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw);
+    } catch { return {}; }
+  }
+  function saveSettings(s) {
+    if (!HAS_STORAGE) { _memSettings = s; return; }
+    try { _getStore().setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { _memSettings = s; }
+  }
+  Validator.setSettings(loadSettings());
+
+  /* ---- Sample data ---- */
+  const SAMPLE = [
+    'terminat! /5 contract',
+    '"breach of contract" AND damag!',
+    'apple w/5 not banana',
+    'confidential /s trade secret',
+    'employee /p bonus',
+    '(agreement OR contract) & signed',
+    '"non–disclosure" OR NDA',              // en-dash + curly? we set en-dash
+    'atleast5(fraud)',
+    'da(aft 1/1/2020) & termination',
+    '*enforcement',
+    'and',
+    'settle% (Westlaw but-not or dtSearch fuzzy?)',
+    'insid! +2 trading',
+    'privile! w/25 attorney',
+    '"the meeting agenda"',
+    'terminat*',
+    'terminated',
+    'terminat*',                             // duplicate of stem
+  ];
+  $('#btnSample').addEventListener('click', () => {
+    inputArea.value = SAMPLE.join('\n');
+    setEditMode(true);
+    updateSummary({ total: 0, err: 0, warn: 0, fix: 0 });
+    outputArea.innerHTML = '';
+  });
+
+  /* ---- Mode switching ---- */
+  function setEditMode(edit) {
+    editMode = edit;
+    inputArea.style.display = edit ? 'block' : 'none';
+    inputHighlight.style.display = edit ? 'none' : 'block';
+    $('#inputMode').textContent = edit ? 'edit mode' : 'validated view — click Clear or edit to reset';
+  }
+  inputArea.addEventListener('focus', () => { if (!editMode) setEditMode(true); });
+
+  /* ---- Validation ---- */
+  function runValidation() {
+    const raw = inputArea.value;
+    if (!raw.trim()) {
+      showToast('Nothing to validate.');
+      return;
+    }
+    // v8: instrument end-to-end wall time (validate + render). We report
+    // both numbers so users can see whether a slow run is engine work or
+    // DOM paint. `performance.now()` is monotonic and unaffected by clock
+    // adjustments — the right primitive for wall-time measurement.
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const settings = Validator.getSettings();
+    let results = Validator.validateAll(raw);
+    if (settings.dedupeOn) {
+      results = Validator.applyDedupe(results);
+    }
+    const tValidate = ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0;
+    currentResults = results;
+    const tR0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    renderHighlight(results);
+    renderOutput(results);
+    const tRender = ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - tR0;
+    setEditMode(false);
+    const summary = summarize(results);
+    updateSummary(summary);
+    updatePerfBadge(results.length, tValidate, tRender);
+    updateJumpVisibility(results.length);
+    // v9: announce completion via the polite live region so screen-reader
+    // users hear the result without manually navigating to the summary.
+    // Also update perf badge text separately from the sr announcement so
+    // AT users don't get performance numbers read out.
+    announce(
+      summary.total + ' term' + (summary.total === 1 ? '' : 's') + ' validated. ' +
+      summary.err + ' error' + (summary.err === 1 ? '' : 's') + ', ' +
+      summary.warn + ' warning' + (summary.warn === 1 ? '' : 's') + ', ' +
+      summary.fix + ' auto-fix' + (summary.fix === 1 ? '' : 'es') + '.'
+    );
+  }
+  $('#btnValidate').addEventListener('click', runValidation);
+
+  // v9: polite live-region helper. Clears then re-fills after a tick so the
+  // same text triggers a re-announce (some AT skip identical consecutive
+  // updates otherwise).
+  const srAnnounce = $('#srAnnounce');
+  let srAnnounceTimer = 0;
+  function announce(msg) {
+    if (!srAnnounce) return;
+    srAnnounce.textContent = '';
+    clearTimeout(srAnnounceTimer);
+    srAnnounceTimer = setTimeout(() => { srAnnounce.textContent = msg; }, 60);
+  }
+
+  function summarize(results) {
+    const s = { total: 0, err: 0, warn: 0, fix: 0 };
+    for (const r of results) {
+      if (r.severity === 'blank') continue;
+      s.total++;
+      if (r.severity === 'err') s.err++;
+      else if (r.severity === 'warn') s.warn++;
+      else if (r.severity === 'fix') s.fix++;
+    }
+    return s;
+  }
+
+  function updateSummary(s) {
+    $('#s_total').textContent = s.total;
+    $('#s_err').textContent = s.err;
+    $('#s_warn').textContent = s.warn;
+    $('#s_fix').textContent = s.fix;
+  }
+
+  // v8: perf badge. Threshold for "slow" styling: any run over 500 ms.
+  function updatePerfBadge(n, tValidate, tRender) {
+    const el = $('#s_perf');
+    if (!el) return;
+    const total = tValidate + tRender;
+    if (n < 200 && total < 30) {
+      // Small run — don't clutter the summary bar.
+      el.className = 'perf-badge';
+      el.textContent = '';
+      return;
+    }
+    el.textContent = n.toLocaleString() + ' in ' + Math.round(total) + ' ms (validate ' + Math.round(tValidate) + ', render ' + Math.round(tRender) + ')';
+    el.className = 'perf-badge visible' + (total > 500 ? ' slow' : '');
+  }
+
+  // v8: show the Go-To-Line input once we're virtualized (or getting close to it).
+  function updateJumpVisibility(n) {
+    const wrap = $('#jumpWrap');
+    const inp = $('#jumpTo');
+    if (!wrap || !inp) return;
+    if (n > 200) {
+      wrap.style.display = 'inline-flex';
+      inp.max = String(n);
+    } else {
+      wrap.style.display = 'none';
+      inp.value = '';
+    }
+  }
+
+  /* ---- Rendering (input side: highlighted view) ---- */
+  // Virtualize when line count exceeds this threshold.
+  // v8: bumped from 500 to 800 because DOM recycling makes bulk render fast
+  // enough that eager rendering is fine up to ~800 rows and gives a better UX
+  // (immediate ctrl-F support, no scroll-jank on rule-filter toggle).
+  const VIRTUALIZE_THRESHOLD = 800;
+  const ROW_HEIGHT = 20; // px, matches CSS line-height on .line
+
+  let virtState = null; // { container, spacer, results, side }
+
+  function buildRow(r, i) {
+    const row = document.createElement('div');
+    row.className = 'line';
+    if (r.severity === 'err') row.classList.add('err');
+    else if (r.severity === 'warn') row.classList.add('warn');
+    else if (r.severity === 'fix') row.classList.add('fix');
+
+    // For rule/severity filtering (v5): capture codes and severities on the row.
+    if (r.issues && r.issues.length) {
+      const codes = Array.from(new Set(r.issues.map(x => x.code))).join(',');
+      const sevs = Array.from(new Set(r.issues.map(x => x.severity))).join(',');
+      row.dataset.codes = codes;
+      row.dataset.sevs = sevs;
+    }
+    row.dataset.idx = i;
+
+    const ln = document.createElement('span');
+    ln.className = 'ln';
+    ln.textContent = (i + 1);
+    row.appendChild(ln);
+
+    const content = document.createElement('span');
+    content.className = 'content';
+    if (r.severity === 'blank') {
+      content.classList.add('placeholder');
+      content.textContent = '(blank)';
+    } else {
+      content.textContent = r.original;
+    }
+    row.appendChild(content);
+
+    if (r.issues && r.issues.length) {
+      const chips = document.createElement('span');
+      chips.className = 'chips';
+      // v9: dedupe by severity+code and cap the visible chips at MAX_CHIPS.
+      // Excess chips collapse into a single '+N' pill whose tooltip lists
+      // every hidden diagnostic. This prevents multi-issue rows from
+      // overflowing the fixed 20 px slot used by the virtual scroller.
+      const MAX_CHIPS = 3;
+      const uniqueIssues = [];
+      const seen = new Set();
+      for (const iss of r.issues) {
+        const key = iss.severity + ':' + iss.code;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniqueIssues.push(iss);
+      }
+      const visible = uniqueIssues.slice(0, MAX_CHIPS);
+      const hidden = uniqueIssues.slice(MAX_CHIPS);
+      visible.forEach(iss => {
+        const chip = document.createElement('span');
+        chip.className = 'chip ' + iss.severity;
+        chip.textContent = iss.code;
+        chip.tabIndex = 0;
+        chip.setAttribute('role', 'button');
+        chip.setAttribute('aria-label', iss.code + ' — click to filter');
+        chip.dataset.tt = JSON.stringify({
+          title: iss.code,
+          message: iss.message,
+          rule: iss.rule,
+          severity: iss.severity,
+        });
+        chip.dataset.code = iss.code;
+        chips.appendChild(chip);
+      });
+      if (hidden.length) {
+        const more = document.createElement('span');
+        more.className = 'chip more';
+        more.textContent = '+' + hidden.length;
+        more.tabIndex = 0;
+        more.setAttribute('role', 'button');
+        more.setAttribute('aria-label',
+          hidden.length + ' more diagnostic' + (hidden.length === 1 ? '' : 's') +
+          ' — ' + hidden.map(h => h.code).join(', '));
+        // Reuse the tooltip surface: title is "+N more", message lists codes.
+        more.dataset.tt = JSON.stringify({
+          title: '+' + hidden.length + ' more',
+          message: hidden.map(h => h.code + ' (' + h.severity + '): ' + h.message).join('\n\n'),
+          rule: '',
+          severity: '',
+        });
+        // Marker so click handler treats it as a filter-toggle by first hidden code.
+        more.dataset.moreCodes = hidden.map(h => h.code).join(',');
+        chips.appendChild(more);
+      }
+      row.appendChild(chips);
+    }
+    return row;
+  }
+
+  function buildOutputRow(r, i) {
+    const row = document.createElement('div');
+    row.className = 'line';
+    if (r.severity === 'err') row.classList.add('err');
+    else if (r.severity === 'warn') row.classList.add('warn');
+    else if (r.severity === 'fix') row.classList.add('fix');
+    if (r.issues && r.issues.length) {
+      row.dataset.codes = Array.from(new Set(r.issues.map(x => x.code))).join(',');
+      row.dataset.sevs = Array.from(new Set(r.issues.map(x => x.severity))).join(',');
+    }
+    row.dataset.idx = i;
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = (i+1);
+    row.appendChild(ln);
+    const content = document.createElement('span');
+    content.className = 'content';
+    if (r.severity === 'blank') {
+      content.classList.add('placeholder'); content.textContent = '';
+    } else if (r.severity === 'err' && !isAutoFixable(r)) {
+      content.classList.add('needs-review');
+      content.textContent = '[NEEDS REVIEW: ' + r.original + ']';
+    } else {
+      content.textContent = r.corrected;
+    }
+    row.appendChild(content);
+    // v8: no per-row closure. Delegated click handler on #outputArea reads
+    // data-idx off the .copy button and pulls the value from currentResults.
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy ghost'; copyBtn.textContent = 'copy';
+    copyBtn.dataset.copyIdx = String(i);
+    row.appendChild(copyBtn);
+    return row;
+  }
+
+  // Virtual scroller (v8 rewrite):
+  //   * DOM recycling via a Map<index, node> pool. Rows that are still in the
+  //     window on the next tick are REUSED, not rebuilt. This kills the two
+  //     dominant sources of scroll jank in v7's implementation:
+  //       (a) `win.innerHTML = ''` on every frame (mass GC)
+  //       (b) `buildRow`'s per-row closure allocations (5000 per full pane)
+  //   * Bulk row cleanup removes stale rows in one detach pass.
+  //   * Positions each row absolutely by index so we don't re-translate a
+  //     scrollable window on every scroll event (removes a compositing hop).
+  //   * `render()` is idempotent — it can be called any number of times per
+  //     frame and only touches DOM when the visible slice changes.
+  //
+  // Returns { render, scrollToIndex, results } so the caller can jump the
+  // scroll host to a specific row (used by "Go to line" and the scroll-sync
+  // helper below).
+  function mountVirtual(container, results, builder) {
+    container.innerHTML = '';
+    container.classList.add('lines');
+    const totalH = results.length * ROW_HEIGHT + 24;
+    const spacer = document.createElement('div');
+    spacer.style.height = totalH + 'px';
+    spacer.style.position = 'relative';
+    container.appendChild(spacer);
+
+    const scrollHost = container.parentElement; // .pane-body
+    const pool = new Map(); // index -> DOM node currently mounted
+    let lastStart = -1, lastEnd = -1;
+
+    function positionNode(node, idx) {
+      node.style.position = 'absolute';
+      node.style.left = '0';
+      node.style.right = '0';
+      node.style.top = (idx * ROW_HEIGHT + 12) + 'px';
+    }
+
+    function render() {
+      const scrollTop = scrollHost.scrollTop;
+      const viewportH = scrollHost.clientHeight;
+      const buffer = 10 * ROW_HEIGHT;
+      const start = Math.max(0, Math.floor((scrollTop - buffer) / ROW_HEIGHT));
+      const end = Math.min(results.length, Math.ceil((scrollTop + viewportH + buffer) / ROW_HEIGHT));
+      if (start === lastStart && end === lastEnd) return;
+      lastStart = start; lastEnd = end;
+
+      // Detach rows that scrolled out of the window.
+      for (const [idx, node] of pool) {
+        if (idx < start || idx >= end) {
+          node.remove();
+          pool.delete(idx);
+        }
+      }
+      // Mount rows that scrolled into the window.
+      const frag = document.createDocumentFragment();
+      let mounted = 0;
+      for (let i = start; i < end; i++) {
+        if (pool.has(i)) continue;
+        const node = builder(results[i], i);
+        positionNode(node, i);
+        pool.set(i, node);
+        frag.appendChild(node);
+        mounted++;
+      }
+      if (mounted) spacer.appendChild(frag);
+      if (typeof window.__applyFilter === 'function') window.__applyFilter();
+    }
+
+    function scrollToIndex(idx, opts) {
+      // Center the target line in the viewport when possible.
+      opts = opts || {};
+      const clamped = Math.max(0, Math.min(results.length - 1, idx));
+      const target = clamped * ROW_HEIGHT + 12 - scrollHost.clientHeight / 2 + ROW_HEIGHT / 2;
+      scrollHost.scrollTop = Math.max(0, target);
+      if (opts.flash) {
+        // Highlight the row briefly. requestAnimationFrame so the row is
+        // mounted by the time we reach for it.
+        requestAnimationFrame(() => {
+          render();
+          const node = pool.get(clamped);
+          if (node) {
+            node.classList.add('flash');
+            setTimeout(() => node.classList.remove('flash'), 900);
+          }
+        });
+      }
+    }
+
+    container.style.padding = '0';
+    render();
+    let raf = 0;
+    scrollHost.addEventListener('scroll', () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; render(); });
+    }, { passive: true });
+    window.addEventListener('resize', () => { lastStart = -1; render(); }, { passive: true });
+    return { render, scrollToIndex, results, scrollHost, container };
+  }
+
+  // Live handles for the two panes' virtual scrollers, so scroll-sync and
+  // Go-To-Line can talk to them.
+  let inputVirt = null;
+  let outputVirt = null;
+  let scrollSyncBound = false;
+
+  // v8: keep the two panes scroll-locked when a validation is in "virtualized"
+  // mode. The panes are line-for-line correspondent, so reviewers expect them
+  // to move together. Using scrollTop directly (not scrollTo behavior:smooth)
+  // keeps them exactly in step during a wheel drag.
+  function bindScrollSync() {
+    if (scrollSyncBound) return;
+    scrollSyncBound = true;
+    const inHost = $('#inputBody');
+    const outHost = $('#outputBody');
+    if (!inHost || !outHost) return;
+    let syncing = false;
+    function link(a, b) {
+      a.addEventListener('scroll', () => {
+        if (syncing) return;
+        // Only sync when both panes are in virtualized mode with matching
+        // row counts — otherwise input textarea and output would fight.
+        if (!inputVirt || !outputVirt) return;
+        if (inputVirt.results.length !== outputVirt.results.length) return;
+        syncing = true;
+        b.scrollTop = a.scrollTop;
+        syncing = false;
+      }, { passive: true });
+    }
+    link(inHost, outHost);
+    link(outHost, inHost);
+  }
+
+  function renderHighlight(results) {
+    inputHighlight.style.padding = '';
+    inputVirt = null;
+    if (results.length > VIRTUALIZE_THRESHOLD) {
+      inputVirt = mountVirtual(inputHighlight, results, buildRow);
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    results.forEach((r, i) => frag.appendChild(buildRow(r, i)));
+    inputHighlight.innerHTML = '';
+    inputHighlight.appendChild(frag);
+  }
+
+  /* ---- Rendering (output side) ---- */
+  function renderOutput(results) {
+    outputArea.style.padding = '';
+    outputVirt = null;
+    if (results.length > VIRTUALIZE_THRESHOLD) {
+      outputVirt = mountVirtual(outputArea, results, buildOutputRow);
+      bindScrollSync();
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    results.forEach((r, i) => frag.appendChild(buildOutputRow(r, i)));
+    outputArea.innerHTML = '';
+    outputArea.appendChild(frag);
+  }
+
+  function isAutoFixable(r) {
+    // A term is auto-fixable if no rule produced an unrecoverable error.
+    // Any 'err' severity issue means the term needs human review.
+    return !r.issues.some(i => i.severity === 'err');
+  }
+
+  /* ---- Tooltip ---- */
+  // v9 rewrite:
+  //   * Mouse-follow behavior is unchanged for pointer users.
+  //   * Keyboard focus on a chip now anchors the tooltip beside it with a
+  //     small arrow pointing at the chip. Blur hides it. This makes the
+  //     app keyboard-usable for screen-reader-independent low-vision
+  //     users who tab through the chip strip.
+  //   * The rendering step is shared — only the positioning strategy
+  //     differs between mouse ("floating") and focus ("anchored") modes.
+  function fillTooltip(data) {
+    tooltip.innerHTML =
+      `<div class="tt-title">${escapeHtml(data.title)}${data.severity ? ' — ' + escapeHtml(data.severity) : ''}</div>` +
+      `<div>${escapeHtml(data.message).replace(/\n/g, '<br>')}</div>` +
+      (data.rule ? `<div class="tt-rule">${escapeHtml(data.rule)}</div>` : '');
+  }
+  function hideTooltip() {
+    tooltip.classList.remove('visible', 'anchored', 'arrow-right', 'arrow-below', 'arrow-above');
+  }
+  function positionFloating(clientX, clientY) {
+    tooltip.classList.remove('anchored', 'arrow-right', 'arrow-below', 'arrow-above');
+    const pad = 12;
+    const rect = tooltip.getBoundingClientRect();
+    const w = rect.width || 380;
+    const h = rect.height || 120;
+    let x = clientX + pad, y = clientY + pad;
+    if (x + w > window.innerWidth - 8) x = Math.max(8, clientX - w - pad);
+    if (y + h > window.innerHeight - 8) y = Math.max(8, clientY - h - pad);
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+  function positionAnchored(chipEl) {
+    // Preferred: place to the right of the chip. Flip left/up as needed.
+    tooltip.classList.remove('arrow-right', 'arrow-below', 'arrow-above');
+    tooltip.classList.add('anchored');
+    const cr = chipEl.getBoundingClientRect();
+    const tr = tooltip.getBoundingClientRect();
+    const w = tr.width || 320;
+    const h = tr.height || 100;
+    const gap = 10;
+    let x, y;
+    // Prefer right side; flip to left if would overflow.
+    if (cr.right + gap + w < window.innerWidth - 8) {
+      x = cr.right + gap;
+    } else {
+      x = Math.max(8, cr.left - gap - w);
+      tooltip.classList.add('arrow-right');
+    }
+    y = cr.top + (cr.height / 2) - 20;
+    if (y + h > window.innerHeight - 8) y = Math.max(8, window.innerHeight - h - 8);
+    if (y < 8) y = 8;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+  document.addEventListener('mousemove', (e) => {
+    const t = e.target;
+    if (t && t.classList && t.classList.contains('chip') && t.dataset.tt) {
+      const data = JSON.parse(t.dataset.tt);
+      fillTooltip(data);
+      tooltip.classList.add('visible');
+      positionFloating(e.clientX, e.clientY);
+    } else if (!tooltip.classList.contains('anchored')) {
+      // Only clear if not currently anchored by keyboard focus.
+      hideTooltip();
+    }
+  });
+  // Keyboard focus: anchor tooltip to the focused chip.
+  document.addEventListener('focusin', (e) => {
+    const t = e.target;
+    if (t && t.classList && t.classList.contains('chip') && t.dataset.tt) {
+      const data = JSON.parse(t.dataset.tt);
+      fillTooltip(data);
+      tooltip.classList.add('visible');
+      positionAnchored(t);
+    }
+  });
+  document.addEventListener('focusout', (e) => {
+    const t = e.target;
+    if (t && t.classList && t.classList.contains('chip') && tooltip.classList.contains('anchored')) {
+      hideTooltip();
+    }
+  });
+  // Escape while a chip is focused hides the tooltip without losing focus.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (tooltip.classList.contains('anchored')) hideTooltip();
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ---- Copy all ---- */
+  $('#btnCopyAll').addEventListener('click', () => {
+    if (!currentResults.length) { showToast('Validate first.'); return; }
+    const lines = currentResults.map(r => {
+      if (r.severity === 'blank') return '';
+      if (r.severity === 'err' && !isAutoFixable(r)) return '[NEEDS REVIEW: ' + r.original + ']';
+      return r.corrected;
+    });
+    copyText(lines.join('\n'));
+    showToast('Copied ' + lines.length + ' lines');
+  });
+
+  /* ---- Clear ---- */
+  $('#btnClear').addEventListener('click', () => {
+    inputArea.value = '';
+    outputArea.innerHTML = '';
+    inputHighlight.innerHTML = '';
+    currentResults = [];
+    updateSummary({total:0,err:0,warn:0,fix:0});
+    setEditMode(true);
+    inputArea.focus();
+  });
+
+  /* ---- Dedupe (one-click) ---- */
+  $('#btnDedupe').addEventListener('click', () => {
+    if (!currentResults.length) { showToast('Validate first.'); return; }
+    const deduped = Validator.applyDedupe(currentResults);
+    const removed = currentResults.length - deduped.length;
+    currentResults = deduped;
+    renderHighlight(deduped);
+    renderOutput(deduped);
+    updateSummary(summarize(deduped));
+    showToast('Removed ' + removed + ' duplicate/subset line(s)');
+    // Reflect in input area too
+    inputArea.value = deduped.map(r => r.original).join('\n');
+  });
+
+  /* ---- Export helpers ---------------------------------------------------
+   * v6: expanded CSV with per-severity counts, distinct rule codes, character
+   * and word counts, and a per-rule occurrence table in the SUMMARY section.
+   * Column order chosen so a case-team reviewer can sort by Severity first,
+   * then jump to the offending term. Short numeric columns cluster on the
+   * left; multi-value text columns (codes, explanations, rule refs) trail
+   * on the right so column widths stay readable in Excel.
+   * ---------------------------------------------------------------------- */
+
+  const SEVERITY_LABEL = { err: 'error', warn: 'warning', fix: 'auto-fix', none: 'clean', clean: 'clean', blank: 'blank' };
+
+  function buildExportModel() {
+    const rows = [];
+    const ruleCounts = new Map(); // code -> {code, err, warn, fix, total, rule}
+    const summary = { total:0, err:0, warn:0, fix:0, clean:0, blank:0 };
+
+    currentResults.forEach((r, i) => {
+      if (r.severity === 'blank') { summary.blank++; return; }
+      summary.total++;
+      if (r.severity === 'err') summary.err++;
+      else if (r.severity === 'warn') summary.warn++;
+      else if (r.severity === 'fix') summary.fix++;
+      else summary.clean++;
+      let errCt = 0, warnCt = 0, fixCt = 0;
+      const seenCodes = new Set();
+      (r.issues || []).forEach(iss => {
+        if (iss.severity === 'err') errCt++;
+        else if (iss.severity === 'warn') warnCt++;
+        else if (iss.severity === 'fix') fixCt++;
+        seenCodes.add(iss.code);
+        const cur = ruleCounts.get(iss.code) || { code: iss.code, err:0, warn:0, fix:0, total:0, rule: iss.rule || '' };
+        cur[iss.severity] = (cur[iss.severity] || 0) + 1;
+        cur.total++;
+        // Keep first non-empty rule string we see.
+        if (!cur.rule && iss.rule) cur.rule = iss.rule;
+        ruleCounts.set(iss.code, cur);
+      });
+      const distinctCodes = Array.from(seenCodes);
+      const codesWithSev = (r.issues || []).map(x => x.severity + ':' + x.code).join('; ');
+      const expl = (r.issues || []).map(x => x.message + (x.rule ? ' — ' + x.rule : '')).join(' || ');
+      const ruleRefs = Array.from(new Set((r.issues || []).map(x => x.rule).filter(Boolean))).join(' || ');
+      const needsReview = (r.severity === 'err' && !isAutoFixable(r)) ? 'YES' : '';
+      const autoFixed = (r.severity === 'fix' || (r.severity === 'err' && isAutoFixable(r))) ? 'YES' : '';
+      const corrected = needsReview
+        ? '[NEEDS REVIEW: ' + r.original + ']'
+        : r.corrected;
+      const wordCount = String(r.original).trim().split(/\s+/).filter(Boolean).length;
+      rows.push({
+        severity: SEVERITY_LABEL[r.severity] || r.severity,
+        line: i + 1,
+        original: r.original,
+        corrected,
+        needsReview,
+        autoFixed,
+        issueCount: (r.issues || []).length,
+        errCount: errCt,
+        warnCount: warnCt,
+        fixCount: fixCt,
+        distinctCodes: distinctCodes.join('; '),
+        codes: codesWithSev,
+        chars: r.original.length,
+        words: wordCount,
+        ruleRefs,
+        explanations: expl,
+      });
+    });
+
+    const rankedRules = Array.from(ruleCounts.values()).sort((a,b) => b.total - a.total);
+    return { rows, summary, rankedRules };
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function stampNow() {
+    return new Date().toISOString().replace(/[:.]/g, '-').slice(0,19);
+  }
+
+  /* ---- Export CSV ---- */
+  $('#btnExport').addEventListener('click', () => {
+    if (!currentResults.length) { showToast('Validate first.'); return; }
+    const model = buildExportModel();
+
+    const header = [
+      'Severity','Line','Original','Corrected',
+      'Needs Review','Auto-Fixed',
+      'Issue Count','Error Count','Warning Count','Auto-Fix Count',
+      'Character Count','Word Count',
+      'Distinct Issue Codes','Issue Codes (severity-prefixed)','Rule References','Explanations'
+    ];
+    const rows = [header];
+    model.rows.forEach(r => {
+      rows.push([
+        r.severity, r.line, r.original, r.corrected,
+        r.needsReview, r.autoFixed,
+        r.issueCount, r.errCount, r.warnCount, r.fixCount,
+        r.chars, r.words,
+        r.distinctCodes, r.codes, r.ruleRefs, r.explanations,
+      ]);
+    });
+    // Summary section: totals, then per-rule occurrence table.
+    rows.push([]);
+    rows.push(['SUMMARY']);
+    rows.push(['Total non-blank terms', model.summary.total]);
+    rows.push(['Errors', model.summary.err]);
+    rows.push(['Warnings', model.summary.warn]);
+    rows.push(['Auto-fixes', model.summary.fix]);
+    rows.push(['Clean', model.summary.clean]);
+    rows.push(['Blank lines (excluded)', model.summary.blank]);
+    rows.push(['App version', APP_VERSION]);
+    rows.push(['Generated (UTC)', new Date().toISOString()]);
+    rows.push([]);
+    rows.push(['RULE OCCURRENCES']);
+    rows.push(['Code','Total','Errors','Warnings','Auto-fixes','Rule reference']);
+    model.rankedRules.forEach(rr => {
+      rows.push([rr.code, rr.total, rr.err, rr.warn, rr.fix, rr.rule]);
+    });
+
+    const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+    // BOM for Excel
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    downloadBlob(blob, 'search-term-validation-' + APP_VERSION + '-' + stampNow() + '.csv');
+    showToast('CSV exported');
+  });
+
+  /* ---- Export Markdown report ---- */
+  $('#btnExportReport').addEventListener('click', () => {
+    if (!currentResults.length) { showToast('Validate first.'); return; }
+    const model = buildExportModel();
+
+    const lines = [];
+    lines.push('# Search Term Validation Report');
+    lines.push('');
+    lines.push('- App version: **' + APP_VERSION + '**');
+    lines.push('- Generated (UTC): ' + new Date().toISOString());
+    lines.push('- Non-blank terms: **' + model.summary.total + '**');
+    lines.push('- Errors: **' + model.summary.err + '**  ·  Warnings: **' + model.summary.warn + '**  ·  Auto-fixes: **' + model.summary.fix + '**  ·  Clean: **' + model.summary.clean + '**');
+    if (model.summary.blank) lines.push('- Blank lines excluded: ' + model.summary.blank);
+    lines.push('');
+
+    // Group rows by rule code.
+    const byCode = new Map();
+    model.rows.forEach(r => {
+      const codes = r.distinctCodes ? r.distinctCodes.split('; ') : ['(none)'];
+      codes.forEach(c => {
+        if (!byCode.has(c)) byCode.set(c, []);
+        byCode.get(c).push(r);
+      });
+    });
+
+    if (model.rankedRules.length) {
+      lines.push('## Rule occurrences');
+      lines.push('');
+      lines.push('| Code | Total | Errors | Warnings | Auto-fixes |');
+      lines.push('| --- | ---: | ---: | ---: | ---: |');
+      model.rankedRules.forEach(rr => {
+        lines.push('| `' + rr.code + '` | ' + rr.total + ' | ' + rr.err + ' | ' + rr.warn + ' | ' + rr.fix + ' |');
+      });
+      lines.push('');
+
+      lines.push('## Issues grouped by rule');
+      lines.push('');
+      model.rankedRules.forEach(rr => {
+        const examples = byCode.get(rr.code) || [];
+        const sev = examples[0] ? examples[0].severity : '';
+        lines.push('### `' + rr.code + '`  — ' + rr.total + ' occurrence(s)');
+        if (rr.rule) lines.push('');
+        if (rr.rule) lines.push('> ' + rr.rule);
+        lines.push('');
+        examples.slice(0, 20).forEach(ex => {
+          lines.push('- Line ' + ex.line + ' (' + ex.severity + '): `' + ex.original.replace(/`/g, '\\`') + '`  →  `' + ex.corrected.replace(/`/g, '\\`') + '`');
+        });
+        if (examples.length > 20) lines.push('- … and ' + (examples.length - 20) + ' more');
+        lines.push('');
+      });
+    }
+
+    // Full term table at the end.
+    lines.push('## All terms');
+    lines.push('');
+    lines.push('| Line | Severity | Original | Corrected | Issues |');
+    lines.push('| ---: | --- | --- | --- | --- |');
+    model.rows.forEach(r => {
+      const orig = r.original.replace(/\|/g, '\\|').replace(/`/g, '\\`');
+      const corr = r.corrected.replace(/\|/g, '\\|').replace(/`/g, '\\`');
+      lines.push('| ' + r.line + ' | ' + r.severity + ' | `' + orig + '` | `' + corr + '` | ' + (r.distinctCodes || '') + ' |');
+    });
+
+    const md = lines.join('\n');
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob(blob, 'search-term-validation-report-' + APP_VERSION + '-' + stampNow() + '.md');
+    showToast('Report exported');
+  });
+
+  function csvEscape(v) {
+    const s = String(v == null ? '' : v);
+    if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  }
+
+  /* ---- Copy helper ---- */
+  function copyText(s) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(s).catch(() => fallbackCopy(s));
+    } else fallbackCopy(s);
+  }
+  function fallbackCopy(s) {
+    const ta = document.createElement('textarea');
+    ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch {}
+    ta.remove();
+  }
+
+  /* ---- Toast ---- */
+  let toastTimer = 0;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), 1600);
+  }
+
+  /* ---- Settings modal ---- */
+  const modal = $('#settingsModal');
+  function openSettings() {
+    const s = Validator.getSettings();
+    $('#sSameSentence').value = s.sameSentence;
+    $('#sSameParagraph').value = s.sameParagraph;
+    $('#sFlagSPPromotion').checked = !!s.flagSPPromotion;
+    $('#sDedupeOn').checked = !!s.dedupeOn;
+    $('#sStrictReserved').checked = !!s.strictReserved;
+    $('#sNoise').value = s.noiseWords.join(', ');
+    modal.classList.add('visible');
+  }
+  function closeSettings() { modal.classList.remove('visible'); }
+  $('#btnSettings').addEventListener('click', openSettings);
+  $('#btnCloseSettings').addEventListener('click', closeSettings);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeSettings(); });
+
+  /* ---- Reference modal ---- */
+  const refModal = $('#referenceModal');
+  function openReference() { refModal.classList.add('visible'); }
+  function closeReference() { refModal.classList.remove('visible'); }
+  $('#btnReference').addEventListener('click', openReference);
+  $('#btnCloseReference').addEventListener('click', closeReference);
+  $('#btnCloseReference2').addEventListener('click', closeReference);
+  refModal.addEventListener('click', (e) => { if (e.target === refModal) closeReference(); });
+  $('#btnResetSettings').addEventListener('click', () => {
+    Validator.setSettings({});
+    saveSettings({});
+    openSettings();
+    showToast('Settings reset to defaults');
+  });
+  $('#btnSaveSettings').addEventListener('click', () => {
+    const noise = $('#sNoise').value.split(/[\s,]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    const next = {
+      sameSentence: Math.max(1, parseInt($('#sSameSentence').value,10) || 15),
+      sameParagraph: Math.max(1, parseInt($('#sSameParagraph').value,10) || 50),
+      flagSPPromotion: $('#sFlagSPPromotion').checked,
+      dedupeOn: $('#sDedupeOn').checked,
+      strictReserved: $('#sStrictReserved').checked,
+      noiseWords: noise.length ? noise : Validator.DEFAULT_NOISE.slice(),
+    };
+    Validator.setSettings(next);
+    saveSettings(next);
+    closeSettings();
+    showToast('Settings saved');
+  });
+
+  /* ---- Keyboard shortcut: Ctrl/Cmd+Enter validates ---- */
+  /* ---- Shortcuts modal ---- */
+  const shortcutsModal = $('#shortcutsModal');
+  function openShortcuts() { shortcutsModal.classList.add('visible'); }
+  function closeShortcuts() { shortcutsModal.classList.remove('visible'); }
+  $('#btnShortcuts').addEventListener('click', openShortcuts);
+  $('#btnCloseShortcuts').addEventListener('click', closeShortcuts);
+  $('#btnCloseShortcuts2').addEventListener('click', closeShortcuts);
+  shortcutsModal.addEventListener('click', (e) => { if (e.target === shortcutsModal) closeShortcuts(); });
+
+  /* ---- Rule filter (output pane) ---- */
+  const filterBar = $('#filterBar');
+  const filterChipsEl = $('#filterChips');
+  let activeFilter = null; // {kind:'rule'|'severity', value}
+
+  function renderFilterChips() {
+    if (!currentResults.length) { filterBar.classList.remove('visible'); return; }
+    const counts = new Map();
+    for (const r of currentResults) {
+      for (const i of r.issues) {
+        counts.set(i.code, (counts.get(i.code) || 0) + 1);
+      }
+    }
+    if (!counts.size) { filterBar.classList.remove('visible'); return; }
+    filterBar.classList.add('visible');
+    const codes = Array.from(counts.entries()).sort((a,b) => b[1] - a[1]);
+    filterChipsEl.innerHTML = codes.map(([code, n]) => {
+      const active = activeFilter && activeFilter.kind === 'rule' && activeFilter.value === code;
+      return `<span class="fchip${active ? ' active' : ''}" data-code="${escapeHtml(code)}" title="${n} occurrence(s)">${escapeHtml(code)} <span style="opacity:.7">×${n}</span></span>`;
+    }).join('');
+  }
+
+  function applyFilter() {
+    const containers = [$('#inputHighlight'), $('#outputArea')];
+    containers.forEach(container => {
+      const lines = container.querySelectorAll('.line');
+      if (!activeFilter) {
+        lines.forEach(l => l.classList.remove('filtered-out'));
+        return;
+      }
+      lines.forEach(l => {
+        const codes = (l.dataset.codes || '').split(',').filter(Boolean);
+        const sevs = (l.dataset.sevs || '').split(',').filter(Boolean);
+        let match = false;
+        if (activeFilter.kind === 'rule') match = codes.includes(activeFilter.value);
+        else if (activeFilter.kind === 'severity') match = sevs.includes(activeFilter.value);
+        // Never hide blank lines when they carry no codes; hide them only if a filter is active.
+        l.classList.toggle('filtered-out', !match);
+      });
+    });
+  }
+
+  function setFilter(kind, value) {
+    if (activeFilter && activeFilter.kind === kind && activeFilter.value === value) {
+      activeFilter = null;
+    } else {
+      activeFilter = { kind, value };
+    }
+    renderFilterChips();
+    applyFilter();
+  }
+
+  function clearFilter() { activeFilter = null; renderFilterChips(); applyFilter(); }
+  window.__applyFilter = applyFilter;
+
+  filterChipsEl.addEventListener('click', (e) => {
+    const t = e.target.closest('.fchip');
+    if (!t) return;
+    setFilter('rule', t.dataset.code);
+  });
+  $('#btnClearFilter').addEventListener('click', clearFilter);
+
+  // Clicking a chip in a line toggles that rule filter
+  $('#inputHighlight').addEventListener('click', (e) => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    const code = c.dataset.code;
+    if (code) setFilter('rule', code);
+  });
+  // Space/Enter on a focused chip also toggles filter (keyboard accessibility).
+  $('#inputHighlight').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const c = e.target.closest && e.target.closest('.chip');
+    if (!c) return;
+    e.preventDefault();
+    const code = c.dataset.code;
+    if (code) setFilter('rule', code);
+  });
+
+  // Summary pill clicks filter by severity
+  $('#summary').addEventListener('click', (e) => {
+    const p = e.target.closest('.pill');
+    if (!p) return;
+    if (p.classList.contains('err')) setFilter('severity', 'err');
+    else if (p.classList.contains('warn')) setFilter('severity', 'warn');
+    else if (p.classList.contains('fix')) setFilter('severity', 'fix');
+    else if (p.classList.contains('total')) clearFilter();
+  });
+  // Give summary pills a pointer cursor.
+  Array.from(document.querySelectorAll('#summary .pill')).forEach(p => p.style.cursor = 'pointer');
+
+  // v8: delegated copy-button handler on the output pane. Replaces the
+  // per-row closure in buildOutputRow — significant heap-allocation win at
+  // 5000+ rows and works transparently with virtual scroll recycling.
+  $('#outputArea').addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('.copy');
+    if (!btn) return;
+    const idxRaw = btn.dataset.copyIdx;
+    if (idxRaw == null) return;
+    const idx = parseInt(idxRaw, 10);
+    if (!Number.isFinite(idx)) return;
+    const r = currentResults[idx];
+    if (!r) return;
+    const val = (r.severity === 'err' && !isAutoFixable(r))
+      ? '[NEEDS REVIEW: ' + r.original + ']'
+      : r.corrected;
+    copyText(val);
+    showToast('Line copied');
+  });
+
+  // v8: Go-To-Line jump input. Visible only when the virtualized threshold
+  // is exceeded (we set that in updateSummary below). Enter jumps and flashes
+  // the target row; blur commits too so tap-away on mobile also works.
+  const jumpWrapEl = $('#jumpWrap');
+  const jumpToEl = $('#jumpTo');
+  function doJump() {
+    // v9: clamp instead of silently ignoring out-of-range input, and surface
+    // a toast when clamping. Empty input is still a no-op.
+    const raw = String(jumpToEl.value || '').trim();
+    if (!raw) return;
+    let n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) { showToast('Invalid line number'); return; }
+    const max = currentResults.length;
+    if (max < 1) { showToast('Validate first.'); return; }
+    let clamped = false;
+    if (n < 1) { n = 1; clamped = true; }
+    if (n > max) { n = max; clamped = true; }
+    if (clamped) {
+      jumpToEl.value = String(n);
+      showToast('Clamped to line ' + n + ' (of ' + max + ')');
+    }
+    const idx = n - 1;
+    if (inputVirt) inputVirt.scrollToIndex(idx, { flash: true });
+    if (outputVirt) outputVirt.scrollToIndex(idx, { flash: true });
+    if (!inputVirt && !outputVirt) {
+      // Non-virtualized: scroll the pane bodies to the row index directly.
+      const inRow = inputHighlight.children[idx];
+      const outRow = outputArea.children[idx];
+      if (inRow) inRow.scrollIntoView({ block: 'center' });
+      if (outRow) outRow.scrollIntoView({ block: 'center' });
+      if (outRow) {
+        outRow.classList.add('flash');
+        setTimeout(() => outRow.classList.remove('flash'), 900);
+      }
+    }
+  }
+  jumpToEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); doJump(); }
+  });
+  jumpToEl.addEventListener('change', doJump);
+
+  // Refresh filter chips whenever we re-render.
+  // Hook Validate and Dedupe buttons: they are the only two paths that mutate currentResults.
+  function refreshFilterUI() { renderFilterChips(); applyFilter(); }
+  $('#btnValidate').addEventListener('click', () => setTimeout(refreshFilterUI, 0));
+  $('#btnDedupe').addEventListener('click', () => setTimeout(refreshFilterUI, 0));
+  $('#btnClear').addEventListener('click', () => { activeFilter = null; setTimeout(refreshFilterUI, 0); });
+
+  /* ---- Keyboard shortcuts ---- */
+  function anyModalOpen() {
+    return document.querySelector('.modal-backdrop.visible') !== null;
+  }
+  function isTypingTarget(el) {
+    if (!el) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+  }
+  document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd+Enter always validates.
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); runValidation(); return; }
+
+    if (e.key === 'Escape') {
+      if (anyModalOpen()) {
+        document.querySelectorAll('.modal-backdrop.visible').forEach(m => m.classList.remove('visible'));
+      } else if (activeFilter) {
+        clearFilter();
+      }
+      return;
+    }
+
+    // The remaining shortcuts should not fire while typing.
+    if (isTypingTarget(e.target)) return;
+
+    if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); openShortcuts(); return; }
+
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault(); inputArea.focus(); return;
+    }
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'e' || e.key === 'E')) {
+      e.preventDefault();
+      (e.shiftKey ? $('#btnExportReport') : $('#btnExport')).click();
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) {
+      e.preventDefault(); $('#btnDedupe').click(); return;
+    }
+  });
+
+  // Focus input on load
+  inputArea.focus();
+})();
+</script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
