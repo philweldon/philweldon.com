@@ -247,6 +247,67 @@
       border-color: rgba(0,0,0,0.18);
     }
 
+    /* ── Live card: a working copy of pdoom.html runs inside it ── */
+    .live-screen {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 800 / 560;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      background: #08070a;
+      border: 0.5px solid rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+      transition: box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .live-card:hover .live-screen,
+    .live-card:focus-visible .live-screen {
+      box-shadow: 0 10px 28px -8px rgba(255,45,16,0.35),
+                  0 4px 12px rgba(0,0,0,0.10);
+    }
+    /* The iframe is laid out at a desktop width, then scaled to fit.
+       It ignores the pointer so the whole card stays one link. */
+    .live-screen iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 800px;
+      height: 560px;
+      border: 0;
+      transform-origin: 0 0;
+      pointer-events: none;
+    }
+    .live-pill {
+      position: absolute;
+      top: 10px; right: 10px;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(8,7,10,0.78);
+      border: 0.5px solid rgba(255,255,255,0.16);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: #ffffff;
+    }
+    .live-pill::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ff2d10;
+      box-shadow: 0 0 6px #ff2d10;
+      animation: live-blink 2s steps(2, end) infinite;
+    }
+    @keyframes live-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.25; } }
+    .live-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
     /* ── Secret card ── */
     .secret-card {
       position: relative;
@@ -347,6 +408,8 @@
       .nav-apps:hover .sparkle { animation: none; opacity: 0.9; transform: none; }
       .secret-card:hover .glint { animation: none; opacity: 0; }
       .secret-card:hover::after { animation: none; opacity: 0; }
+      .live-screen { transition: none; }
+      .live-pill::before { animation: none; }
     }
     @media (max-width: 640px) {
       nav { padding: 1rem 1.25rem; }
@@ -412,6 +475,22 @@
         <p class="app-note">An independent project. Not affiliated with, sponsored by, or endorsed by Relativity ODA LLC. Relativity®, RelativityOne®, and dtSearch® are trademarks of their respective owners.</p>
       </a>
 
+      <!-- Tidbyt: p(DOOM), with the live web edition running inside the card -->
+      <a class="app-card live-card" href="pdoom.html">
+        <div class="live-screen">
+          <span class="live-pill" aria-hidden="true">LIVE</span>
+          <iframe src="pdoom.html" title="p(DOOM) countdown, live preview" loading="lazy" tabindex="-1" aria-hidden="true" scrolling="no"></iframe>
+        </div>
+        <div class="live-body">
+          <p class="app-store-tag">Tidbyt · Pixlet app + Web</p>
+          <h2 class="app-name">Tidbyt — p(DOOM)</h2>
+          <p class="app-tagline">A doomsday clock that resets every midnight</p>
+          <p class="app-desc">A countdown to your local midnight, paired with real, sourced quotations about catastrophic AI risk — from Turing and I. J. Good to Hinton and Bengio. Built for the Tidbyt's 64×32 LED matrix, with a web edition that's ticking away right here in this card.</p>
+          <span class="free-badge">FREE — no tracking, no ads</span>
+          <span class="app-cta">Watch the clock</span>
+        </div>
+      </a>
+
       <!-- Secret app -->
       <div class="app-card secret-card" aria-label="Unannounced app, coming spring 2027">
         <span class="glint g1" aria-hidden="true">✦</span>
@@ -432,6 +511,25 @@
   <footer>
     philweldon.com &nbsp;·&nbsp; Built with care (and a little AI)
   </footer>
+
+  <script>
+    // Scale each live preview so the embedded page keeps its desktop layout
+    // and fills the screen exactly, whatever width the card ends up.
+    document.querySelectorAll('.live-screen').forEach(function (screen) {
+      var frame = screen.querySelector('iframe');
+      function fit() {
+        var w = screen.clientWidth, h = screen.clientHeight;
+        if (!w || !h) return;
+        var scale = Math.min(1, Math.max(w / 800, 0.6));
+        frame.style.width = (w / scale) + 'px';
+        frame.style.height = (h / scale) + 'px';
+        frame.style.transform = 'scale(' + scale + ')';
+      }
+      fit();
+      if ('ResizeObserver' in window) new ResizeObserver(fit).observe(screen);
+      else window.addEventListener('resize', fit);
+    });
+  </script>
 
 </body>
 </html>
