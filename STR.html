@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Search Term Validator — v12</title>
+<title>Search Term Validator — v13</title>
 <!--
   APP_VERSION is defined once in the <script> block below and drives:
     (a) the version badge in the header
@@ -264,6 +264,7 @@
   .line.err:hover  { background: #fce7e5; }
   .line.warn:hover { background: #fbf1d6; }
   .line.fix:hover  { background: #e4edfc; }
+  .line.term-hover { background: var(--accent-soft); outline: 1px solid var(--accent); outline-offset: -1px; }
   .line .content { flex: 1; word-break: break-all; white-space: pre-wrap; }
   .line .content.needs-review { color: var(--red-text); font-style: italic; }
   .line .content.placeholder { color: var(--text-faint); font-style: italic; }
@@ -912,16 +913,25 @@ const Validator = (function () {
   }
 
   function checkAmpersand(text) {
-    // & outside quoted phrases -> AND
+    // Preserve ampersands between letters; convert other unquoted & to AND.
     const issues = [];
+    const isLetterAmpersand = i => /\p{L}$/u.test(text.slice(0, i)) && /^\p{L}/u.test(text.slice(i + 1));
+    if (/\p{L}&\p{L}/u.test(text)) {
+      issues.push({
+        severity: 'warn',
+        code: 'AMPERSAND_AMBIGUOUS',
+        message: `Ambiguous ampersand: "${text}" contains an ampersand directly between letters. Depending on the dtSearch index configuration, the ampersand may be treated as a space, causing the term to be interpreted as "${text.replace(/&/g, (c, i) => isLetterAmpersand(i) ? ' ' : c)}".`,
+        rule: 'Do not automatically replace it with a word such as AND ("AT and T" would change the intended search). Review and adjust the dtSearch index configuration so the intended term is indexed and searched correctly.',
+      });
+    }
     const stripped = stripQuotedRegions(text);
-    if (/&/.test(stripped)) {
+    if (/&/.test(stripped.replace(/&/g, (c, i) => isLetterAmpersand(i) ? ' ' : c))) {
       // Rebuild text substituting & with AND outside quotes
       let out = '', inQ = false;
       for (let i = 0; i < text.length; i++) {
         const c = text[i];
         if (c === '"') { inQ = !inQ; out += c; continue; }
-        if (!inQ && c === '&') {
+        if (!inQ && c === '&' && !isLetterAmpersand(i)) {
           // Ensure surrounding whitespace
           const prev = out.slice(-1);
           if (prev && prev !== ' ') out += ' ';
@@ -2547,7 +2557,7 @@ const Validator = (function () {
   //   1) change this constant
   //   2) change the <title> in <head>
   //   3) bump SETTINGS_KEY below if the settings shape changes (optional)
-  const APP_VERSION = 'v12';
+  const APP_VERSION = 'v13';
 
   const $ = sel => document.querySelector(sel);
   const inputArea = $('#inputArea');
@@ -2594,6 +2604,7 @@ const Validator = (function () {
 
   /* ---- Sample data ---- */
   const SAMPLE = [
+    'AT&T',
     'terminat! /5 contract',
     '"breach of contract" AND damag!',
     'apple w/5 not banana',
@@ -2647,6 +2658,7 @@ const Validator = (function () {
       results = Validator.applyDedupe(results);
     }
     const tValidate = ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0;
+    highlightTerm(null);
     currentResults = results;
     const tR0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     renderHighlight(results);
@@ -2740,9 +2752,38 @@ const Validator = (function () {
 
   let virtState = null; // { container, spacer, results, side }
 
+  const termIds = new WeakMap();
+  let nextTermId = 0;
+  let hoveredTermId = null;
+  function identifyTerm(row, result) {
+    if (!termIds.has(result)) termIds.set(result, String(++nextTermId));
+    row.dataset.termId = termIds.get(result);
+    row.classList.toggle('term-hover', row.dataset.termId === hoveredTermId);
+  }
+  function highlightTerm(id) {
+    hoveredTermId = id;
+    for (const pane of [inputHighlight, outputArea]) {
+      pane.querySelectorAll('.line').forEach(row => {
+        row.classList.toggle('term-hover', id !== null && row.dataset.termId === id);
+      });
+    }
+  }
+  for (const pane of [inputHighlight, outputArea]) {
+    pane.addEventListener('mouseover', event => {
+      const row = event.target.closest('.line');
+      if (row && pane.contains(row)) highlightTerm(row.dataset.termId);
+    });
+    pane.addEventListener('mouseout', event => {
+      const row = event.target.closest('.line');
+      if (row && !row.contains(event.relatedTarget)) highlightTerm(null);
+    });
+    pane.addEventListener('mouseleave', () => highlightTerm(null));
+  }
+
   function buildRow(r, i) {
     const row = document.createElement('div');
     row.className = 'line';
+    identifyTerm(row, r);
     if (r.severity === 'err') row.classList.add('err');
     else if (r.severity === 'warn') row.classList.add('warn');
     else if (r.severity === 'fix') row.classList.add('fix');
@@ -2833,6 +2874,7 @@ const Validator = (function () {
   function buildOutputRow(r, i) {
     const row = document.createElement('div');
     row.className = 'line';
+    identifyTerm(row, r);
     if (r.severity === 'err') row.classList.add('err');
     else if (r.severity === 'warn') row.classList.add('warn');
     else if (r.severity === 'fix') row.classList.add('fix');
