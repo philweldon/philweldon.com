@@ -27,7 +27,7 @@ SOFTWARE.
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Search Term Validator — v22</title>
+<title>Search Term Validator — v23</title>
 <!--
   APP_VERSION is defined once in the <script> block below and drives:
     (a) the version badge in the header
@@ -339,6 +339,12 @@ SOFTWARE.
     background: #d92d20; color: #fff; font-weight: 700; font-style: normal;
     border-radius: 3px; padding: 0 2px; margin: 0 1px;
     box-shadow: 0 0 0 2px rgba(217, 45, 32, .28);
+  }
+  /* v23: where a smart (curly) quote was converted to a straight quote. */
+  mark.sq {
+    background: #dbe7ff; color: inherit; font-style: normal; font-weight: 700;
+    border-radius: 3px; padding: 0 2px; margin: 0 1px;
+    box-shadow: inset 0 -2px 0 #2b54c9;
   }
   /* v14: editable output terms. */
   #outputArea .line .content[contenteditable] { cursor: text; outline: none; border-radius: 3px; min-width: 40px; }
@@ -1055,7 +1061,7 @@ const Validator = (function () {
     AND_ANY_INFO:             ['SYN', 'AndAnyoperator', 'AndAny operator', 'stated'],
     AND_NOT_INFO:             ['SYN', 'NOToperator', 'NOT operator', 'stated'],
     AND_SLASH_OR:             ['SYN', 'Connectorwords', 'Connector words', 'derived', '"and" and "or" are connector words; the slash is a default space character (Alphabet list > Spaces).'],
-    ARTIFACT_NORMALIZED:      ['REGEX', 'Regularexpressionsearchstrings', 'Regular expression search strings', 'derived', 'Docs state the straight-vs-curly quote rule for regex strings; this validator applies it to every term.'],
+    ARTIFACT_NORMALIZED:      ['STRC', 'Fields', 'Fields - Remove Hidden Characters', 'derived', 'Docs: characters copied unknowingly from Word or Excel are known to cause search issues.'],
     BACKSLASH_PROXIMITY:      ['SYN', 'WNoperator', 'W/N operator', 'derived'],
     BARE_NOISE_TERM:          ['NOISE', 'dtSearchesandnoisewords', 'dtSearches and noise words', 'stated', 'Docs: remove the word from the Noise Words list, save, and perform a full build of the index.'],
     BOOLEAN_IN_PHRASE:        ['SYN', 'Exactphrasedoublequotes', 'Exact phrase - double quotes', 'stated'],
@@ -1105,6 +1111,7 @@ const Validator = (function () {
     REGEX_UPPERCASE:          ['REGEX', 'RegularexpressioncaveatsindtSearch', 'Regular expression caveats in dtSearch', 'stated'],
     RESERVED_LITERAL_QUOTED:  ['SYN', 'Connectorwords', 'Connector words', 'stated'],
     SHORT_NUMERIC:            ['STRC', 'Considerations', 'Considerations', 'derived', 'Docs recommend specific search terms that return small numbers of documents.'],
+    SMART_QUOTES_CONVERTED:   ['REGEX', 'Regularexpressionsearchstrings', 'Regular expression search strings', 'derived', 'Docs state the straight-not-curly quote rule for regular expression strings (curly quotes may cause the search to fail); this validator applies it to every term.'],
     STACKED_PROXIMITY:        ['SYN', 'WNoperator', 'W/N operator', 'derived'],
     STOP_WORD_IN_TERM:        ['SYN', 'Defaultnoisewordlist', 'Default noise word list', 'stated', 'Docs: to search a phrase containing a noise word, remove the word from the list and rebuild the index.'],
     STEM_IRREGULAR:           ['SYN', 'Stemming', 'Stemming', 'stated'],
@@ -1194,13 +1201,31 @@ const Validator = (function () {
     const normalized = normalizeArtifacts(trimmed).replace(/\s+/g, ' ');
     const issues = [];
     if (normalized !== original) {
-      const artifactChanged = normalizeArtifacts(original.replace(/^\s+|\s+$/g, '').replace(/\s+/g,' ')) !== original.replace(/^\s+|\s+$/g,'').replace(/\s+/g,' ');
+      // v23: smart (curly) double quotes get their own flag, with positions,
+      // so the user can see exactly where they were. ARTIFACT_NORMALIZED now
+      // covers only the other pasted characters (apostrophes, dashes, NBSP...).
+      const SMART_DQ = /[\u201C\u201D\u201E\u201F\u2033\u2036]/g;
+      const sq = [];
+      let m;
+      while ((m = SMART_DQ.exec(original)) !== null) sq.push({ index: m.index, char: m[0] });
+      if (sq.length) {
+        const where = sq.map(q => q.char + ' at character ' + (q.index + 1));
+        issues.push({
+          severity: 'fix',
+          code: 'SMART_QUOTES_CONVERTED',
+          message: `Converted ${sq.length} smart (curly) quote${sq.length === 1 ? '' : 's'} to straight double quotes: ${where.join(', ')} of the original term. Each one is highlighted in blue in both panes.`,
+          rule: 'Use straight double quotes ("), not curly quotes (\u201C \u201D). Relativity\'s documentation warns that curly quotes may cause a search string to fail; they are a different character from the straight quote that marks a phrase.',
+          smartQuotes: sq,
+        });
+      }
+      const flat = original.replace(/^\s+|\s+$/g, '').replace(/\s+/g,' ').replace(SMART_DQ, '"');
+      const artifactChanged = normalizeArtifacts(flat) !== flat;
       if (artifactChanged) {
         issues.push({
           severity: 'fix',
           code: 'ARTIFACT_NORMALIZED',
-          message: 'Word-copy artifacts normalized to ASCII (smart quotes, curly apostrophes, em-dashes, non-breaking spaces).',
-          rule: 'dtSearch requires straight ASCII quotes; smart quotes are treated as different characters and may not match anything.',
+          message: 'Word-copy artifacts normalized to ASCII (curly apostrophes, em-dashes, ellipses, non-breaking spaces, tabs).',
+          rule: 'Characters pasted from Word or email (curly apostrophes, long dashes, non-breaking spaces) are different characters from their plain ASCII forms and may not match anything in the index.',
         });
       }
     }
@@ -2919,7 +2944,7 @@ const Validator = (function () {
   //   1) change this constant
   //   2) change the <title> in <head>
   //   3) bump SETTINGS_KEY below if the settings shape changes (optional)
-  const APP_VERSION = 'v22';
+  const APP_VERSION = 'v23';
 
   const $ = sel => document.querySelector(sel);
   const inputArea = $('#inputArea');
@@ -3168,33 +3193,76 @@ const Validator = (function () {
     const p = (issues || []).some(x => x.code === 'UNBALANCED_PARENS');
     return (q || p) ? findUnbalanced(str, q, p) : [];
   }
-  // Fill `el` with `str`, wrapping each index in `marks` in a red <mark>.
+  const SMART_DQ_CHARS = '“”„‟″‶';
+  const straightenQuotes = str => String(str).replace(/[“”„‟″‶]/g, '"');
+  // v23: positions of converted smart quotes.
+  //  - in the ORIGINAL text they are the curly characters themselves;
+  //  - in the OUTPUT text the n-th quote corresponds to the n-th quote of the
+  //    original, so it is flagged when that original quote was curly. If
+  //    another fix or an edit changed the number of quotes, the output marks
+  //    are skipped rather than guessed (the rule chip still flags the term).
+  function smartQuoteMarks(original, text, isOriginal) {
+    const kinds = [];
+    for (const c of String(original)) {
+      if (c === '"') kinds.push(null);
+      else if (SMART_DQ_CHARS.includes(c)) kinds.push(c);
+    }
+    if (!kinds.some(Boolean)) return [];
+    const out = [];
+    if (isOriginal) {
+      for (let i = 0; i < text.length; i++) if (SMART_DQ_CHARS.includes(text[i])) out.push({ i, was: text[i] });
+      return out;
+    }
+    const pos = [];
+    for (let i = 0; i < text.length; i++) if (text[i] === '"') pos.push(i);
+    if (pos.length !== kinds.length) return [];
+    pos.forEach((i, n) => { if (kinds[n]) out.push({ i, was: kinds[n] }); });
+    return out;
+  }
+  // All marks for one displayed string: unmatched ( ) " in red, converted
+  // smart quotes in blue. A character that is both gets the red mark.
+  function marksFor(r, text, issues, isOriginal) {
+    const byIdx = new Map();
+    for (const q of smartQuoteMarks(r.original, text, isOriginal)) {
+      byIdx.set(q.i, { i: q.i, cls: 'sq', title: isOriginal
+        ? 'Smart (curly) quote ' + q.was + ' — converted to a straight quote (") in the corrected output.'
+        : 'This straight quote replaced a smart (curly) quote ' + q.was + ' from the original term.' });
+    }
+    for (const i of unbalancedFor(text, issues)) {
+      const ch = text[i], prev = byIdx.get(i);
+      const t = ch === '(' ? 'This ( is never closed. Add the missing ) or delete it.'
+        : ch === ')' ? 'This ) has no opening (. Add the missing ( or delete it.'
+        : 'This quote is never closed. Add the missing closing quote or delete it.';
+      byIdx.set(i, { i, cls: 'unbal', title: t + (prev ? ' ' + prev.title : '') });
+    }
+    return Array.from(byIdx.values()).sort((a, b) => a.i - b.i);
+  }
+  // Fill `el` with `str`, wrapping each marked character in a <mark>.
   function renderMarked(el, str, marks) {
     el.textContent = '';
     if (!marks || !marks.length) { el.textContent = str; return; }
     let cur = 0;
-    for (const i of marks) {
-      if (i > cur) el.appendChild(document.createTextNode(str.slice(cur, i)));
+    for (const mk of marks) {
+      if (mk.i > cur) el.appendChild(document.createTextNode(str.slice(cur, mk.i)));
       const m = document.createElement('mark');
-      m.className = 'unbal';
-      const ch = str[i];
-      m.textContent = ch;
-      m.title = ch === '(' ? 'This ( is never closed. Add the missing ) or delete it.'
-        : ch === ')' ? 'This ) has no opening (. Add the missing ( or delete it.'
-        : 'This quote is never closed. Add the missing closing quote or delete it.';
+      m.className = mk.cls;
+      m.textContent = str[mk.i];
+      m.title = mk.title;
       el.appendChild(m);
-      cur = i + 1;
+      cur = mk.i + 1;
     }
     if (cur < str.length) el.appendChild(document.createTextNode(str.slice(cur)));
   }
   const needsReviewRow = r => r.severity === 'err' && !isAutoFixable(r);
   // The text shown (and editable) on the right for a term, before any edit.
-  const baseOutputText = r => r.severity === 'blank' ? '' : (needsReviewRow(r) ? r.original : r.corrected);
+  // v23: a needs-review term is shown as typed, except that smart quotes are
+  // always straightened, so nothing leaves this tool with a curly quote.
+  const baseOutputText = r => r.severity === 'blank' ? '' : (needsReviewRow(r) ? straightenQuotes(r.original) : r.corrected);
   // What Copy / Copy all / exports emit for a term.
   function outputValue(r) {
     if (typeof r.userEdit === 'string') return r.userEdit;
     if (r.severity === 'blank') return '';
-    return needsReviewRow(r) ? '[NEEDS REVIEW: ' + r.original + ']' : r.corrected;
+    return needsReviewRow(r) ? '[NEEDS REVIEW: ' + straightenQuotes(r.original) + ']' : r.corrected;
   }
 
   function buildRow(r, i) {
@@ -3225,7 +3293,7 @@ const Validator = (function () {
       content.classList.add('placeholder');
       content.textContent = '(blank)';
     } else {
-      renderMarked(content, r.original, unbalancedFor(r.original, r.issues));
+      renderMarked(content, r.original, marksFor(r, r.original, r.issues, true));
     }
     row.appendChild(content);
 
@@ -3334,7 +3402,7 @@ const Validator = (function () {
         content.classList.add('needs-review');
       }
       const text = edited ? r.userEdit : baseOutputText(r);
-      renderMarked(content, text, unbalancedFor(text, issues));
+      renderMarked(content, text, marksFor(r, text, issues, false));
       // Editable in place. plaintext-only keeps pasted formatting out; older
       // browsers fall back to plain "true" and the paste handler below.
       try { content.contentEditable = 'plaintext-only'; } catch (_e) { content.contentEditable = 'true'; }
