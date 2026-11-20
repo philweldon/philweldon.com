@@ -27,7 +27,7 @@ SOFTWARE.
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Search Term Validator — v23</title>
+<title>Search Term Validator — v26</title>
 <!--
   APP_VERSION is defined once in the <script> block below and drives:
     (a) the version badge in the header
@@ -277,12 +277,6 @@ SOFTWARE.
     .lines:not(.virtual) .chips .chip { flex: none; }
     .lines:not(.virtual) .line .content { min-width: 0; }
   }
-  #filterBar .fchip a.fdoc {
-    margin-left: 0; padding: 0 3px; border-radius: 999px; text-decoration: none;
-    font-family: var(--sans); font-weight: 700; color: var(--accent);
-  }
-  #filterBar .fchip a.fdoc:hover { background: var(--accent); color: #fff; }
-  #filterBar .fchip.active a.fdoc { color: #fff; }
   #tooltip .tt-url { display: block; margin-top: 5px; color: #8f99ab; font-size: 10.5px; word-break: break-all; user-select: all; }
   .line .edited-tag[data-tt] { cursor: help; }
   /* The scroll host for the virtual scroller — must stay padding-free. */
@@ -618,19 +612,63 @@ SOFTWARE.
     flex-wrap: wrap;
   }
   #filterBar.visible { display: flex; }
-  #filterBar .fchip {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 999px;
-    background: #fff; border: 1px solid var(--border-strong);
-    font-family: var(--mono); font-size: 11px; color: var(--text);
-    cursor: pointer;
-    transition: background .14s ease, color .14s ease, border-color .14s ease, box-shadow .14s ease;
+  /* v26: the filter is an Excel-style column header. The ▾ button on its
+     right opens a checklist of every rule found; ticked rules are shown. */
+  #filterBar { position: relative; z-index: 6; flex-wrap: wrap; }
+  #filterBar .fhead {
+    display: inline-flex; align-items: stretch; min-width: 280px; height: 26px;
+    border: 1px solid #b7bdc9; background: linear-gradient(#fbfbfc, #eceef2);
+    color: var(--text); cursor: pointer; user-select: none;
   }
-  #filterBar .fchip:hover { background: var(--surface-sunken); border-color: #b9c0ce; }
-  #filterBar .fchip.active {
-    background: var(--accent); color: #fff; border-color: var(--accent);
-    box-shadow: 0 1px 3px rgba(28, 55, 130, .3);
+  #filterBar .fhead:hover { border-color: #8e97a8; }
+  #filterBar .fhead-label {
+    display: flex; align-items: center; padding: 0 10px; font-weight: 700;
+    font-size: 12px; letter-spacing: .02em;
   }
+  #filterBar .fhead-state {
+    display: flex; align-items: center; flex: 1; padding: 0 10px 0 0;
+    font-size: 12px; color: var(--text-muted); white-space: nowrap;
+  }
+  #filterBar.filtered .fhead-state { color: var(--accent); font-weight: 600; }
+  #filterBar .fhead-btn {
+    flex: none; width: 24px; margin: 2px; padding: 0; border-radius: 2px;
+    border: 1px solid #aab1bf; background: linear-gradient(#ffffff, #dfe3ea);
+    box-shadow: none; color: #333c4d; font-size: 11px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #filterBar .fhead-btn:hover, #filterBar .fhead-btn[aria-expanded="true"] { background: #d3daf0; border-color: #6f86c9; }
+  #filterBar.filtered .fhead-btn { background: #dbe7ff; border-color: #2b54c9; color: #1f3f9e; }
+  #filterMenu {
+    position: absolute; top: calc(100% - 4px); left: 12px; z-index: 40;
+    width: min(430px, calc(100% - 24px)); box-sizing: border-box;
+    background: #fff; border: 1px solid #9aa2b1; border-radius: 4px;
+    box-shadow: 0 10px 28px rgba(16, 24, 40, .22); padding: 8px;
+    font-size: 12px; color: var(--text);
+  }
+  #filterMenu[hidden] { display: none; }
+  #filterMenu input[type="search"] {
+    width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit;
+    border: 1px solid var(--border-strong); border-radius: 3px; margin-bottom: 6px;
+  }
+  #filterMenu .fbox { border: 1px solid var(--border-strong); border-radius: 3px; max-height: min(340px, 46vh); overflow-y: auto; }
+  #filterMenu .fitem {
+    display: flex; align-items: center; gap: 6px; padding: 3px 8px; min-height: 22px;
+  }
+  #filterMenu .fitem:hover { background: #eef3ff; }
+  #filterMenu .fitem.fall { border-bottom: 1px solid var(--border); font-weight: 600; position: sticky; top: 0; background: #fff; z-index: 1; }
+  #filterMenu .fitem label { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; cursor: pointer; }
+  #filterMenu .fitem input { margin: 0; flex: none; }
+  #filterMenu .fcode { font-family: var(--mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #filterMenu .fitem.fspecial .fcode { font-family: var(--sans); font-size: 12px; font-style: italic; }
+  #filterMenu .fcount { color: var(--text-muted); font-size: 11px; flex: none; }
+  #filterMenu a.fdoc {
+    flex: none; padding: 0 5px; border-radius: 999px; text-decoration: none;
+    font-weight: 700; color: var(--accent);
+  }
+  #filterMenu a.fdoc:hover { background: var(--accent); color: #fff; }
+  #filterMenu .fempty { padding: 10px; color: var(--text-muted); }
+  #filterMenu .ffoot { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  #filterMenu .ffoot .fnote { flex: 1; color: var(--text-muted); font-size: 11px; }
   #filterBar .fclear {
     background: transparent; border: 0; color: var(--accent);
     cursor: pointer; font-size: 12px; font-weight: 600; padding: 2px 6px;
@@ -759,7 +797,7 @@ SOFTWARE.
         <div class="spacer" style="flex:1"></div>
         <span id="inputMode" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">edit mode</span>
       </div>
-      <div id="inputSpacer" aria-hidden="true"><span>Hover a rule chip for its link to the Relativity documentation. Every rule found is also listed under Filter, with a ↗ link.</span></div>
+      <div id="inputSpacer" aria-hidden="true"><span>Hover a rule chip for its documentation link, or open the Rules filter ▾.</span></div>
       <div class="pane-body" id="inputBody">
         <textarea id="inputArea" spellcheck="false" placeholder="Paste search terms here, one per line…"></textarea>
         <div id="inputHighlight" class="lines" style="display:none"></div>
@@ -774,10 +812,25 @@ SOFTWARE.
         <button id="btnCopyAll" class="ghost">Copy all</button>
       </div>
       <div id="filterBar" role="toolbar" aria-label="Filter by rule">
-        <span style="font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:11px">Filter</span>
-        <div id="filterChips" style="display:inline-flex;gap:4px;flex-wrap:wrap"></div>
-        <button class="fclear" id="btnClearFilter">Clear</button>
+        <div class="fhead" id="filterHead" title="Filter the terms by rule">
+          <span class="fhead-label">Rules</span>
+          <span class="fhead-state" id="filterState">All shown</span>
+          <button type="button" class="fhead-btn" id="btnFilterMenu" aria-haspopup="true" aria-expanded="false" aria-controls="filterMenu" aria-label="Open the rule filter">▾</button>
+        </div>
+        <button class="fclear" id="btnClearFilter" hidden>Clear filter</button>
         <div class="fsource" id="filterSource" hidden></div>
+        <div id="filterMenu" hidden role="dialog" aria-label="Choose which rules to show">
+          <input type="search" id="filterSearch" placeholder="Search rules" aria-label="Search rules" autocomplete="off" spellcheck="false">
+          <div class="fbox">
+            <div class="fitem fall"><label><input type="checkbox" id="filterAll"> <span>(Select All)</span></label></div>
+            <div id="filterChips" role="group" aria-label="Rules"></div>
+          </div>
+          <div class="ffoot">
+            <span class="fnote">A term is shown if it has any ticked rule.</span>
+            <button type="button" class="ghost" id="btnFilterReset">Show all</button>
+            <button type="button" class="primary" id="btnFilterClose">Close</button>
+          </div>
+        </div>
       </div>
       <div class="pane-body" id="outputBody">
         <div id="outputArea" class="lines"></div>
@@ -1100,6 +1153,7 @@ const Validator = (function () {
     OTHER_UNICODE_SPACE:      ['ALPHA', 'Spaces', 'Spaces', 'derived', 'Docs list the default space characters; characters outside ASCII follow the Unicode tables.'],
     PERCENT_AMBIGUOUS:        ['SYN', 'Fuzzysearching', 'Fuzzy searching', 'differs', 'Docs show % inside a word (app%ly, a%%pply), not only at the front. The Westlaw meaning is not from a Relativity source.'],
     PHONIC_INVALID:           ['SYN', 'Phonicsearching', 'Phonic searching', 'stated'],
+    POSSIBLE_HARD_RETURN:     ['STRC', 'Addingtermsandhighlightcolors', 'Adding terms and highlight colors', 'derived', 'Docs: enter each term on a separate line; each line is treated as an individual dtSearch query.'],
     PROX_BETWEEN_ANDS:        ['SYN', 'Complexexpressions', 'Complex expressions', 'stated'],
     PROX_NEEDS_PARENS:        ['SYN', 'Complexexpressions', 'Complex expressions', 'stated'],
     PROX_OVER_OR:             ['SYN', 'Complexexpressions', 'Complex expressions', 'derived', 'Docs advise parentheses and give OR-with-proximity examples; they do not state the exact default grouping.'],
@@ -2910,9 +2964,34 @@ const Validator = (function () {
   }
   function getSettings() { return Object.assign({}, currentSettings); }
 
+  // v24: a line whose last word is AND or OR usually means one search string
+  // was split in two by a hard return when it was pasted. This is a whole-list
+  // check because it needs to look at the line that follows.
+  function findHardReturns(results) {
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      const text = String(r.original || '').trim();
+      const m = /(?:^|[^A-Za-z0-9_])(AND|OR)$/i.exec(text);
+      if (!m) continue;
+      const next = i + 1 < results.length ? String(results[i + 1].original || '').trim() : '';
+      const snippet = next.length > 60 ? next.slice(0, 60) + '\u2026' : next;
+      const op = m[1].toUpperCase();
+      r.issues.push({
+        severity: 'warn',
+        code: 'POSSIBLE_HARD_RETURN',
+        message: next
+          ? `Term ends with ${op} \u2014 possible hard return in the pasted text. The next line ("${snippet}") may be the rest of this term. If so, rejoin the two lines into one.`
+          : `Term ends with ${op} \u2014 possible hard return in the pasted text. Nothing follows it, so the rest of this term may have been lost in the paste. Check the source list.`,
+        rule: 'In a search terms report every line is run as its own search. A term whose last word is AND or OR is usually one search string that was split by a line break (hard return) when it was pasted, so its two halves would run as two different searches.',
+      });
+      if (r.severity === 'none' || r.severity === 'fix') r.severity = 'warn';
+    }
+  }
+
   function validateAll(rawText) {
     const lines = rawText.split(/\r\n|\n|\r/);
     const results = lines.map(l => validateLine(l));
+    findHardReturns(results);
     findDuplicatesAndSubsets(results);
     results.forEach(r => attachCitations(r.issues || []));
     return results;
@@ -2944,7 +3023,7 @@ const Validator = (function () {
   //   1) change this constant
   //   2) change the <title> in <head>
   //   3) bump SETTINGS_KEY below if the settings shape changes (optional)
-  const APP_VERSION = 'v23';
+  const APP_VERSION = 'v26';
 
   const $ = sel => document.querySelector(sel);
   const inputArea = $('#inputArea');
@@ -2990,26 +3069,94 @@ const Validator = (function () {
   Validator.setSettings(loadSettings());
 
   /* ---- Sample data ---- */
+  // v25: the sample is the full Batman QC list - 3 working examples, then one
+  // term for each of the 80 rules (83 lines). It matches column A of
+  // "Batman Terms.xlsx". Non-ASCII and invisible characters are written as
+  // \u escapes so they survive editing this file.
   const SAMPLE = [
-    'AT&T',
-    'terminat! /5 contract',
-    '"breach of contract" AND damag!',
-    'apple w/5 not banana',
-    'confidential /s trade secret',
-    'employee /p bonus',
-    '(agreement OR contract) & signed',
-    '"non–disclosure" OR NDA',              // en-dash + curly? we set en-dash
-    'atleast5(fraud)',
-    'da(aft 1/1/2020) & termination',
-    '*enforcement',
-    'and',
-    'settle% (Westlaw but-not or dtSearch fuzzy?)',
-    'insid! +2 trading',
-    'privile! w/25 attorney',
-    '"the meeting agenda"',
-    'terminat*',
-    'terminated',
-    'terminat*',                             // duplicate of stem
+    "(batman OR \"dark knight\") AND gotham",      // working example
+    "joker w/5 \"ace chemicals\"",                 // working example
+    "batmobile*",                                  // working example
+    "\u201carkham asylum\u201d AND joker",         // SMART_QUOTES_CONVERTED
+    "riddler\u2019s AND gotham",                   // ARTIFACT_NORMALIZED
+    "batman  AND  robin",                          // NO_DOUBLE_SPACES
+    "batman & catwoman",                           // AMP_TO_AND
+    "bat! AND gotham",                             // WL_BANG_TO_STAR
+    "batman /5 batmobile",                         // WL_SLASH_N
+    "robin +3 nightwing",                          // WL_PLUS_N
+    "gordon /s commissioner",                      // WL_SAME_SENTENCE
+    "penguin /p cobblepot",                        // WL_SAME_PARAGRAPH
+    "%%bane",                                      // FUZZY_SEARCH
+    "riddler AND nygma%",                          // PERCENT_AMBIGUOUS
+    "atleast5(batarang)",                          // WL_FIELD_UNSUPPORTED
+    "\"the batcave AND wayne",                     // UNBALANCED_QUOTES
+    "(joker OR harley",                            // UNBALANCED_PARENS
+    "*batmobile",                                  // LEADING_WILDCARD
+    "batman w/5 not superman",                     // NOT_IN_PROXIMITY
+    "contains",                                    // RESERVED_LITERAL_QUOTED
+    "\"the joker\"",                               // NOISE_IN_PHRASE
+    "gotham w/5 (under OR siege)",                 // STOP_WORD_IN_TERM
+    "who",                                         // BARE_NOISE_TERM
+    "(batman w/5 robin) or nightwing",             // PROX_OVER_OR
+    "batman AND OR robin",                         // ADJACENT_BOOLEANS
+    "batman AND robin NOT",                        // TRAILING_OPERATOR
+    "penguin OR",                                  // POSSIBLE_HARD_RETURN
+    "OR batgirl",                                  // LEADING_OPERATOR
+    "batman w/5 w/10 joker",                       // STACKED_PROXIMITY
+    "batman and/or robin",                         // AND_SLASH_OR
+    "?atman",                                      // LEADING_SINGLECHAR_WILDCARD
+    "bat????",                                     // MANY_SINGLECHAR_WILDCARDS
+    "***",                                         // ONLY_WILDCARDS
+    "1939",                                        // SHORT_NUMERIC
+    "batman AND \"\"",                             // EMPTY_PHRASE
+    "\"batman not robin\"",                        // BOOLEAN_IN_PHRASE
+    "\"bat* signal\"",                             // QUOTED_OPERATOR_HIGHLIGHT
+    "batman AND evidence CONTAINS batarang",       // UNSUPPORTED_CONTAINS
+    "NOT joker",                                   // LEADING_NOT
+    "gotham AND NOT metropolis",                   // AND_NOT_INFO
+    "batman AndAny batarang",                      // AND_ANY_INFO
+    "wayne AND batman w/5 robin sidekick AND gotham", // PROX_BETWEEN_ANDS
+    "(batman w/5 robin) w/10 gotham",              // NESTED_PROXIMITY
+    "batman w/5 joker AND gotham",                 // PROX_NEEDS_PARENS
+    "batmanbatmobilebatcavebatarangbatgirl",       // WORD_OVER_32_CHARS
+    "batmanbatmobilebatcavebatarangbatgirl*",      // WILDCARD_PAST_32
+    "##\"bat\\smobile\"",                          // REGEX_BACKSLASH_S
+    "##\"Gotham signal\"",                         // REGEX_UPPERCASE
+    "batarang\\d{3}",                              // REGEX_MISSING_HASHHASH
+    "##\"gotham\" AND bat[m-z]",                   // BRACKET_CLASS_OUTSIDE_REGEX
+    "date(after January 1 2016)",                  // DATE_OPEN_RANGE
+    "date(1/1/2016 to 12/31/2016)",                // DATE_NUMERIC_AMBIGUOUS
+    "date(January 1 2016 to December 31 3010)",    // DATE_YEAR_OUT_OF_RANGE
+    "gotham city sirens",                          // IMPLICIT_PHRASE
+    "batman TO robin",                             // LITERAL_CONNECTOR_UNQUOTED
+    "1939~",                                       // STEM_ON_NUMERIC
+    "zs\u00e1sz~",                                 // STEM_NON_ENGLISH
+    "fought~",                                     // STEM_IRREGULAR
+    "# gordon",                                    // PHONIC_INVALID
+    "xfirstword AND bat*",                         // XFIRSTLAST_BROAD
+    "batmobile=v8",                                // EQUALS_OUTSIDE_NUMERIC
+    "bat-signal",                                  // HYPHEN_WORD_BREAK
+    "\u30d0\u30c3\u30c8\u30de\u30f3",              // CJK_TOKEN_NOTE
+    "batman w/0 robin",                            // PROX_ZERO
+    "batman w/500 joker",                          // PROX_VERY_LARGE
+    "bat\u200bsignal",                             // INVISIBLE_UNICODE
+    "catwoman AND\u2003kyle",                      // OTHER_UNICODE_SPACE
+    "batman w/ joker AND gotham",                  // MISSING_PROXIMITY_NUMBER
+    "batman AND ()",                               // EMPTY_PARENS
+    "custodian:wayne",                             // FIELD_COLON_SYNTAX
+    "\"gotham city police department major crimes unit task force report\"", // LONG_PHRASE
+    "batman,AND robin",                            // OPERATOR_TOUCHING_PUNCT
+    "batman AND AND robin",                        // DUPLICATE_OPERATOR
+    "\"dark knight\"*",                            // STEM_ON_PHRASE
+    "batman*!",                                    // MIXED_WILDCARDS
+    "batman AMD robin AND gotham",                 // TYPOED_OPERATOR
+    "batman w\\5 joker AND gotham",                // BACKSLASH_PROXIMITY
+    "https://gothamgazette.example.com/wayne",     // URL_IN_TERM
+    "bruce.wayne@wayneenterprises.example",        // EMAIL_IN_TERM
+    "(batman OR batmobile OR batarang OR batcave OR batsignal OR batgirl OR batwoman OR nightwing OR robin OR alfred OR gordon OR gotham OR arkham OR joker OR penguin OR riddler OR catwoman OR bane OR scarecrow OR clayface OR ivy OR freeze OR talia OR damian OR grayson OR oracle OR huntress OR azrael OR bullock OR montoya OR falcone OR maroni OR quinn OR hush OR deadshot OR firefly OR blackgate OR zsasz OR cobblepot OR pennyworth OR wayneenterprises OR gothamgazette OR crimealley OR acechemicals)", // TERM_TOO_LONG
+    "B&R",                                         // AMPERSAND_AMBIGUOUS
+    "batmobiles",                                  // LOGICAL_SUBSET
+    "(batman OR \"dark knight\") AND gotham",      // DUPLICATE
   ];
   $('#btnSample').addEventListener('click', () => {
     inputArea.value = SAMPLE.join('\n');
@@ -4200,35 +4347,157 @@ const Validator = (function () {
   const filterChipsEl = $('#filterChips');
   let activeFilter = null; // {kind:'rule'|'severity', value}
 
-  function renderFilterChips() {
-    if (!currentResults.length) { filterBar.classList.remove('visible'); return; }
-    const counts = new Map();
+  // v26: Excel-style filter. The data model is unchanged for the rest of the
+  // app (activeFilter is still null, {kind:'rule'} or {kind:'severity'});
+  // the checklist adds one more shape:
+  //   { kind: 'rules', values: Set<code>, clean: boolean }
+  // where `clean` is the "(No issues)" box. A term is shown when it carries
+  // at least one ticked rule (or has no rules and "(No issues)" is ticked).
+  const NO_ISSUES = '__none__';
+  let filterSearchText = '';
+  function filterInventory() {
+    const counts = new Map(), sevs = new Map();
+    let clean = 0;
     for (const r of currentResults) {
+      const seen = new Set();
       for (const i of r.issues) {
+        if (!sevs.has(i.code)) sevs.set(i.code, new Set());
+        sevs.get(i.code).add(i.severity);
+        if (seen.has(i.code)) continue;
+        seen.add(i.code);
         counts.set(i.code, (counts.get(i.code) || 0) + 1);
       }
+      if (!seen.size) clean++;
     }
-    if (!counts.size) { filterBar.classList.remove('visible'); return; }
-    filterBar.classList.add('visible');
-    const codes = Array.from(counts.entries()).sort((a,b) => b[1] - a[1]);
-    filterChipsEl.innerHTML = codes.map(([code, n]) => {
-      const active = activeFilter && activeFilter.kind === 'rule' && activeFilter.value === code;
-      const cite = Validator.citationFor(code);
-      const doc = cite ? `<a class="fdoc" href="${escapeHtml(cite.url)}" target="_blank" rel="noopener" title="Open in Relativity documentation: ${escapeHtml(cite.label)}" aria-label="Open ${escapeHtml(code)} in the Relativity documentation">\u2197</a>` : '';
-      return `<span class="fchip${active ? ' active' : ''}" data-code="${escapeHtml(code)}" title="${n} occurrence(s) \u2014 click to filter">${escapeHtml(code)} <span style="opacity:.7">×${n}</span>${doc}</span>`;
-    }).join('');
+    return { counts, sevs, clean };
+  }
+  // Which boxes are ticked, derived from whatever filter is active.
+  function filterChecked(inv) {
+    if (!activeFilter) return { values: new Set(inv.counts.keys()), clean: true };
+    if (activeFilter.kind === 'rule') return { values: new Set([activeFilter.value]), clean: false };
+    if (activeFilter.kind === 'severity') {
+      const v = new Set();
+      inv.sevs.forEach((set, code) => { if (set.has(activeFilter.value)) v.add(code); });
+      return { values: v, clean: false };
+    }
+    return { values: new Set(activeFilter.values), clean: !!activeFilter.clean };
+  }
+  function commitChecked(inv, st) {
+    const all = st.clean && Array.from(inv.counts.keys()).every(c => st.values.has(c));
+    activeFilter = all ? null : { kind: 'rules', values: st.values, clean: st.clean };
+    renderFilterHead(inv);
+    syncFilterAllBox();
+    applyFilter();
+    scheduleAlign();
+  }
+  function renderFilterHead(inv) {
+    inv = inv || filterInventory();
+    const total = inv.counts.size;
+    let text = 'All shown';
+    if (activeFilter) {
+      if (activeFilter.kind === 'severity') {
+        text = ({ err: 'Errors only', warn: 'Warnings only', fix: 'Auto-fixes only' })[activeFilter.value] || 'Filtered';
+      } else {
+        const st = filterChecked(inv);
+        const n = Array.from(st.values).filter(c => inv.counts.has(c)).length;
+        text = n === 1 && !st.clean ? Array.from(st.values).find(c => inv.counts.has(c))
+          : n + ' of ' + total + ' rules' + (st.clean ? ' + no issues' : '');
+      }
+    }
+    $('#filterState').textContent = text;
+    filterBar.classList.toggle('filtered', !!activeFilter);
+    $('#btnClearFilter').hidden = !activeFilter;
+    $('#btnFilterMenu').textContent = activeFilter ? '▼' : '▾';
     renderFilterSource();
   }
+  function syncFilterAllBox() {
+    const boxes = Array.from(filterChipsEl.querySelectorAll('input[type="checkbox"]'));
+    const on = boxes.filter(b => b.checked).length;
+    const all = $('#filterAll');
+    all.checked = boxes.length > 0 && on === boxes.length;
+    all.indeterminate = on > 0 && on < boxes.length;
+  }
+  function renderFilterChips() {
+    if (!currentResults.length) { filterBar.classList.remove('visible'); closeFilterMenu(); return; }
+    const inv = filterInventory();
+    if (!inv.counts.size) { filterBar.classList.remove('visible'); closeFilterMenu(); return; }
+    filterBar.classList.add('visible');
+    const st = filterChecked(inv);
+    const q = filterSearchText.trim().toLowerCase();
+    const codes = Array.from(inv.counts.entries()).sort((a, b) => a[0] < b[0] ? -1 : 1)
+      .filter(([code]) => !q || code.toLowerCase().includes(q.replace(/\s+/g, '_')));
+    let html = codes.map(([code, n]) => {
+      const cite = Validator.citationFor(code);
+      const doc = cite ? `<a class="fdoc" href="${escapeHtml(cite.url)}" target="_blank" rel="noopener" title="Open in Relativity documentation: ${escapeHtml(cite.label)}" aria-label="Open ${escapeHtml(code)} in the Relativity documentation">↗</a>` : '';
+      return `<div class="fitem"><label><input type="checkbox" data-code="${escapeHtml(code)}"${st.values.has(code) ? ' checked' : ''}> <span class="fcode">${escapeHtml(code)}</span></label><span class="fcount">${n} term${n === 1 ? '' : 's'}</span>${doc}</div>`;
+    }).join('');
+    if (inv.clean && (!q || 'no issues'.includes(q))) {
+      html += `<div class="fitem fspecial"><label><input type="checkbox" data-code="${NO_ISSUES}"${st.clean ? ' checked' : ''}> <span class="fcode">(No issues)</span></label><span class="fcount">${inv.clean} term${inv.clean === 1 ? '' : 's'}</span></div>`;
+    }
+    filterChipsEl.innerHTML = html || '<div class="fempty">No rules match that search.</div>';
+    syncFilterAllBox();
+    renderFilterHead(inv);
+  }
+  function openFilterMenu() {
+    $('#filterMenu').hidden = false;
+    $('#btnFilterMenu').setAttribute('aria-expanded', 'true');
+    filterSearchText = ''; $('#filterSearch').value = '';
+    renderFilterChips();
+    $('#filterSearch').focus();
+  }
+  function closeFilterMenu() {
+    const m = $('#filterMenu');
+    if (!m || m.hidden) return;
+    m.hidden = true;
+    $('#btnFilterMenu').setAttribute('aria-expanded', 'false');
+  }
+  $('#filterHead').addEventListener('click', () => { if ($('#filterMenu').hidden) openFilterMenu(); else closeFilterMenu(); });
+  $('#btnFilterClose').addEventListener('click', closeFilterMenu);
+  $('#btnFilterReset').addEventListener('click', () => { clearFilter(); });
+  $('#filterSearch').addEventListener('input', (e) => { filterSearchText = e.target.value; renderFilterChips(); });
+  // Tick / untick one rule.
+  filterChipsEl.addEventListener('change', (e) => {
+    const box = e.target.closest('input[type="checkbox"]');
+    if (!box) return;
+    const inv = filterInventory(), st = filterChecked(inv);
+    if (box.dataset.code === NO_ISSUES) st.clean = box.checked;
+    else if (box.checked) st.values.add(box.dataset.code); else st.values.delete(box.dataset.code);
+    commitChecked(inv, st);
+  });
+  // (Select All) acts on the rules currently listed, as in Excel: with a
+  // search typed, it ticks or unticks only the matches.
+  $('#filterAll').addEventListener('change', (e) => {
+    const inv = filterInventory(), st = filterChecked(inv);
+    filterChipsEl.querySelectorAll('input[type="checkbox"]').forEach(b => {
+      b.checked = e.target.checked;
+      if (b.dataset.code === NO_ISSUES) st.clean = b.checked;
+      else if (b.checked) st.values.add(b.dataset.code); else st.values.delete(b.dataset.code);
+    });
+    commitChecked(inv, st);
+  });
+  // Close on a click outside the filter, and on Escape (before the global
+  // Escape handler, which would otherwise clear the filter).
+  document.addEventListener('mousedown', (e) => {
+    if (!$('#filterMenu').hidden && !filterBar.contains(e.target)) closeFilterMenu();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#filterMenu').hidden) {
+      e.stopPropagation(); e.preventDefault(); closeFilterMenu(); $('#btnFilterMenu').focus();
+    }
+  }, true);
 
   // v14: when one rule is the active filter, show its documentation source
   // as a real, clickable link (the hover tooltip cannot be clicked).
   function renderFilterSource() {
     const el = $('#filterSource');
     if (!el) return;
-    const cite = (activeFilter && activeFilter.kind === 'rule') ? Validator.citationFor(activeFilter.value) : null;
+    let one = null;
+    if (activeFilter && activeFilter.kind === 'rule') one = activeFilter.value;
+    else if (activeFilter && activeFilter.kind === 'rules' && activeFilter.values.size === 1 && !activeFilter.clean) one = Array.from(activeFilter.values)[0];
+    const cite = one ? Validator.citationFor(one) : null;
     if (!cite) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false;
-    el.innerHTML = '<b>' + escapeHtml(activeFilter.value) + '</b> source: ' + citeLinkHtml(cite) +
+    el.innerHTML = '<b>' + escapeHtml(one) + '</b> source: ' + citeLinkHtml(cite) +
       ' <span class="basis ' + cite.basis + '">' + escapeHtml(cite.basisLabel) + '</span>' +
       (cite.note ? ' <span style="color:var(--text-muted)">' + escapeHtml(cite.note) + '</span>' : '');
   }
@@ -4250,6 +4519,7 @@ const Validator = (function () {
         let match = false;
         if (activeFilter.kind === 'rule') match = codes.includes(activeFilter.value);
         else if (activeFilter.kind === 'severity') match = sevs.includes(activeFilter.value);
+        else if (activeFilter.kind === 'rules') match = codes.length ? codes.some(c => activeFilter.values.has(c)) : !!activeFilter.clean;
         // Never hide blank lines when they carry no codes; hide them only if a filter is active.
         l.classList.toggle('filtered-out', !match);
       });
@@ -4270,12 +4540,6 @@ const Validator = (function () {
   function clearFilter() { activeFilter = null; renderFilterChips(); applyFilter(); scheduleAlign(); }
   window.__applyFilter = applyFilter;
 
-  filterChipsEl.addEventListener('click', (e) => {
-    if (e.target.closest('a')) return;            // the \u2197 documentation link
-    const t = e.target.closest('.fchip');
-    if (!t) return;
-    setFilter('rule', t.dataset.code);
-  });
   $('#btnClearFilter').addEventListener('click', clearFilter);
 
   // Clicking a chip in a line toggles that rule filter
