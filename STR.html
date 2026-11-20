@@ -1,8 +1,33 @@
 <!DOCTYPE html>
+<!--
+Search Term Validator
+
+MIT License
+
+Copyright (c) 2026 Phil Weldon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Search Term Validator — v13</title>
+<title>Search Term Validator — v22</title>
 <!--
   APP_VERSION is defined once in the <script> block below and drives:
     (a) the version badge in the header
@@ -105,6 +130,20 @@
   button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 
   /* --- Layout ----------------------------------------------------------- */
+  /* v14: page footer (license / provenance line) pinned under the panes. */
+  .app-footer {
+    flex: none; padding: 0 16px 10px; text-align: center;
+    font-size: 11.5px; line-height: 1.5; color: var(--text-muted);
+  }
+  .app-footer button {
+    background: none; border: 0; padding: 0; margin: 0; box-shadow: none;
+    font: inherit; color: var(--accent); cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  #licenseText {
+    margin: 0; white-space: pre-wrap; font-family: var(--mono);
+    font-size: 12px; line-height: 1.55; color: var(--text);
+  }
   .app { display: flex; flex-direction: column; height: 100vh; }
   header.topbar {
     display: flex; align-items: center; flex-wrap: wrap;
@@ -219,6 +258,33 @@
     background: linear-gradient(180deg, #fbfcfd 0%, var(--surface-alt) 100%);
     min-height: 40px;
   }
+  /* v14: left-pane band that matches the height of the right pane's filter
+     bar, so line 1 on the left starts level with line 1 on the right. */
+  #inputSpacer {
+    flex: none; height: 0; overflow: hidden; box-sizing: border-box;
+    background: var(--surface-alt); color: var(--text-muted);
+    font-size: 12px; line-height: 1.5; padding: 0 12px;
+    display: flex; align-items: center;
+  }
+  #inputSpacer.on { border-bottom: 1px solid var(--border); }
+  /* v14: outside the virtual scroller a row may grow, so its rule chips are
+     never cut off at the pane edge and each one can be hovered for its link. */
+  @media (min-width: 901px) {
+    .lines:not(.virtual) .chips {
+      flex-wrap: wrap; justify-content: flex-end; row-gap: 2px;
+      overflow: visible; flex: 0 1 auto; max-width: 55%; padding: 1px 0;
+    }
+    .lines:not(.virtual) .chips .chip { flex: none; }
+    .lines:not(.virtual) .line .content { min-width: 0; }
+  }
+  #filterBar .fchip a.fdoc {
+    margin-left: 0; padding: 0 3px; border-radius: 999px; text-decoration: none;
+    font-family: var(--sans); font-weight: 700; color: var(--accent);
+  }
+  #filterBar .fchip a.fdoc:hover { background: var(--accent); color: #fff; }
+  #filterBar .fchip.active a.fdoc { color: #fff; }
+  #tooltip .tt-url { display: block; margin-top: 5px; color: #8f99ab; font-size: 10.5px; word-break: break-all; user-select: all; }
+  .line .edited-tag[data-tt] { cursor: help; }
   /* The scroll host for the virtual scroller — must stay padding-free. */
   .pane-body { flex: 1; overflow: auto; position: relative; }
 
@@ -268,6 +334,28 @@
   .line .content { flex: 1; word-break: break-all; white-space: pre-wrap; }
   .line .content.needs-review { color: var(--red-text); font-style: italic; }
   .line .content.placeholder { color: var(--text-faint); font-style: italic; }
+  /* v14: the unmatched ( ) or " that triggered UNBALANCED_PARENS / UNBALANCED_QUOTES. */
+  mark.unbal {
+    background: #d92d20; color: #fff; font-weight: 700; font-style: normal;
+    border-radius: 3px; padding: 0 2px; margin: 0 1px;
+    box-shadow: 0 0 0 2px rgba(217, 45, 32, .28);
+  }
+  /* v14: editable output terms. */
+  #outputArea .line .content[contenteditable] { cursor: text; outline: none; border-radius: 3px; min-width: 40px; }
+  #outputArea .line .content[contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--border-strong); }
+  #outputArea .line .content[contenteditable]:focus {
+    background: #fff; box-shadow: 0 0 0 2px var(--accent); font-style: normal; color: var(--text);
+  }
+  .line .nr-tag, .line .edited-tag {
+    flex: none; align-self: flex-start; margin-top: 3px; font-family: var(--sans);
+    font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    line-height: 14px; padding: 0 6px; border-radius: 999px; user-select: none; white-space: nowrap;
+  }
+  .line .nr-tag { margin-right: 6px; background: var(--red-border); color: #fff; }
+  .line .edited-tag { margin-left: 8px; background: #e6f4ea; color: #1e6b37; border: 1px solid #bfe0c9; }
+  .line .edited-tag.has-issues { background: #fff4e0; color: #8a5300; border-color: #f1d9a8; }
+  .line.edited-ok { background: #f1faf3; box-shadow: inset 3px 0 0 #6cc08a; }
+  .line.edited-ok:hover { background: #e8f6ec; }
   .line .copy {
     opacity: 0; margin-left: 8px;
     font-size: 10px; font-weight: 600;
@@ -337,7 +425,16 @@
     opacity: 0; transition: opacity .12s ease;
     font-family: var(--sans);
   }
-  #tooltip.visible { opacity: 1; }
+  /* v14: the tooltip is clickable while shown, so its documentation link works. */
+  #tooltip.visible { opacity: 1; pointer-events: auto; }
+  #tooltip a.tt-link {
+    display: inline-block; margin-top: 7px; padding: 4px 10px;
+    border-radius: 6px; background: #2b54c9; color: #fff;
+    font-weight: 600; text-decoration: none;
+  }
+  #tooltip a.tt-link:hover, #tooltip a.tt-link:focus { background: #3a66e0; outline: none; }
+  #tooltip .tt-more-links { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.12); }
+  #tooltip .tt-more-links a { color: #9db8ff; display: block; margin-top: 3px; }
   #tooltip .tt-title {
     font-weight: 700; margin-bottom: 5px;
     letter-spacing: .02em;
@@ -348,6 +445,33 @@
     border-top: 1px solid rgba(255, 255, 255, .12);
   }
   #tooltip ul { margin: 4px 0 0; padding-left: 18px; }
+  /* v14: citation line under the rule text. */
+  #tooltip .tt-cite {
+    font-size: 11px; color: #cfd6e4; margin-top: 8px; line-height: 1.45;
+  }
+  #tooltip .tt-cite b { color: #fff; font-weight: 600; }
+  #tooltip .tt-cite .tt-hint { color: #8f99ab; }
+  .basis {
+    display: inline-block; padding: 1px 7px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600; white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .basis.stated  { background: #e6f4ea; color: #1e6b37; border-color: #bfe0c9; }
+  .basis.derived { background: #eef1f6; color: #45506a; border-color: #d5dbe6; }
+  .basis.differs { background: #fff4e0; color: #8a5300; border-color: #f1d9a8; }
+  #filterBar .fsource {
+    flex-basis: 100%; font-size: 12px; color: var(--text); line-height: 1.5;
+    padding-top: 2px;
+  }
+  #filterBar .fsource a { color: var(--accent); font-weight: 600; }
+  #ruleCiteTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+  #ruleCiteTable th, #ruleCiteTable td {
+    text-align: left; vertical-align: top; padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  #ruleCiteTable th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  #ruleCiteTable td.code { font-family: var(--mono); font-size: 11px; white-space: nowrap; }
+  #ruleCiteTable .cnote { color: var(--text-muted); margin-top: 2px; }
   /* v9: arrow shown only in keyboard-anchored mode. */
   #tooltip.anchored::before {
     content: ''; position: absolute; width: 8px; height: 8px;
@@ -604,7 +728,7 @@
       <button id="btnExport" title="Export CSV report">Export CSV</button>
       <button id="btnExportReport" class="ghost" title="Export human-readable Markdown report grouped by rule">Report (.md)</button>
     </div>
-    <button id="btnReference" title="Reference: dtSearch/Relativity rules the validator can't fully check" aria-label="Reference">Reference</button>
+    <button id="btnReference" title="Reference: Relativity documentation source for every rule, plus advisory rules" aria-label="Reference">Reference</button>
     <button id="btnShortcuts" title="Keyboard shortcuts (press ?)" aria-label="Keyboard shortcuts">?</button>
     <button id="btnSettings" title="Settings" aria-label="Settings">⚙︎</button>
     <!-- v12: offline copy. Plain anchor — no script is bound to it, so it
@@ -629,6 +753,7 @@
         <div class="spacer" style="flex:1"></div>
         <span id="inputMode" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">edit mode</span>
       </div>
+      <div id="inputSpacer" aria-hidden="true"><span>Hover a rule chip for its link to the Relativity documentation. Every rule found is also listed under Filter, with a ↗ link.</span></div>
       <div class="pane-body" id="inputBody">
         <textarea id="inputArea" spellcheck="false" placeholder="Paste search terms here, one per line…"></textarea>
         <div id="inputHighlight" class="lines" style="display:none"></div>
@@ -638,6 +763,7 @@
     <section class="pane">
       <div class="pane-header">
         <span>Corrected output</span>
+        <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">— click any term to edit it; Copy all includes your edits</span>
         <div class="spacer" style="flex:1"></div>
         <button id="btnCopyAll" class="ghost">Copy all</button>
       </div>
@@ -645,18 +771,53 @@
         <span style="font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:11px">Filter</span>
         <div id="filterChips" style="display:inline-flex;gap:4px;flex-wrap:wrap"></div>
         <button class="fclear" id="btnClearFilter">Clear</button>
+        <div class="fsource" id="filterSource" hidden></div>
       </div>
       <div class="pane-body" id="outputBody">
         <div id="outputArea" class="lines"></div>
       </div>
     </section>
   </main>
+  <footer class="app-footer">No telemetry, tracking, or ads. Free and open source under the <button type="button" id="btnLicense" aria-haspopup="dialog">MIT License</button>. Designed by Phil Weldon, built with Ai Agents, and subject to verification by the user.</footer>
 </div>
 
 <div id="tooltip" role="tooltip"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <!-- v9: polite live region so screen readers announce validation completion. -->
 <div id="srAnnounce" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- License modal (v14) -->
+<div class="modal-backdrop" id="licenseModal">
+  <div class="modal" role="dialog" aria-labelledby="licenseTitle" style="width:min(680px,94vw);max-width:680px">
+    <header><h2 id="licenseTitle">MIT License</h2><div class="spacer" style="flex:1"></div><button class="ghost" id="btnCloseLicense" aria-label="Close">✕</button></header>
+    <div class="content"><pre id="licenseText">MIT License
+
+Copyright (c) 2026 Phil Weldon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</pre></div>
+    <footer>
+      <div class="spacer" style="flex:1"></div>
+      <button id="btnCloseLicense2" class="primary">Close</button>
+    </footer>
+  </div>
+</div>
 
 <!-- Shortcuts modal -->
 <div class="modal-backdrop" id="shortcutsModal">
@@ -670,6 +831,7 @@
         <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>K</kbd></td><td>Focus the input area.</td></tr>
         <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>D</kbd></td><td>Open Dedupe.</td></tr>
         <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>E</kbd></td><td>Export CSV. Add <kbd>Shift</kbd> for the Markdown report.</td></tr>
+        <tr><td><kbd>Shift</kbd>+click a rule chip</td><td>Open that rule&rsquo;s source section in the Relativity documentation (new tab). Or hover the chip and click the link in the pop-up.</td></tr>
         <tr><td>Click a rule chip on a line</td><td>Filter output to that rule only. Click again or press <kbd>Esc</kbd> to clear.</td></tr>
         <tr><td>Click a summary pill</td><td>Filter output by severity (errors, warnings, auto-fixes).</td></tr>
       </table>
@@ -684,53 +846,63 @@
 
 <!-- Reference modal -->
 <div class="modal-backdrop" id="referenceModal">
-  <div class="modal" role="dialog" aria-labelledby="referenceTitle" style="max-width:720px">
-    <header><h2 id="referenceTitle">Reference &mdash; advisory rules</h2><div class="spacer" style="flex:1"></div><button class="ghost" id="btnCloseReference">✕</button></header>
+  <div class="modal" role="dialog" aria-labelledby="referenceTitle" style="width:min(900px,94vw);max-width:900px">
+    <header><h2 id="referenceTitle">Reference &mdash; rule sources</h2><div class="spacer" style="flex:1"></div><button class="ghost" id="btnCloseReference">✕</button></header>
     <div class="content" id="referenceContent">
-      <p style="margin-top:0;color:var(--text-muted);font-size:13px">These rules from the Relativity/dtSearch documentation can't be fully verified from term text alone. Use them as a checklist while drafting. Every item below cites the source page in the official Relativity documentation.</p>
+      <p style="margin-top:0;color:var(--text-muted);font-size:13px">Every rule this validator applies is listed below with a link to the section of the official Relativity documentation (help.relativity.com) it rests on. The basis tag says how closely: <span class="basis stated">Stated in Relativity docs</span> means the linked section states the rule; <span class="basis derived">Derived from documented behavior</span> means the section documents the underlying syntax and the specific check is this validator&rsquo;s inference; <span class="basis differs">Docs word this differently - read source</span> means the docs cover the topic but do not match the rule&rsquo;s wording.</p>
 
       <div style="margin:10px 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt,#f8f9fb);font-size:12px;line-height:1.5">
         <div style="font-weight:600;margin-bottom:4px">Primary sources</div>
         <ul style="margin:4px 0 0;padding-left:16px">
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">Using dtSearch syntax options</a> — connectors, proximity, wildcards, stemming, fuzzy, phonic</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">dtSearch noise words and alphabet</a> — noise list, letters, reserved symbols</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm" target="_blank" rel="noopener">Regular expression caveats with dtSearch</a> — <code>##"..."</code> syntax, case sensitivity in regex</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/Regular_expressions/Searching_with_regular_expressions.htm" target="_blank" rel="noopener">Searching with regular expressions</a> — regex examples and patterns</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/STR.htm" target="_blank" rel="noopener">Search terms reports (STR) overview</a> — STR-specific constraints (Fuzziness, Dictionary)</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">Running a Dictionary search</a> — token validation workflow</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/System_Guides/User_quick_reference/Searching_Quick_Reference/Search.htm" target="_blank" rel="noopener">Searching quick reference</a> — operator summary table</li>
-          <li><a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Searching_for_symbols.htm" target="_blank" rel="noopener">Searching for symbols and emojis</a> — making reserved characters searchable</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">Using dtSearch syntax options</a> — connectors, proximity, wildcards, stemming, fuzzy, phonic, dates</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Running_a_dtSearch.htm" target="_blank" rel="noopener">Running a dtSearch</a> — considerations and best practices, words longer than 32 characters</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Search_term_reports/Create.htm" target="_blank" rel="noopener">Create and edit search term reports</a> — STR considerations, 450-character term limit, duplicates, hidden characters</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Alphabet_list.htm" target="_blank" rel="noopener">Alphabet list</a> — letters, hyphens, spaces, reserved characters</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">Making the dtSearch noise word list searchable</a> — default noise list and custom lists</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm" target="_blank" rel="noopener">Using regular expressions with dtSearch</a> — <code>"##..."</code> syntax, lowercase, <code>\s</code> caveat</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Regular_expressions/Searching_with_regular_expressions.htm" target="_blank" rel="noopener">Searching with regular expressions (regex)</a> — metacharacters and quantifiers</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">Running a dictionary search</a> — token validation workflow, 2,000-item cap</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Searching_for_symbols.htm" target="_blank" rel="noopener">Searching for symbols and emojis</a> — making reserved characters searchable</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/dtSearch_index.htm" target="_blank" rel="noopener">dtSearch index</a> — accent-insensitive and case-insensitive indexes</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Searching/Searching_workflows.htm" target="_blank" rel="noopener">Searching workflows</a> — proximity best practices, auto-recognition</li>
+          <li><a href="https://help.relativity.com/RelativityaiR/Content/System_Guides/User_quick_reference/Searching_Quick_Reference/Search.htm" target="_blank" rel="noopener">Searching quick reference guide</a> — operator summary table</li>
         </ul>
       </div>
 
-      <h3 style="margin:14px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Query design</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.55">
-        <li>Use several specific STRs instead of one broad query with many OR&rsquo;d concepts. Broad queries are hard to review, hard to validate against a Dictionary, and often over-inclusive. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/STR.htm" target="_blank" rel="noopener">[STR overview]</a></li>
-        <li>Minimize the number of saved-search field conditions layered on top of the STR. Every condition adds a place where the STR&rsquo;s intent can be quietly narrowed. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/Create.htm" target="_blank" rel="noopener">[Create STR]</a></li>
-        <li>Consider smaller, targeted indexes (by custodian, date range, or file type) rather than one large index. Smaller indexes validate faster and behave more predictably. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/dtSearch.htm" target="_blank" rel="noopener">[dtSearch overview]</a></li>
-        <li>Missing highlights in a hit document do not mean the search failed. Highlighting is a display artifact and can lag or be omitted for complex proximity results. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_dtSearch.htm" target="_blank" rel="noopener">[Running a dtSearch]</a></li>
-        <li>Ignore isolated highlights inside proximity-hit documents — the proximity operator groups matches internally, but the highlighter shows every individual token. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options]</a></li>
+      <h3 style="margin:18px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Rule citations &mdash; every rule the validator checks</h3>
+      <div id="ruleCitations"></div>
+
+      <h3 style="margin:18px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Advisory rules the validator cannot check</h3>
+      <p style="margin:0 0 8px;color:var(--text-muted);font-size:12px">These can&rsquo;t be verified from term text alone. Use them as a checklist while drafting.</p>
+
+      <h4 style="margin:10px 0 4px;font-size:12px">Query design</h4>
+      <ul style="margin:0;padding-left:18px;line-height:1.6">
+        <li>Use several specific STRs instead of one broad query with many OR&rsquo;d concepts. Broad queries are hard to review, hard to validate against a Dictionary, and often over-inclusive. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Search_term_reports/Create.htm#Considerations" target="_blank" rel="noopener">[Create STR: Considerations]</a> <span class="basis stated">Stated in Relativity docs</span></li>
+        <li>Minimize the number of saved-search field conditions layered on top of the STR. Every condition adds a place where the STR&rsquo;s intent can be quietly narrowed. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Search_term_reports/Create.htm#Considerations" target="_blank" rel="noopener">[Create STR: Considerations]</a> <span class="basis derived">Validator guidance</span> <span style="color:var(--text-muted)">The docs cover defining the Searchable Set; this advice itself is not in them.</span></li>
+        <li>Consider smaller, targeted indexes (by custodian, date range, or file type) rather than one large index. Smaller indexes validate faster and behave more predictably. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/dtSearch_index.htm#CreatingadtSearchindex" target="_blank" rel="noopener">[dtSearch index: Creating a dtSearch index]</a> <span class="basis derived">Validator guidance</span> <span style="color:var(--text-muted)">The docs describe automatic sub-indexes; this advice itself is not in them.</span></li>
+        <li>Missing highlights in a hit document do not mean the search failed. Highlighting is a display artifact and can lag or be omitted for complex proximity results. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Persistent_highlight_sets/Creating_efficient_searches_for_persistent_highlighting.htm#Usingtermssearch" target="_blank" rel="noopener">[Persistent highlighting: Using terms search]</a> <span class="basis stated">Stated in Relativity docs</span> <span style="color:var(--text-muted)">Docs: terms using proximity, fuzziness, or stemming receive no highlight in a Terms Search.</span></li>
+        <li>Ignore isolated highlights inside proximity-hit documents — the proximity operator groups matches internally, but the highlighter shows every individual token. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Persistent_highlight_sets/Creating_efficient_searches_for_persistent_highlighting.htm#Usinghighlightfields" target="_blank" rel="noopener">[Persistent highlighting: Using highlight fields]</a> <span class="basis derived">Validator guidance</span></li>
       </ul>
 
-      <h3 style="margin:14px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Validation workflow</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.55">
-        <li>Use the Dictionary to validate a term against actual indexed tokens. Dictionary is capped at ~2,000 unique expansions per query — broad wildcards and stemming can silently exceed this. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">[Dictionary search]</a></li>
-        <li>Prefer Dictionary validation over broad wildcards. If a wildcard expands to more than the Dictionary can show, you don&rsquo;t truly know what it will match. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm" target="_blank" rel="noopener">[Dictionary search]</a></li>
-        <li>Validate wildcard, stemming, fuzzy, and phonic expansions in the Dictionary before running the STR against production data. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options]</a></li>
-        <li>Enable auto-recognition for <code>date()</code>, <code>mail()</code>, and <code>creditcard()</code> pattern types before you rely on them, but only when necessary — auto-recognition slows indexing and increases index size. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options]</a></li>
-        <li>Record: which index/searchable set was used, the alphabet file version, the noise word list, the STR terms as run, and the run timestamp — for defensibility. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Search_term_reports/Create.htm" target="_blank" rel="noopener">[Create STR]</a></li>
+      <h4 style="margin:12px 0 4px;font-size:12px">Validation workflow</h4>
+      <ul style="margin:0;padding-left:18px;line-height:1.6">
+        <li>Use the Dictionary to validate a term against actual indexed tokens. A dictionary search returns only the first 2,000 items — broad wildcards and stemming can silently exceed this. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm#Runningadictionarysearch" target="_blank" rel="noopener">[Running a dictionary search]</a> <span class="basis stated">Stated in Relativity docs</span></li>
+        <li>Prefer Dictionary validation over broad wildcards. If a wildcard expands to more than the Dictionary can show, you don&rsquo;t truly know what it will match. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm#Runningadictionarysearch" target="_blank" rel="noopener">[Running a dictionary search]</a> <span class="basis derived">Validator guidance</span></li>
+        <li>Validate wildcard, stemming, fuzzy, and phonic expansions in the Dictionary before running the STR against production data. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Running_a_Dictionary_search.htm#Runningadictionarysearchinthesearchpanel" target="_blank" rel="noopener">[Dictionary search in the search panel]</a> <span class="basis derived">Validator guidance</span></li>
+        <li>Enable auto-recognition for <code>date()</code>, <code>mail()</code>, and <code>creditcard()</code> pattern types before you rely on them, but only when necessary — auto-recognition slows indexing and searching. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm#Autorecognition" target="_blank" rel="noopener">[Syntax options: Auto-recognition]</a> <span class="basis stated">Stated in Relativity docs</span></li>
+        <li>Record: which index/searchable set was used, the alphabet file version, the noise word list, the STR terms as run, and the run timestamp — for defensibility. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Search_term_reports/Create.htm#Createsearchtermreport" target="_blank" rel="noopener">[Create search term report]</a> <span class="basis derived">Validator guidance</span> <span style="color:var(--text-muted)">Good practice; not a documented Relativity rule.</span></li>
       </ul>
 
-      <h3 style="margin:14px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">Index-dependent behavior</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.55">
-        <li>The Fuzziness Level control is not supported in STR searches. Use <code>word%</code> notation instead if you need approximate matching. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm" target="_blank" rel="noopener">[Syntax options: fuzzy]</a></li>
-        <li>Accent sensitivity depends on how the index was built. This validator cannot verify accent handling from term text alone. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">[Alphabet file]</a></li>
-        <li>Underscore does <strong>not</strong> create a word break by default. <code>foo_bar</code> is indexed as one token, not two. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm" target="_blank" rel="noopener">[Alphabet file]</a></li>
-        <li>Reserved symbols &mdash; <code>? * % ~ # = : &amp; ( )</code> &mdash; are stripped by default. To search them as literals, add them to the alphabet file and fully rebuild the index. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/dtSearch/Searching_for_symbols.htm" target="_blank" rel="noopener">[Searching for symbols]</a></li>
-        <li>Searches are case-insensitive. dtSearch normalizes indexed text to lowercase; uppercase in the query has no effect except inside <code>##"..."</code> regex, where uppercase will fail to match. <a href="https://help.relativity.com/RelativityOne/Content/Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm" target="_blank" rel="noopener">[Regex caveats]</a></li>
+      <h4 style="margin:12px 0 4px;font-size:12px">Index-dependent behavior</h4>
+      <ul style="margin:0;padding-left:18px;line-height:1.6">
+        <li>The Fuzziness Level control is not supported in STR searches. Use the Dictionary, or the <code>%</code> fuzzy character on individual terms, if you need approximate matching. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Search_term_reports/Create.htm#Considerations" target="_blank" rel="noopener">[Create STR: Considerations]</a> <span class="basis stated">Stated in Relativity docs</span></li>
+        <li>Accent sensitivity depends on how the index was built (Relativity builds accent-insensitive indexes by default). This validator cannot verify accent handling from term text alone. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/dtSearch_index.htm#Accentinsensitiveindexes" target="_blank" rel="noopener">[dtSearch index: Accent-insensitive indexes]</a> <span class="basis stated">Stated in Relativity docs</span></li>
+        <li>Underscore does <strong>not</strong> create a word break by default. <code>foo_bar</code> is indexed as one token, not two. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Using_dtSearch_syntax_options.htm#Otherconsiderations" target="_blank" rel="noopener">[Syntax options: Other considerations]</a> <span class="basis stated">Stated in Relativity docs</span></li>
+        <li>Reserved symbols &mdash; <code>" ( ) * ? % ~ # &amp; =</code> &mdash; are not searchable by default. To search them as literals, add them to the alphabet file and fully rebuild the index. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Alphabet_list.htm#Reservedcharactersinthealphabetfile" target="_blank" rel="noopener">[Alphabet list: Reserved characters]</a> <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/Searching_for_symbols.htm#Searchingforsymbols" target="_blank" rel="noopener">[Searching for symbols]</a> <span class="basis differs">Docs word this differently - read source</span> <span style="color:var(--text-muted)">Docs add that reserved characters keep acting as operators even after they are indexed, so several need a regular expression to search literally.</span></li>
+        <li>Searches are case-insensitive. dtSearch normalizes indexed text to lowercase; uppercase in the query has no effect except inside <code>"##..."</code> regex, where capital letters cannot be used. <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/dtSearch/dtSearch_index.htm#Caseinsensitiveindexes" target="_blank" rel="noopener">[dtSearch index: Case-insensitive indexes]</a> <a href="https://help.relativity.com/RelativityaiR/Content/Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm#RegularexpressioncaveatsindtSearch" target="_blank" rel="noopener">[Regex caveats]</a> <span class="basis stated">Stated in Relativity docs</span></li>
       </ul>
 
-      <p style="margin:14px 0 0;color:var(--text-muted);font-size:12px">Documentation URLs point to the current RelativityOne pages. If you’re on Server, replace <code>/RelativityOne/</code> with <code>/Server2026/</code> (or your version) in the URL.</p>
+      <p style="margin:14px 0 0;color:var(--text-muted);font-size:12px">Links were checked against help.relativity.com on 2026-11-19 and point to the current RelativityOne documentation, which the site now serves under <code>/RelativityaiR/</code> (older <code>/RelativityOne/</code> links redirect there). If you&rsquo;re on Server, replace <code>/RelativityaiR/</code> with <code>/Server2026/</code> (or your version) in the URL.</p>
     </div>
     <footer>
       <div class="spacer" style="flex:1"></div>
@@ -770,7 +942,7 @@
       <div class="field">
         <label for="sNoise">dtSearch noise words (comma or whitespace separated)</label>
         <textarea id="sNoise"></textarea>
-        <div class="hint">Default is the dtSearch standard English noise word list. Noise words inside quoted phrases produce warnings because they are not indexed.</div>
+        <div class="hint">Default is the stop (noise) word list published in the Relativity documentation. Any of these words used as a search word is flagged, because it is not in the index until an administrator removes it from the index&rsquo;s Noise Words list and runs a full build. If your index uses a custom list, paste that list here.</div>
       </div>
       <div class="field">
         <label class="toggle">
@@ -794,31 +966,30 @@
 const Validator = (function () {
   'use strict';
 
-  // Standard dtSearch English noise words (built-in default list).
-  // Source: dtSearch Corp — noise.dat default English list.
+  // Default dtSearch stop (noise) word list, exactly as published in the
+  // Relativity documentation: Using dtSearch syntax options > Default noise
+  // word list. (v14: synced to the docs; the earlier list differed by a few
+  // words.) LEGACY_DEFAULT_NOISE is the pre-v14 default, kept only so a saved
+  // copy of the old default can be upgraded automatically.
   const DEFAULT_NOISE = [
-    "a","about","after","all","also","an","and","another","any","are","as","at",
-    "be","because","been","before","being","between","both","but","by",
-    "came","can","come","could",
-    "did","do","does",
-    "each","else",
-    "for","from",
-    "get","got",
-    "had","has","have","he","her","here","him","himself","his","how",
-    "i","if","in","into","is","it","its",
-    "just",
-    "like",
-    "make","many","me","might","more","most","much","must","my",
-    "never","no","now",
-    "of","on","only","or","other","our","out","over",
-    "re",
-    "said","same","see","should","since","she","so","some","still","such",
-    "take","than","that","the","their","them","then","there","these","they","this","those","through","to","too",
-    "under","up","use",
-    "very",
-    "want","was","way","we","well","were","what","when","where","which","while","who","will","with","would",
-    "you","your"
+    "a","about","after","all","also","an","and","another","any","are","as",
+    "at","be","because","been","before","being","between","both","but","by",
+    "came","can","come","could","did","do","each","even","for","from",
+    "further","furthermore","get","got","had","has","have","he","her","here",
+    "hi","him","himself","his","how","however","i","if","in","indeed","into",
+    "is","it","its","just","like","made","many","me","might","more",
+    "moreover","most","much","must","my","never","not","now","of","on","only",
+    "or","other","our","out","over","said","same","see","she","should",
+    "since","some","still","such","take","than","that","the","their","them",
+    "then","there","therefore","these","they","this","those","through","thus",
+    "to","too","under","up","very","was","way","we","well","were","what",
+    "when","where","which","while","who","will","with","would","you","your"
   ];
+  const LEGACY_DEFAULT_NOISE = [
+    "a","about","after","all","also","an","and","another","any","are","as","at","be","because","been","before","being","between","both","but","by","came","can","come","could","did","do","does","each","else","for","from","get","got","had","has","have","he","her","here","him","himself","his","how","i","if","in","into","is","it","its","just","like","make","many","me","might","more","most","much","must","my","never","no","now","of","on","only","or","other","our","out","over","re","said","same","see","should","since","she","so","some","still","such","take","than","that","the","their","them","then","there","these","they","this","those","through","to","too","under","up","use","very","want","was","way","we","well","were","what","when","where","which","while","who","will","with","would","you","your"
+  ];
+  // Shared note appended to every stop-word rule.
+  const STOP_WORD_INDEX_NOTE = 'To make a stop word searchable, a system administrator must remove it from the dtSearch index\'s Noise Words list and run a full build of the index; until then the word is not in the index.';
 
   // Reserved dtSearch operator words — when a bare (unquoted) token equals one
   // of these, it is not searched literally.
@@ -843,6 +1014,138 @@ const Validator = (function () {
     noiseWords: DEFAULT_NOISE.slice(),
     strictReserved: true,
   };
+
+
+  /* ---------- rule citations (v14) ----------
+     Every rule code maps to the page + section of the official Relativity
+     documentation it rests on. `basis` says how closely:
+       stated  - the cited section states the rule itself
+       derived - the cited section documents the underlying syntax/behavior;
+                 the specific check is this validator's inference from it
+       differs - the cited section covers the topic but its wording does not
+                 match this rule's text; read the source before relying on it
+     To retarget the docs (e.g. a Server release), change DOC_BASE only. */
+  const DOC_BASE = 'https://help.relativity.com/RelativityaiR/Content/';
+  const DOC_PAGES = {
+    SYN:   ['Using dtSearch syntax options', 'Relativity/dtSearch/Using_dtSearch_syntax_options.htm'],
+    RUN:   ['Running a dtSearch', 'Relativity/dtSearch/Running_a_dtSearch.htm'],
+    ALPHA: ['Alphabet list', 'Relativity/dtSearch/Alphabet_list.htm'],
+    NOISE: ['Making the dtSearch noise word list searchable', 'Relativity/dtSearch/Making_the_stop_word_and_alphabet_list_searchable.htm'],
+    SYM:   ['Searching for symbols and emojis', 'Relativity/dtSearch/Searching_for_symbols.htm'],
+    DICT:  ['Running a dictionary search', 'Relativity/dtSearch/Running_a_Dictionary_search.htm'],
+    IDX:   ['dtSearch index', 'Relativity/dtSearch/dtSearch_index.htm'],
+    REGEX: ['Using regular expressions with dtSearch', 'Relativity/Regular_expressions/Using_regular_expressions_with_dtSearch.htm'],
+    STRC:  ['Create and edit search term reports', 'Relativity/Search_term_reports/Create.htm'],
+    WF:    ['Searching workflows', 'Relativity/Searching/Searching_workflows.htm'],
+    CJK:   ['Setting up CJK document workspaces in Relativity', 'Relativity/dtSearch/Setting_up_CJK_document_workspaces.htm'],
+    PHF:   ['Using the highlight fields source', 'Relativity/Persistent_highlight_sets/Using_the_highlight_fields_source.htm'],
+    PH:    ['Creating efficient searches for persistent highlighting', 'Relativity/Persistent_highlight_sets/Creating_efficient_searches_for_persistent_highlighting.htm'],
+  };
+  const BASIS_LABEL = {
+    stated: 'Stated in Relativity docs',
+    derived: 'Derived from documented behavior',
+    differs: 'Docs word this differently - read source',
+  };
+  const WL_NOTE = 'Relativity documents the dtSearch operator only; the Westlaw meaning is not from a Relativity source.';
+  // code: [page, anchor, section title, basis, note?]
+  const RULE_SOURCES = {
+    ADJACENT_BOOLEANS:        ['SYN', 'Booleanoperators', 'Boolean operators', 'derived'],
+    AMPERSAND_AMBIGUOUS:      ['ALPHA', 'Spaces', 'Spaces', 'stated', 'The ampersand is in the default [Spaces] list, so it causes a word break.'],
+    AMP_TO_AND:               ['SYN', 'Otherconsiderations', 'Other considerations', 'stated', 'Docs: Relativity does not use the ampersand (&).'],
+    AND_ANY_INFO:             ['SYN', 'AndAnyoperator', 'AndAny operator', 'stated'],
+    AND_NOT_INFO:             ['SYN', 'NOToperator', 'NOT operator', 'stated'],
+    AND_SLASH_OR:             ['SYN', 'Connectorwords', 'Connector words', 'derived', '"and" and "or" are connector words; the slash is a default space character (Alphabet list > Spaces).'],
+    ARTIFACT_NORMALIZED:      ['REGEX', 'Regularexpressionsearchstrings', 'Regular expression search strings', 'derived', 'Docs state the straight-vs-curly quote rule for regex strings; this validator applies it to every term.'],
+    BACKSLASH_PROXIMITY:      ['SYN', 'WNoperator', 'W/N operator', 'derived'],
+    BARE_NOISE_TERM:          ['NOISE', 'dtSearchesandnoisewords', 'dtSearches and noise words', 'stated', 'Docs: remove the word from the Noise Words list, save, and perform a full build of the index.'],
+    BOOLEAN_IN_PHRASE:        ['SYN', 'Exactphrasedoublequotes', 'Exact phrase - double quotes', 'stated'],
+    BRACKET_CLASS_OUTSIDE_REGEX: ['REGEX', 'Regularexpressionsearchstrings', 'Regular expression search strings', 'differs', 'Docs give the form "##pattern" (## at the start, inside straight quotes) with no closing ##.'],
+    CJK_TOKEN_NOTE:           ['CJK', 'Searchingconsiderations', 'Searching considerations', 'stated', 'Stemming being English-only is stated under Using dtSearch syntax options > Stemming.'],
+    DATE_NUMERIC_AMBIGUOUS:   ['SYN', 'Daterecognition', 'Date recognition', 'stated'],
+    DATE_OPEN_RANGE:          ['SYN', 'Daterecognition', 'Date recognition', 'stated'],
+    DATE_YEAR_OUT_OF_RANGE:   ['SYN', 'Daterecognition', 'Date recognition', 'stated'],
+    DUPLICATE:                ['STRC', 'Addingtermsandhighlightcolors', 'Adding terms and highlight colors', 'derived', 'Docs: duplicate terms are ignored when added to a search terms report.'],
+    DUPLICATE_OPERATOR:       ['SYN', 'Booleanoperators', 'Boolean operators', 'derived'],
+    EMAIL_IN_TERM:            ['ALPHA', 'Spaces', 'Spaces', 'stated', '@ and . are default space characters. See also Using dtSearch syntax options > Email address recognition for mail().'],
+    EMPTY_PARENS:             ['SYN', 'Operatorprecedencewithparentheses', 'Operator precedence - with parentheses', 'derived'],
+    EMPTY_PHRASE:             ['SYN', 'Wordsandphrases', 'Words and phrases', 'derived'],
+    EQUALS_OUTSIDE_NUMERIC:   ['SYN', 'Numericalpatterns', 'Numerical patterns', 'stated'],
+    FIELD_COLON_SYNTAX:       ['SYN', 'Otherconsiderations', 'Other considerations', 'differs', 'Docs say Relativity does not use the colon (:); they do not describe a Field:(expression) syntax.'],
+    FUZZY_SEARCH:             ['SYN', 'Fuzzysearching', 'Fuzzy searching', 'stated', 'Docs: the number of % sets how many characters may differ; the position of % sets how many leading characters must match.'],
+    HYPHEN_WORD_BREAK:        ['ALPHA', 'Hyphens', 'Hyphens', 'stated'],
+    IMPLICIT_PHRASE:          ['SYN', 'Exactphrasenodoublequotes', 'Exact phrase - no double quotes', 'stated'],
+    INVISIBLE_UNICODE:        ['STRC', 'Fields', 'Fields - Remove Hidden Characters', 'derived', 'Docs: hidden control characters copied from Word or Excel are known to cause search issues.'],
+    LEADING_NOT:              ['SYN', 'NOToperator', 'NOT operator', 'stated'],
+    LEADING_OPERATOR:         ['SYN', 'Booleanoperators', 'Boolean operators', 'derived'],
+    LEADING_SINGLECHAR_WILDCARD: ['SYN', 'Wildcards', 'Wildcards', 'stated', 'The performance caution is stated for leading wildcards under Create and edit search term reports > Considerations.'],
+    LEADING_WILDCARD:         ['STRC', 'Considerations', 'Considerations', 'stated'],
+    LITERAL_CONNECTOR_UNQUOTED: ['SYN', 'Connectorwords', 'Connector words', 'stated'],
+    LOGICAL_SUBSET:           ['SYN', 'Wildcards', 'Wildcards', 'derived'],
+    LONG_PHRASE:              ['SYN', 'Wordsandphrases', 'Words and phrases', 'derived'],
+    MANY_SINGLECHAR_WILDCARDS: ['SYN', 'Wildcards', 'Wildcards', 'stated'],
+    MISSING_PROXIMITY_NUMBER: ['SYN', 'WNoperator', 'W/N operator', 'stated'],
+    MIXED_WILDCARDS:          ['SYN', 'Wildcards', 'Wildcards', 'derived', 'Docs list ! among the default space characters (Alphabet list > Spaces), not as an operator.'],
+    NESTED_PROXIMITY:         ['STRC', 'Considerations', 'Considerations', 'stated'],
+    NOISE_IN_PHRASE:          ['SYN', 'Defaultnoisewordlist', 'Default noise word list', 'stated', 'Docs: to search a phrase containing a noise word, remove the word from the list and rebuild the index. Skipping inside phrases is under Words and phrases.'],
+    NOT_IN_PROXIMITY:         ['SYN', 'NOToperator', 'NOT operator', 'stated', 'Docs: NOT in the middle of an expression must follow AND or OR. NOT W/N (NOT before the operator) is a separate, supported operator.'],
+    NO_DOUBLE_SPACES:         ['WF', 'Proximitysearch', 'Best practices for advanced operators - Proximity search', 'differs', 'Docs say Relativity treats line breaks and consecutive spaces as single spaces; they do not prohibit them.'],
+    ONLY_WILDCARDS:           ['SYN', 'Otherconsiderations', 'Other considerations', 'derived', 'Docs: searching for special characters on their own produces incorrect results.'],
+    OPERATOR_TOUCHING_PUNCT:  ['ALPHA', 'Spaces', 'Spaces', 'differs', 'Docs say punctuation counts as whitespace under default settings; they do not say it turns an operator into a literal.'],
+    OTHER_UNICODE_SPACE:      ['ALPHA', 'Spaces', 'Spaces', 'derived', 'Docs list the default space characters; characters outside ASCII follow the Unicode tables.'],
+    PERCENT_AMBIGUOUS:        ['SYN', 'Fuzzysearching', 'Fuzzy searching', 'differs', 'Docs show % inside a word (app%ly, a%%pply), not only at the front. The Westlaw meaning is not from a Relativity source.'],
+    PHONIC_INVALID:           ['SYN', 'Phonicsearching', 'Phonic searching', 'stated'],
+    PROX_BETWEEN_ANDS:        ['SYN', 'Complexexpressions', 'Complex expressions', 'stated'],
+    PROX_NEEDS_PARENS:        ['SYN', 'Complexexpressions', 'Complex expressions', 'stated'],
+    PROX_OVER_OR:             ['SYN', 'Complexexpressions', 'Complex expressions', 'derived', 'Docs advise parentheses and give OR-with-proximity examples; they do not state the exact default grouping.'],
+    PROX_VERY_LARGE:          ['SYN', 'WNoperator', 'W/N operator', 'derived'],
+    PROX_ZERO:                ['SYN', 'WNoperator', 'W/N operator', 'stated', 'Docs: N is the number of intervening words.'],
+    QUOTED_OPERATOR_HIGHLIGHT: ['PHF', 'Bestpractices', 'Best practices', 'stated'],
+    REGEX_BACKSLASH_S:        ['REGEX', 'RegularexpressioncaveatsindtSearch', 'Regular expression caveats in dtSearch', 'stated'],
+    REGEX_MISSING_HASHHASH:   ['REGEX', 'Regularexpressionsearchstrings', 'Regular expression search strings', 'stated'],
+    REGEX_UPPERCASE:          ['REGEX', 'RegularexpressioncaveatsindtSearch', 'Regular expression caveats in dtSearch', 'stated'],
+    RESERVED_LITERAL_QUOTED:  ['SYN', 'Connectorwords', 'Connector words', 'stated'],
+    SHORT_NUMERIC:            ['STRC', 'Considerations', 'Considerations', 'derived', 'Docs recommend specific search terms that return small numbers of documents.'],
+    STACKED_PROXIMITY:        ['SYN', 'WNoperator', 'W/N operator', 'derived'],
+    STOP_WORD_IN_TERM:        ['SYN', 'Defaultnoisewordlist', 'Default noise word list', 'stated', 'Docs: to search a phrase containing a noise word, remove the word from the list and rebuild the index.'],
+    STEM_IRREGULAR:           ['SYN', 'Stemming', 'Stemming', 'stated'],
+    STEM_NON_ENGLISH:         ['SYN', 'Stemming', 'Stemming', 'stated'],
+    STEM_ON_NUMERIC:          ['SYN', 'Stemming', 'Stemming', 'derived'],
+    STEM_ON_PHRASE:           ['SYN', 'Stemming', 'Stemming', 'derived'],
+    TERM_TOO_LONG:            ['STRC', 'Addingtermsandhighlightcolors', 'Adding terms and highlight colors', 'stated', 'Docs: a single term has a character limit of 450.'],
+    TRAILING_OPERATOR:        ['SYN', 'Booleanoperators', 'Boolean operators', 'derived'],
+    TYPOED_OPERATOR:          ['SYN', 'Connectorwords', 'Connector words', 'derived'],
+    UNBALANCED_PARENS:        ['SYN', 'Operatorprecedencewithparentheses', 'Operator precedence - with parentheses', 'derived'],
+    UNBALANCED_QUOTES:        ['SYN', 'Exactphrasedoublequotes', 'Exact phrase - double quotes', 'derived'],
+    UNSUPPORTED_CONTAINS:     ['SYN', 'Connectorwords', 'Connector words', 'stated'],
+    URL_IN_TERM:              ['ALPHA', 'Spaces', 'Spaces', 'stated', '/ : ? and . are default space characters.'],
+    WILDCARD_PAST_32:         ['RUN', 'Searchingforwordslongerthan32characters', 'Searching for words longer than 32 characters', 'stated'],
+    WORD_OVER_32_CHARS:       ['RUN', 'Searchingforwordslongerthan32characters', 'Searching for words longer than 32 characters', 'stated'],
+    WL_BANG_TO_STAR:          ['SYN', 'Wildcards', 'Wildcards', 'derived', WL_NOTE],
+    WL_FIELD_UNSUPPORTED:     ['SYN', 'UsingdtSearchsyntaxoptions', 'Supported syntax table', 'derived', WL_NOTE],
+    WL_PLUS_N:                ['SYN', 'ProximitywithtermsorderPREoperator', 'Proximity with terms order (PRE operator)', 'derived', WL_NOTE],
+    WL_SAME_PARAGRAPH:        ['SYN', 'WNoperator', 'W/N operator', 'derived', WL_NOTE],
+    WL_SAME_SENTENCE:         ['SYN', 'WNoperator', 'W/N operator', 'derived', WL_NOTE],
+    WL_SLASH_N:               ['SYN', 'WNoperator', 'W/N operator', 'derived', WL_NOTE],
+    XFIRSTLAST_BROAD:         ['SYN', 'Builtinsearchwords', 'Built-in search words', 'stated'],
+  };
+  function citationFor(code) {
+    const e = RULE_SOURCES[code];
+    if (!e) return null;
+    const page = DOC_PAGES[e[0]];
+    return {
+      page: page[0],
+      section: e[2],
+      label: page[0] + ' \u203A ' + e[2],
+      url: DOC_BASE + page[1] + (e[1] ? '#' + e[1] : ''),
+      basis: e[3],
+      basisLabel: BASIS_LABEL[e[3]],
+      note: e[4] || '',
+    };
+  }
+  function attachCitations(issues) {
+    for (const iss of issues) if (!iss.cite) iss.cite = citationFor(iss.code);
+    return issues;
+  }
 
   /* ---------- helpers ---------- */
 
@@ -1272,8 +1575,8 @@ const Validator = (function () {
         issues.push({
           severity: 'warn',
           code: 'NOISE_IN_PHRASE',
-          message: `Quoted phrase contains dtSearch noise word(s): ${Array.from(new Set(hits)).join(', ')}.`,
-          rule: 'Noise words are not stored in the dtSearch index. Phrases containing only noise words return nothing; mixed phrases may over-return because the noise words are ignored during phrase matching.',
+          message: `Quoted phrase contains stop word(s) that are not in a default dtSearch index: ${Array.from(new Set(hits)).join(', ')}. The index must be updated before these words can be matched.`,
+          rule: 'Stop (noise) words are not stored in the dtSearch index. dtSearch skips them inside a phrase but keeps their position, so "statue of liberty" matches statue, any one word, then liberty. A phrase made only of stop words returns nothing. ' + STOP_WORD_INDEX_NOTE,
         });
         break;
       }
@@ -1474,24 +1777,13 @@ const Validator = (function () {
     return { text, issues };
   }
 
-  function checkWildcardInPhrase(text) {
-    // dtSearch does NOT expand * or ? inside a quoted phrase — it treats them
-    // as literal characters.
-    const issues = [];
-    const phrases = findQuotedPhrases(text);
-    for (const p of phrases) {
-      if (/[*?]/.test(p.text)) {
-        issues.push({
-          severity: 'warn',
-          code: 'WILDCARD_IN_PHRASE',
-          message: 'Wildcard (* or ?) appears inside a quoted phrase.',
-          rule: 'dtSearch treats * and ? as literal characters inside quotes. To wildcard a token, break it out of the phrase (e.g., "non-disclosure agreement" → non-disclosure w/2 agreement*).',
-        });
-        break;
-      }
-    }
-    return { text, issues };
-  }
+  // v14: the WILDCARD_IN_PHRASE rule was removed. It claimed * and ? become
+  // literal characters inside quotes. Per the Relativity docs (Using the
+  // highlight fields source > Best practices) that is how the Viewer's
+  // persistent highlighting reads a quoted operator, NOT how dtSearch does:
+  // dtSearch treats a quoted wildcard or stemming operator as the operator,
+  // so "run~" returns run, runner, running. Quoted wildcards are valid in a
+  // search terms report and are no longer flagged.
 
   // ------ Rules driven by Relativity/dtSearch official documentation ------
 
@@ -1934,6 +2226,30 @@ const Validator = (function () {
     return { text, issues };
   }
 
+  function checkQuotedOperatorHighlight(text) {
+    // v14: low-severity note. A wildcard (* or ?) or stemming (~) operator
+    // inside quotes still works as an operator in dtSearch, so the search
+    // terms report finds the right documents. The Viewer, however, reads a
+    // quoted operator as literal text, so those hits may not be highlighted.
+    // Regex strings ("##...") are skipped: * and ? mean something else there.
+    const issues = [];
+    for (const p of findQuotedPhrases(text)) {
+      if (/^\s*##/.test(p.text)) continue;
+      const ops = [];
+      if (/[*?]/.test(p.text)) ops.push('wildcard');
+      if (/[A-Za-z0-9]~/.test(p.text)) ops.push('stemming');
+      if (!ops.length) continue;
+      issues.push({
+        severity: 'fix',
+        code: 'QUOTED_OPERATOR_HIGHLIGHT',
+        message: `Note: a ${ops.join(' and ')} operator is inside quotes ("${p.text}"). The search still expands it and finds the documents, but the Viewer may not highlight those hits. Term left unchanged.`,
+        rule: 'dtSearch treats a wildcard or stemming operator in quotes as the operator, so "run~" returns run, runner, running. The Viewer treats any operator in quotes as literal text, so persistent highlighting looks for the exact characters and may show no highlight. If highlighting matters, move the operator outside the quotes where the search allows it.',
+      });
+      break;
+    }
+    return { text, issues };
+  }
+
   function checkCjkNote(text) {
     // CJK characters are indexed per-character with no Western stemming.
     const issues = [];
@@ -2144,8 +2460,42 @@ const Validator = (function () {
       issues.push({
         severity: 'err',
         code: 'BARE_NOISE_TERM',
-        message: `"${text}" is a dtSearch noise word and is not stored in the index -- searching for it as a bare term returns nothing.`,
-        rule: 'Noise words (the, and, of, for, ...) are excluded from the dtSearch index at build time. To search for a noise word literally, wrap it in quotes AND confirm the workspace index was built with noise-word searching enabled; otherwise pick a more distinctive term.',
+        message: `"${text}" is a stop (noise) word and is not in a default dtSearch index, so searching for it returns nothing. The index must be updated before it can be matched.`,
+        rule: 'Stop (noise) words (the, and, of, for, ...) are excluded from the dtSearch index when it is built. Quoting the word does not help. ' + STOP_WORD_INDEX_NOTE + ' Otherwise pick a more distinctive term.',
+      });
+    }
+    return { text, issues };
+  }
+
+
+  function checkStopWordInTerm(text, settings) {
+    // v14: any stop (noise) word used as a search word OUTSIDE quotes, e.g.
+    // `statue of liberty` or `bank of america w/5 fraud`. Quoted phrases are
+    // covered by NOISE_IN_PHRASE and a lone stop word by BARE_NOISE_TERM.
+    // AND / OR / NOT are skipped here because outside quotes they act as
+    // connectors, not search words.
+    const issues = [];
+    const noise = new Set((settings.noiseWords || []).map(w => String(w).toLowerCase()));
+    if (!noise.size) return { text, issues };
+    if (/^[A-Za-z][A-Za-z0-9_-]*$/.test(text.trim())) return { text, issues }; // BARE_NOISE_TERM
+    const stripped = stripQuotedRegions(text)
+      .replace(/"[^"]*"/g, ' ')
+      .replace(/\b(?:date|mail|creditcard)\s*\([^()]*\)/gi, ' ')
+      .replace(/\b(?:not\s+)?(?:w|pre)\/\d+\b/gi, ' ');
+    const CONNECTORS = new Set(['and', 'or', 'not', 'andany']);
+    const hits = [];
+    for (const raw of stripped.split(/[\s()]+/)) {
+      if (!raw || /[*?%~#=\0]/.test(raw)) continue;      // wildcard / fuzzy / stem / phonic token
+      const tok = raw.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '').toLowerCase();
+      if (!tok || CONNECTORS.has(tok)) continue;
+      if (noise.has(tok) && !hits.includes(tok)) hits.push(tok);
+    }
+    if (hits.length) {
+      issues.push({
+        severity: 'warn',
+        code: 'STOP_WORD_IN_TERM',
+        message: `Term contains stop word(s) that are not in a default dtSearch index: ${hits.join(', ')}. The index must be updated before these words can be matched.`,
+        rule: 'Stop (noise) words are left out of the dtSearch index, so the search cannot match the word itself. Inside a run of words dtSearch skips the stop word but keeps its position, so any single word in that position matches. ' + STOP_WORD_INDEX_NOTE,
       });
     }
     return { text, issues };
@@ -2387,7 +2737,6 @@ const Validator = (function () {
     applyStep(checkReservedLiterals(text, currentSettings));
     applyStep(checkNoiseInPhrase(text, currentSettings));
     applyStep(checkPhraseWithBoolean(text));
-    applyStep(checkWildcardInPhrase(text));
     applyStep(checkEmptyPhrase(text));
     applyStep(checkProximityOverOr(text));
     applyStep(checkAdjacentOperators(text));
@@ -2415,6 +2764,7 @@ const Validator = (function () {
     applyStep(checkEqualsOutsideNumeric(text));
     applyStep(checkHyphenNote(text));
     applyStep(checkCjkNote(text));
+    applyStep(checkQuotedOperatorHighlight(text));
     // v7: additional real-world drafter mistakes
     applyStep(checkMissingProximityNumber(text));
     applyStep(checkEmptyParens(text));
@@ -2422,6 +2772,7 @@ const Validator = (function () {
     applyStep(checkLongPhrase(text));
     applyStep(checkOperatorTouchingPunct(text));
     applyStep(checkBareNoiseTerm(text, currentSettings));
+    applyStep(checkStopWordInTerm(text, currentSettings));
     // v10: additional real-world drafter mistakes
     applyStep(checkDuplicateOperator(text));
     applyStep(checkStemOnPhrase(text));
@@ -2434,6 +2785,7 @@ const Validator = (function () {
     applyStep(checkLength(text));
 
     const severity = ['none','fix','warn','err'][severityRank];
+    attachCitations(trace);
     return { original: originalRaw, corrected: text, issues: trace, severity };
   }
 
@@ -2523,6 +2875,12 @@ const Validator = (function () {
     // Coerce noise list
     if (Array.isArray(currentSettings.noiseWords)) {
       currentSettings.noiseWords = currentSettings.noiseWords.map(String);
+      // v14: a saved list identical to the pre-v14 default is replaced by
+      // the documented default. A list the user customized is left alone.
+      const saved = currentSettings.noiseWords.map(w => w.toLowerCase()).sort().join(',');
+      if (saved === LEGACY_DEFAULT_NOISE.slice().sort().join(',')) {
+        currentSettings.noiseWords = DEFAULT_NOISE.slice();
+      }
     }
   }
   function getSettings() { return Object.assign({}, currentSettings); }
@@ -2531,6 +2889,7 @@ const Validator = (function () {
     const lines = rawText.split(/\r\n|\n|\r/);
     const results = lines.map(l => validateLine(l));
     findDuplicatesAndSubsets(results);
+    results.forEach(r => attachCitations(r.issues || []));
     return results;
   }
 
@@ -2543,6 +2902,9 @@ const Validator = (function () {
     validateAll,
     applyDedupe,
     MAX_TERM_LENGTH,
+    RULE_SOURCES,
+    citationFor,
+    DOC_BASE,
   };
 })();
 
@@ -2557,7 +2919,7 @@ const Validator = (function () {
   //   1) change this constant
   //   2) change the <title> in <head>
   //   3) bump SETTINGS_KEY below if the settings shape changes (optional)
-  const APP_VERSION = 'v13';
+  const APP_VERSION = 'v22';
 
   const $ = sel => document.querySelector(sel);
   const inputArea = $('#inputArea');
@@ -2637,6 +2999,7 @@ const Validator = (function () {
     inputArea.style.display = edit ? 'block' : 'none';
     inputHighlight.style.display = edit ? 'none' : 'block';
     $('#inputMode').textContent = edit ? 'edit mode' : 'validated view — click Clear or edit to reset';
+    scheduleAlign();
   }
   inputArea.addEventListener('focus', () => { if (!editMode) setEditMode(true); });
 
@@ -2780,6 +3143,60 @@ const Validator = (function () {
     pane.addEventListener('mouseleave', () => highlightTerm(null));
   }
 
+  /* ---- v14: unmatched-character highlighting + editable output ---- */
+  // Index of every unmatched ( ) or " in `str`. Mirrors the engine's own
+  // balance check: parentheses inside a quoted phrase are ignored, and with
+  // an odd number of quotes the last one (the phrase that never closes) is
+  // the unmatched one. Curly quotes count as quotes.
+  const QUOTE_CHARS = '"“”„‟″‶';
+  function findUnbalanced(str, wantQuotes, wantParens) {
+    const out = [], stack = [];
+    let inQ = false, openQ = -1;
+    for (let i = 0; i < str.length; i++) {
+      const c = str[i];
+      if (QUOTE_CHARS.includes(c)) { if (!inQ) { inQ = true; openQ = i; } else inQ = false; continue; }
+      if (inQ) continue;
+      if (c === '(') stack.push(i);
+      else if (c === ')') { if (stack.length) stack.pop(); else if (wantParens) out.push(i); }
+    }
+    if (inQ && wantQuotes) out.push(openQ);
+    if (wantParens) out.push(...stack);
+    return out.sort((a, b) => a - b);
+  }
+  function unbalancedFor(str, issues) {
+    const q = (issues || []).some(x => x.code === 'UNBALANCED_QUOTES');
+    const p = (issues || []).some(x => x.code === 'UNBALANCED_PARENS');
+    return (q || p) ? findUnbalanced(str, q, p) : [];
+  }
+  // Fill `el` with `str`, wrapping each index in `marks` in a red <mark>.
+  function renderMarked(el, str, marks) {
+    el.textContent = '';
+    if (!marks || !marks.length) { el.textContent = str; return; }
+    let cur = 0;
+    for (const i of marks) {
+      if (i > cur) el.appendChild(document.createTextNode(str.slice(cur, i)));
+      const m = document.createElement('mark');
+      m.className = 'unbal';
+      const ch = str[i];
+      m.textContent = ch;
+      m.title = ch === '(' ? 'This ( is never closed. Add the missing ) or delete it.'
+        : ch === ')' ? 'This ) has no opening (. Add the missing ( or delete it.'
+        : 'This quote is never closed. Add the missing closing quote or delete it.';
+      el.appendChild(m);
+      cur = i + 1;
+    }
+    if (cur < str.length) el.appendChild(document.createTextNode(str.slice(cur)));
+  }
+  const needsReviewRow = r => r.severity === 'err' && !isAutoFixable(r);
+  // The text shown (and editable) on the right for a term, before any edit.
+  const baseOutputText = r => r.severity === 'blank' ? '' : (needsReviewRow(r) ? r.original : r.corrected);
+  // What Copy / Copy all / exports emit for a term.
+  function outputValue(r) {
+    if (typeof r.userEdit === 'string') return r.userEdit;
+    if (r.severity === 'blank') return '';
+    return needsReviewRow(r) ? '[NEEDS REVIEW: ' + r.original + ']' : r.corrected;
+  }
+
   function buildRow(r, i) {
     const row = document.createElement('div');
     row.className = 'line';
@@ -2808,7 +3225,7 @@ const Validator = (function () {
       content.classList.add('placeholder');
       content.textContent = '(blank)';
     } else {
-      content.textContent = r.original;
+      renderMarked(content, r.original, unbalancedFor(r.original, r.issues));
     }
     row.appendChild(content);
 
@@ -2842,8 +3259,10 @@ const Validator = (function () {
           message: iss.message,
           rule: iss.rule,
           severity: iss.severity,
+          cite: iss.cite || null,
         });
         chip.dataset.code = iss.code;
+        if (iss.cite) chip.setAttribute('aria-label', iss.code + ' — click to filter, Shift+Enter to open the source: ' + iss.cite.label);
         chips.appendChild(chip);
       });
       if (hidden.length) {
@@ -2861,6 +3280,7 @@ const Validator = (function () {
           message: hidden.map(h => h.code + ' (' + h.severity + '): ' + h.message).join('\n\n'),
           rule: '',
           severity: '',
+          cites: hidden.filter(h => h.cite).map(h => ({ code: h.code, label: h.cite.label, url: h.cite.url })),
         });
         // Marker so click handler treats it as a filter-toggle by first hidden code.
         more.dataset.moreCodes = hidden.map(h => h.code).join(',');
@@ -2873,11 +3293,26 @@ const Validator = (function () {
 
   function buildOutputRow(r, i) {
     const row = document.createElement('div');
+    paintOutputRow(row, r, i);
+    return row;
+  }
+  // (Re)draws one output row in place. Used for the first build and again
+  // after the user edits the term, so the virtual scroller's node pool keeps
+  // pointing at the same element.
+  function paintOutputRow(row, r, i) {
+    const wasFiltered = row.classList.contains('filtered-out');
     row.className = 'line';
+    row.textContent = '';
     identifyTerm(row, r);
-    if (r.severity === 'err') row.classList.add('err');
-    else if (r.severity === 'warn') row.classList.add('warn');
-    else if (r.severity === 'fix') row.classList.add('fix');
+    const edited = typeof r.userEdit === 'string';
+    const sev = edited ? r.editCheck.severity : r.severity;
+    const issues = edited ? r.editCheck.issues : r.issues;
+    if (sev === 'err') row.classList.add('err');
+    else if (sev === 'warn') row.classList.add('warn');
+    else if (sev === 'fix') row.classList.add('fix');
+    else if (edited) row.classList.add('edited-ok');
+    if (wasFiltered) row.classList.add('filtered-out');
+    // Filtering stays keyed to the ORIGINAL term's rules so both panes agree.
     if (r.issues && r.issues.length) {
       row.dataset.codes = Array.from(new Set(r.issues.map(x => x.code))).join(',');
       row.dataset.sevs = Array.from(new Set(r.issues.map(x => x.severity))).join(',');
@@ -2889,21 +3324,91 @@ const Validator = (function () {
     content.className = 'content';
     if (r.severity === 'blank') {
       content.classList.add('placeholder'); content.textContent = '';
-    } else if (r.severity === 'err' && !isAutoFixable(r)) {
-      content.classList.add('needs-review');
-      content.textContent = '[NEEDS REVIEW: ' + r.original + ']';
     } else {
-      content.textContent = r.corrected;
+      const stillErr = edited ? r.editCheck.severity === 'err' : needsReviewRow(r);
+      if (stillErr) {
+        const tag = document.createElement('span');
+        tag.className = 'nr-tag'; tag.textContent = 'Needs review';
+        tag.title = 'This term has an error the validator cannot fix for you. Edit it here.';
+        row.appendChild(tag);
+        content.classList.add('needs-review');
+      }
+      const text = edited ? r.userEdit : baseOutputText(r);
+      renderMarked(content, text, unbalancedFor(text, issues));
+      // Editable in place. plaintext-only keeps pasted formatting out; older
+      // browsers fall back to plain "true" and the paste handler below.
+      try { content.contentEditable = 'plaintext-only'; } catch (_e) { content.contentEditable = 'true'; }
+      if (content.contentEditable !== 'plaintext-only') content.contentEditable = 'true';
+      content.spellcheck = false;
+      content.setAttribute('role', 'textbox');
+      content.setAttribute('aria-label', 'Term ' + (i + 1) + ', editable');
+      content.dataset.editIdx = String(i);
     }
     row.appendChild(content);
+    if (edited) {
+      const et = document.createElement('span');
+      const codes = Array.from(new Set((issues || []).filter(x => x.severity !== 'fix').map(x => x.code)));
+      et.className = 'edited-tag' + (codes.length ? ' has-issues' : '');
+      et.textContent = codes.length ? 'edited · ' + codes.length + ' issue' + (codes.length === 1 ? '' : 's') : 'edited ✓';
+      if (codes.length) {
+        const rem = (issues || []).filter(x => x.severity !== 'fix');
+        et.dataset.tt = JSON.stringify({
+          title: 'Your edit still triggers', severity: '',
+          message: rem.map(x => x.code + ': ' + x.message).join('\n\n'), rule: '',
+          cites: Array.from(new Map(rem.filter(x => x.cite).map(x => [x.code, { code: x.code, label: x.cite.label, url: x.cite.url }])).values()),
+        });
+      } else et.title = 'Your edit passes the validator.';
+      row.appendChild(et);
+    }
     // v8: no per-row closure. Delegated click handler on #outputArea reads
     // data-idx off the .copy button and pulls the value from currentResults.
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy ghost'; copyBtn.textContent = 'copy';
     copyBtn.dataset.copyIdx = String(i);
     row.appendChild(copyBtn);
-    return row;
   }
+
+  // Delegated editing handlers for the output pane.
+  function commitEdit(content) {
+    const idx = parseInt(content.dataset.editIdx, 10);
+    const r = currentResults[idx];
+    const row = content.closest('.line');
+    if (!r || !row) return;
+    const text = content.textContent.replace(/[\r\n]+/g, ' ');
+    const before = typeof r.userEdit === 'string' ? r.userEdit : baseOutputText(r);
+    if (text === before) { return; }                       // nothing changed
+    if (text === baseOutputText(r)) { delete r.userEdit; delete r.editCheck; }
+    else {
+      r.userEdit = text;
+      const chk = Validator.validateLine(text);
+      // The edit is taken as typed: judge it on what is still wrong with it.
+      r.editCheck = { severity: chk.severity, issues: chk.issues };
+    }
+    paintOutputRow(row, r, idx);
+    scheduleAlign();
+  }
+  outputArea.addEventListener('focusout', (e) => {
+    const c = e.target && e.target.closest ? e.target.closest('.content[contenteditable]') : null;
+    if (c) commitEdit(c);
+  });
+  outputArea.addEventListener('keydown', (e) => {
+    const c = e.target && e.target.closest ? e.target.closest('.content[contenteditable]') : null;
+    if (!c) return;
+    if (e.key === 'Enter') { e.preventDefault(); c.blur(); }           // one term per line
+    else if (e.key === 'Escape') {                                     // cancel this edit
+      e.preventDefault(); e.stopPropagation();
+      const r = currentResults[parseInt(c.dataset.editIdx, 10)];
+      if (r) c.textContent = typeof r.userEdit === 'string' ? r.userEdit : baseOutputText(r);
+      c.blur();
+    }
+  });
+  outputArea.addEventListener('paste', (e) => {
+    const c = e.target && e.target.closest ? e.target.closest('.content[contenteditable="true"]') : null;
+    if (!c) return;                                        // plaintext-only handles itself
+    e.preventDefault();
+    const t = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/[\r\n]+/g, ' ');
+    document.execCommand('insertText', false, t);
+  });
 
   // Virtual scroller (v8 rewrite):
   //   * DOM recycling via a Map<index, node> pool. Rows that are still in the
@@ -3024,8 +3529,12 @@ const Validator = (function () {
         if (syncing) return;
         // Only sync when both panes are in virtualized mode with matching
         // row counts — otherwise input textarea and output would fight.
-        if (!inputVirt || !outputVirt) return;
-        if (inputVirt.results.length !== outputVirt.results.length) return;
+        // v14: also sync the ordinary (non-virtual) lists, so the two panes
+        // scroll together and stay lined up. Never while the left pane is
+        // the plain text box.
+        if (editMode) return;
+        if (!!inputVirt !== !!outputVirt) return;
+        if (inputVirt && inputVirt.results.length !== outputVirt.results.length) return;
         syncing = true;
         b.scrollTop = a.scrollTop;
         syncing = false;
@@ -3038,6 +3547,8 @@ const Validator = (function () {
   function renderHighlight(results) {
     inputHighlight.style.padding = '';
     inputVirt = null;
+    inputHighlight.classList.toggle('virtual', results.length > VIRTUALIZE_THRESHOLD);
+    scheduleAlign();
     if (results.length > VIRTUALIZE_THRESHOLD) {
       inputVirt = mountVirtual(inputHighlight, results, buildRow);
       return;
@@ -3048,13 +3559,57 @@ const Validator = (function () {
     inputHighlight.appendChild(frag);
   }
 
+  /* ---- v14: keep the two panes lined up ---- */
+  // 1) alignPaneTops: the right pane has a filter bar (and a taller header)
+  //    above its list. The left pane gets a band of exactly the same height.
+  // 2) syncRowHeights: a long term can wrap onto a different number of lines
+  //    in each pane. Each pair of rows is set to the taller of the two.
+  //    (The virtual scroller already uses one fixed row height in both.)
+  let alignRaf = 0;
+  function scheduleAlign() {
+    if (alignRaf) return;
+    alignRaf = requestAnimationFrame(() => { alignRaf = 0; alignPaneTops(); syncRowHeights(); });
+  }
+  function alignPaneTops() {
+    const sp = $('#inputSpacer'), inB = $('#inputBody'), outB = $('#outputBody');
+    if (!sp || !inB || !outB) return;
+    const a = inB.getBoundingClientRect(), b = outB.getBoundingClientRect();
+    const sideBySide = Math.abs(a.left - b.left) > 40;
+    const cur = sp.getBoundingClientRect().height;
+    let h = (sideBySide && !editMode) ? Math.max(0, Math.round(b.top - (a.top - cur))) : 0;
+    if (Math.abs(h - cur) < 0.5) return;
+    sp.style.height = h + 'px';
+    sp.classList.toggle('on', h > 0);
+    sp.firstElementChild.style.display = h >= 30 ? '' : 'none';
+  }
+  function syncRowHeights() {
+    if (editMode || inputVirt || outputVirt) return;
+    const L = inputHighlight.children, R = outputArea.children;
+    if (!L.length || L.length !== R.length) return;
+    for (let i = 0; i < L.length; i++) { L[i].style.minHeight = ''; R[i].style.minHeight = ''; }
+    const hs = new Array(L.length);
+    for (let i = 0; i < L.length; i++) hs[i] = Math.max(L[i].offsetHeight, R[i].offsetHeight);
+    for (let i = 0; i < L.length; i++) {
+      if (!hs[i]) continue;                       // filtered-out pair
+      if (L[i].offsetHeight !== hs[i]) L[i].style.minHeight = hs[i] + 'px';
+      if (R[i].offsetHeight !== hs[i]) R[i].style.minHeight = hs[i] + 'px';
+    }
+  }
+  window.addEventListener('resize', scheduleAlign, { passive: true });
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(scheduleAlign);
+    document.querySelectorAll('.pane-header, #filterBar').forEach(el => ro.observe(el));
+  }
+
   /* ---- Rendering (output side) ---- */
   function renderOutput(results) {
     outputArea.style.padding = '';
     outputVirt = null;
+    outputArea.classList.toggle('virtual', results.length > VIRTUALIZE_THRESHOLD);
+    bindScrollSync();
+    scheduleAlign();
     if (results.length > VIRTUALIZE_THRESHOLD) {
       outputVirt = mountVirtual(outputArea, results, buildOutputRow);
-      bindScrollSync();
       return;
     }
     const frag = document.createDocumentFragment();
@@ -3082,7 +3637,14 @@ const Validator = (function () {
     tooltip.innerHTML =
       `<div class="tt-title">${escapeHtml(data.title)}${data.severity ? ' — ' + escapeHtml(data.severity) : ''}</div>` +
       `<div>${escapeHtml(data.message).replace(/\n/g, '<br>')}</div>` +
-      (data.rule ? `<div class="tt-rule">${escapeHtml(data.rule)}</div>` : '');
+      (data.rule ? `<div class="tt-rule">${escapeHtml(data.rule)}</div>` : '') +
+      (data.cite ? `<div class="tt-cite"><b>Source:</b> ${escapeHtml(data.cite.label)} (help.relativity.com)<br>` +
+        `<span class="basis ${escapeHtml(data.cite.basis)}">${escapeHtml(data.cite.basisLabel)}</span>` +
+        (data.cite.note ? `<br>${escapeHtml(data.cite.note)}` : '') +
+        `<br><a class="tt-link" href="${escapeHtml(data.cite.url)}" target="_blank" rel="noopener">Open in Relativity documentation \u2197</a>` +
+        `<span class="tt-url">${escapeHtml(data.cite.url)}</span></div>` : '') +
+      (data.cites && data.cites.length ? `<div class="tt-more-links"><b>Sources:</b>` +
+        data.cites.map(c => `<a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">${escapeHtml(c.code)}: ${escapeHtml(c.label)} \u2197</a>`).join('') + `</div>` : '');
   }
   function hideTooltip() {
     tooltip.classList.remove('visible', 'anchored', 'arrow-right', 'arrow-below', 'arrow-above');
@@ -3122,18 +3684,63 @@ const Validator = (function () {
     tooltip.style.left = x + 'px';
     tooltip.style.top = y + 'px';
   }
+  // v14: hover no longer follows the pointer. The tooltip is pinned beside
+  // the chip and stays open while the pointer is on the chip OR on the
+  // tooltip itself (with a short grace period to cross the gap), so the
+  // documentation link inside it can be clicked.
+  let hoverChip = null;
+  let hideTimer = 0;
+  function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = 0; } }
+  let switchTimer = 0, pendingChip = null;
+  function cancelSwitch() { if (switchTimer) { clearTimeout(switchTimer); switchTimer = 0; } pendingChip = null; }
+  function scheduleHide() {
+    if (hideTimer) return;
+    hideTimer = setTimeout(() => {
+      hideTimer = 0;
+      const f = document.activeElement;
+      if (f && f.classList && f.classList.contains('chip') && f !== hoverChip) return; // keyboard-anchored
+      if (f && tooltip.contains(f)) f.blur();
+      hoverChip = null;
+      hideTooltip();
+    }, 350);
+  }
   document.addEventListener('mousemove', (e) => {
     const t = e.target;
-    if (t && t.classList && t.classList.contains('chip') && t.dataset.tt) {
-      const data = JSON.parse(t.dataset.tt);
-      fillTooltip(data);
-      tooltip.classList.add('visible');
-      positionFloating(e.clientX, e.clientY);
-    } else if (!tooltip.classList.contains('anchored')) {
-      // Only clear if not currently anchored by keyboard focus.
-      hideTooltip();
+    const chip = t && t.closest ? t.closest('[data-tt]') : null;
+    if (chip && chip.dataset.tt) {
+      cancelHide();
+      const show = () => {
+        switchTimer = 0; pendingChip = null;
+        hoverChip = chip;
+        fillTooltip(JSON.parse(chip.dataset.tt));
+        tooltip.classList.add('visible');
+        positionAnchored(chip);
+      };
+      if (!tooltip.classList.contains('visible')) { cancelSwitch(); show(); }
+      else if (chip === hoverChip) { cancelSwitch(); }
+      else if (chip !== pendingChip) {
+        // A pop-up is already open for another chip. Wait briefly before
+        // switching, so brushing past a neighbouring chip on the way to the
+        // link does not replace the pop-up.
+        cancelSwitch(); pendingChip = chip; switchTimer = setTimeout(show, 220);
+      }
+    } else if (t && tooltip.contains(t)) {
+      cancelHide(); cancelSwitch();
+    } else if (tooltip.classList.contains('visible')) {
+      cancelSwitch();
+      // Safe corridor: the box spanning the chip and the tooltip. Moving
+      // diagonally from the chip toward the link stays inside it.
+      if (hoverChip && hoverChip.isConnected) {
+        const a = hoverChip.getBoundingClientRect(), b = tooltip.getBoundingClientRect(), m = 10;
+        const L = Math.min(a.left, b.left) - m, R = Math.max(a.right, b.right) + m;
+        const T = Math.min(a.top, b.top) - m, B = Math.max(a.bottom, b.bottom) + m;
+        if (e.clientX >= L && e.clientX <= R && e.clientY >= T && e.clientY <= B) { cancelHide(); return; }
+      }
+      scheduleHide();
     }
   });
+  // The list scrolls under a pinned tooltip; close it rather than leave it detached.
+  document.addEventListener('scroll', () => { cancelHide(); hoverChip = null; hideTooltip(); }, true);
   // Keyboard focus: anchor tooltip to the focused chip.
   document.addEventListener('focusin', (e) => {
     const t = e.target;
@@ -3147,6 +3754,8 @@ const Validator = (function () {
   document.addEventListener('focusout', (e) => {
     const t = e.target;
     if (t && t.classList && t.classList.contains('chip') && tooltip.classList.contains('anchored')) {
+      if (hoverChip === t) return;            // pointer is still on it
+      hoverChip = null;
       hideTooltip();
     }
   });
@@ -3163,13 +3772,13 @@ const Validator = (function () {
   /* ---- Copy all ---- */
   $('#btnCopyAll').addEventListener('click', () => {
     if (!currentResults.length) { showToast('Validate first.'); return; }
-    const lines = currentResults.map(r => {
-      if (r.severity === 'blank') return '';
-      if (r.severity === 'err' && !isAutoFixable(r)) return '[NEEDS REVIEW: ' + r.original + ']';
-      return r.corrected;
-    });
+    // Commit an edit that is still being typed before copying.
+    const active = document.activeElement;
+    if (active && outputArea.contains(active) && active.blur) active.blur();
+    const lines = currentResults.map(outputValue);
+    const nEdited = currentResults.filter(r => typeof r.userEdit === 'string').length;
     copyText(lines.join('\n'));
-    showToast('Copied ' + lines.length + ' lines');
+    showToast('Copied ' + lines.length + ' lines' + (nEdited ? ' (' + nEdited + ' edited)' : ''));
   });
 
   /* ---- Clear ---- */
@@ -3227,7 +3836,7 @@ const Validator = (function () {
         else if (iss.severity === 'warn') warnCt++;
         else if (iss.severity === 'fix') fixCt++;
         seenCodes.add(iss.code);
-        const cur = ruleCounts.get(iss.code) || { code: iss.code, err:0, warn:0, fix:0, total:0, rule: iss.rule || '' };
+        const cur = ruleCounts.get(iss.code) || { code: iss.code, err:0, warn:0, fix:0, total:0, rule: iss.rule || '', cite: iss.cite || Validator.citationFor(iss.code) };
         cur[iss.severity] = (cur[iss.severity] || 0) + 1;
         cur.total++;
         // Keep first non-empty rule string we see.
@@ -3238,11 +3847,11 @@ const Validator = (function () {
       const codesWithSev = (r.issues || []).map(x => x.severity + ':' + x.code).join('; ');
       const expl = (r.issues || []).map(x => x.message + (x.rule ? ' — ' + x.rule : '')).join(' || ');
       const ruleRefs = Array.from(new Set((r.issues || []).map(x => x.rule).filter(Boolean))).join(' || ');
-      const needsReview = (r.severity === 'err' && !isAutoFixable(r)) ? 'YES' : '';
+      const sourceUrls = Array.from(new Set((r.issues || []).map(x => x.cite ? x.code + ': ' + x.cite.url : '').filter(Boolean))).join(' || ');
+      const userEdited = typeof r.userEdit === 'string';
+      const needsReview = (userEdited ? r.editCheck.severity === 'err' : (r.severity === 'err' && !isAutoFixable(r))) ? 'YES' : '';
       const autoFixed = (r.severity === 'fix' || (r.severity === 'err' && isAutoFixable(r))) ? 'YES' : '';
-      const corrected = needsReview
-        ? '[NEEDS REVIEW: ' + r.original + ']'
-        : r.corrected;
+      const corrected = outputValue(r);
       const wordCount = String(r.original).trim().split(/\s+/).filter(Boolean).length;
       rows.push({
         severity: SEVERITY_LABEL[r.severity] || r.severity,
@@ -3260,6 +3869,8 @@ const Validator = (function () {
         chars: r.original.length,
         words: wordCount,
         ruleRefs,
+        sourceUrls,
+        userEdited: userEdited ? 'YES' : '',
         explanations: expl,
       });
     });
@@ -3290,7 +3901,7 @@ const Validator = (function () {
       'Needs Review','Auto-Fixed',
       'Issue Count','Error Count','Warning Count','Auto-Fix Count',
       'Character Count','Word Count',
-      'Distinct Issue Codes','Issue Codes (severity-prefixed)','Rule References','Explanations'
+      'Distinct Issue Codes','Issue Codes (severity-prefixed)','Rule References','Explanations','Documentation Sources (help.relativity.com)','User Edited'
     ];
     const rows = [header];
     model.rows.forEach(r => {
@@ -3299,7 +3910,7 @@ const Validator = (function () {
         r.needsReview, r.autoFixed,
         r.issueCount, r.errCount, r.warnCount, r.fixCount,
         r.chars, r.words,
-        r.distinctCodes, r.codes, r.ruleRefs, r.explanations,
+        r.distinctCodes, r.codes, r.ruleRefs, r.explanations, r.sourceUrls, r.userEdited,
       ]);
     });
     // Summary section: totals, then per-rule occurrence table.
@@ -3315,9 +3926,10 @@ const Validator = (function () {
     rows.push(['Generated (UTC)', new Date().toISOString()]);
     rows.push([]);
     rows.push(['RULE OCCURRENCES']);
-    rows.push(['Code','Total','Errors','Warnings','Auto-fixes','Rule reference']);
+    rows.push(['Code','Total','Errors','Warnings','Auto-fixes','Rule reference','Documentation source','Source URL','Basis','Source note']);
     model.rankedRules.forEach(rr => {
-      rows.push([rr.code, rr.total, rr.err, rr.warn, rr.fix, rr.rule]);
+      rows.push([rr.code, rr.total, rr.err, rr.warn, rr.fix, rr.rule,
+        rr.cite ? rr.cite.label : '', rr.cite ? rr.cite.url : '', rr.cite ? rr.cite.basisLabel : '', rr.cite ? rr.cite.note : '']);
     });
 
     const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
@@ -3370,6 +3982,10 @@ const Validator = (function () {
         lines.push('### `' + rr.code + '`  — ' + rr.total + ' occurrence(s)');
         if (rr.rule) lines.push('');
         if (rr.rule) lines.push('> ' + rr.rule);
+        if (rr.cite) {
+          lines.push('');
+          lines.push('Source: [' + rr.cite.label + '](' + rr.cite.url + ') — ' + rr.cite.basisLabel + (rr.cite.note ? '. ' + rr.cite.note : ''));
+        }
         lines.push('');
         examples.slice(0, 20).forEach(ex => {
           lines.push('- Line ' + ex.line + ' (' + ex.severity + '): `' + ex.original.replace(/`/g, '\\`') + '`  →  `' + ex.corrected.replace(/`/g, '\\`') + '`');
@@ -3444,6 +4060,27 @@ const Validator = (function () {
 
   /* ---- Reference modal ---- */
   const refModal = $('#referenceModal');
+  // v14: build the per-rule citation table from the engine's registry so the
+  // modal can never drift from what the tooltips and exports cite.
+  (function buildRuleCitations() {
+    const host = $('#ruleCitations');
+    if (!host) return;
+    const codes = Object.keys(Validator.RULE_SOURCES).sort();
+    const counts = { stated: 0, derived: 0, differs: 0 };
+    const body = codes.map(code => {
+      const c = Validator.citationFor(code);
+      counts[c.basis]++;
+      return '<tr><td class="code">' + escapeHtml(code) + '</td><td>' + citeLinkHtml(c) +
+        (c.note ? '<div class="cnote">' + escapeHtml(c.note) + '</div>' : '') +
+        '</td><td><span class="basis ' + c.basis + '">' + escapeHtml(c.basisLabel) + '</span></td></tr>';
+    }).join('');
+    host.innerHTML =
+      '<p style="margin:0 0 8px;color:var(--text-muted);font-size:12px">' + codes.length + ' rules: ' +
+      counts.stated + ' stated in the docs, ' + counts.derived + ' derived from documented behavior, ' +
+      counts.differs + ' where the docs word it differently.</p>' +
+      '<table id="ruleCiteTable"><thead><tr><th>Rule</th><th>Relativity documentation source</th><th>Basis</th></tr></thead><tbody>' +
+      body + '</tbody></table>';
+  })();
   function openReference() { refModal.classList.add('visible'); }
   function closeReference() { refModal.classList.remove('visible'); }
   $('#btnReference').addEventListener('click', openReference);
@@ -3482,6 +4119,14 @@ const Validator = (function () {
   $('#btnCloseShortcuts2').addEventListener('click', closeShortcuts);
   shortcutsModal.addEventListener('click', (e) => { if (e.target === shortcutsModal) closeShortcuts(); });
 
+  /* ---- License modal (v14) ---- */
+  const licenseModal = $('#licenseModal');
+  function closeLicense() { licenseModal.classList.remove('visible'); }
+  $('#btnLicense').addEventListener('click', () => licenseModal.classList.add('visible'));
+  $('#btnCloseLicense').addEventListener('click', closeLicense);
+  $('#btnCloseLicense2').addEventListener('click', closeLicense);
+  licenseModal.addEventListener('click', (e) => { if (e.target === licenseModal) closeLicense(); });
+
   /* ---- Rule filter (output pane) ---- */
   const filterBar = $('#filterBar');
   const filterChipsEl = $('#filterChips');
@@ -3500,8 +4145,27 @@ const Validator = (function () {
     const codes = Array.from(counts.entries()).sort((a,b) => b[1] - a[1]);
     filterChipsEl.innerHTML = codes.map(([code, n]) => {
       const active = activeFilter && activeFilter.kind === 'rule' && activeFilter.value === code;
-      return `<span class="fchip${active ? ' active' : ''}" data-code="${escapeHtml(code)}" title="${n} occurrence(s)">${escapeHtml(code)} <span style="opacity:.7">×${n}</span></span>`;
+      const cite = Validator.citationFor(code);
+      const doc = cite ? `<a class="fdoc" href="${escapeHtml(cite.url)}" target="_blank" rel="noopener" title="Open in Relativity documentation: ${escapeHtml(cite.label)}" aria-label="Open ${escapeHtml(code)} in the Relativity documentation">\u2197</a>` : '';
+      return `<span class="fchip${active ? ' active' : ''}" data-code="${escapeHtml(code)}" title="${n} occurrence(s) \u2014 click to filter">${escapeHtml(code)} <span style="opacity:.7">×${n}</span>${doc}</span>`;
     }).join('');
+    renderFilterSource();
+  }
+
+  // v14: when one rule is the active filter, show its documentation source
+  // as a real, clickable link (the hover tooltip cannot be clicked).
+  function renderFilterSource() {
+    const el = $('#filterSource');
+    if (!el) return;
+    const cite = (activeFilter && activeFilter.kind === 'rule') ? Validator.citationFor(activeFilter.value) : null;
+    if (!cite) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = '<b>' + escapeHtml(activeFilter.value) + '</b> source: ' + citeLinkHtml(cite) +
+      ' <span class="basis ' + cite.basis + '">' + escapeHtml(cite.basisLabel) + '</span>' +
+      (cite.note ? ' <span style="color:var(--text-muted)">' + escapeHtml(cite.note) + '</span>' : '');
+  }
+  function citeLinkHtml(cite) {
+    return '<a href="' + escapeHtml(cite.url) + '" target="_blank" rel="noopener">' + escapeHtml(cite.label) + ' \u2197</a>';
   }
 
   function applyFilter() {
@@ -3532,12 +4196,14 @@ const Validator = (function () {
     }
     renderFilterChips();
     applyFilter();
+    scheduleAlign();
   }
 
-  function clearFilter() { activeFilter = null; renderFilterChips(); applyFilter(); }
+  function clearFilter() { activeFilter = null; renderFilterChips(); applyFilter(); scheduleAlign(); }
   window.__applyFilter = applyFilter;
 
   filterChipsEl.addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;            // the \u2197 documentation link
     const t = e.target.closest('.fchip');
     if (!t) return;
     setFilter('rule', t.dataset.code);
@@ -3549,6 +4215,10 @@ const Validator = (function () {
     const c = e.target.closest('.chip');
     if (!c) return;
     const code = c.dataset.code;
+    if (code && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+      const cite = Validator.citationFor(code);
+      if (cite) { window.open(cite.url, '_blank', 'noopener'); return; }
+    }
     if (code) setFilter('rule', code);
   });
   // Space/Enter on a focused chip also toggles filter (keyboard accessibility).
@@ -3558,6 +4228,10 @@ const Validator = (function () {
     if (!c) return;
     e.preventDefault();
     const code = c.dataset.code;
+    if (code && e.shiftKey) {
+      const cite = Validator.citationFor(code);
+      if (cite) { window.open(cite.url, '_blank', 'noopener'); return; }
+    }
     if (code) setFilter('rule', code);
   });
 
@@ -3585,9 +4259,7 @@ const Validator = (function () {
     if (!Number.isFinite(idx)) return;
     const r = currentResults[idx];
     if (!r) return;
-    const val = (r.severity === 'err' && !isAutoFixable(r))
-      ? '[NEEDS REVIEW: ' + r.original + ']'
-      : r.corrected;
+    const val = outputValue(r);
     copyText(val);
     showToast('Line copied');
   });
@@ -3635,7 +4307,7 @@ const Validator = (function () {
 
   // Refresh filter chips whenever we re-render.
   // Hook Validate and Dedupe buttons: they are the only two paths that mutate currentResults.
-  function refreshFilterUI() { renderFilterChips(); applyFilter(); }
+  function refreshFilterUI() { renderFilterChips(); applyFilter(); scheduleAlign(); }
   $('#btnValidate').addEventListener('click', () => setTimeout(refreshFilterUI, 0));
   $('#btnDedupe').addEventListener('click', () => setTimeout(refreshFilterUI, 0));
   $('#btnClear').addEventListener('click', () => { activeFilter = null; setTimeout(refreshFilterUI, 0); });
@@ -3684,333 +4356,5 @@ const Validator = (function () {
   inputArea.focus();
 })();
 </script>
-<script data-pplx-inline-edit>
-(function () {
-  if (window === window.top) return;
-
-  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
-  const MAX_FONT_BYTES = 500 * 1024;
-  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
-  let scrollForwarding = false;
-  let scrollRaf = 0;
-  let trustedTopOrigin = null;
-
-  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
-  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
-  // across multiple labels.
-  function matchesAllowedOrigin(origin) {
-    if (!origin) return false;
-    for (const entry of allowedParentOrigins) {
-      if (!entry.includes("*")) {
-        if (entry === origin) return true;
-        continue;
-      }
-      const pattern = new RegExp(
-        "^" +
-          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
-          "$",
-      );
-      if (pattern.test(origin)) return true;
-    }
-    return false;
-  }
-
-  // Trust decision: when the sender is same-origin-visible (event.origin is a
-  // real origin like https://www.perplexity.ai) we trust event.origin directly.
-  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
-  // broker's stamped `parentOrigin` to identify the top window. The fallback
-  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
-  // on the response path (see postToTrustedTop) to ensure replies can't be
-  // delivered to anyone but the actual top window of that claimed origin.
-  function getTrustedParentOrigin(event) {
-    const forwardedParentOrigin =
-      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
-    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
-    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
-  }
-
-  // All responses go to window.top with targetOrigin = the allowlisted origin.
-  // An attacker that iframes us inside their own null-origin broker can claim
-  // any parentOrigin they like, but the browser will drop the reply whenever
-  // the real top's origin doesn't match — so the screenshot never leaves.
-  function postToTrustedTop(message) {
-    if (!trustedTopOrigin) return;
-    try {
-      window.top.postMessage(message, trustedTopOrigin);
-    } catch (_error) {}
-  }
-
-  function inlineAll(original, clone) {
-    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
-
-    try {
-      const computedStyle = getComputedStyle(original);
-      // cssText on a computed style is the serialized declaration in modern
-      // Chromium/Safari — a single read beats enumerating ~400 longhand
-      // properties. Firefox returns "" here, so we fall back on empty.
-      const serialized = computedStyle.cssText;
-      if (serialized) {
-        clone.style.cssText = serialized;
-      } else {
-        const parts = new Array(computedStyle.length);
-        for (let index = 0; index < computedStyle.length; index += 1) {
-          const property = computedStyle[index];
-          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
-        }
-        clone.style.cssText = parts.join("");
-      }
-    } catch (_error) {}
-
-    const originalChildren = original.children;
-    const clonedChildren = clone.children;
-    for (
-      let index = 0;
-      index < originalChildren.length && index < clonedChildren.length;
-      index += 1
-    ) {
-      inlineAll(originalChildren[index], clonedChildren[index]);
-    }
-  }
-
-  function extractFontUrl(srcValue) {
-    const matches = [
-      ...srcValue.matchAll(
-        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
-      ),
-    ];
-    if (matches.length === 0) return null;
-    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
-    if (woff2) return woff2[1];
-    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
-    if (woff) return woff[1];
-    return matches[0][1];
-  }
-
-  // Cache resolved font URL -> data URI across captures. Fonts on a page
-  // essentially never change, and a batch run emits multiple captures back to
-  // back — without this we'd refetch + re-base64 every time.
-  const fontDataUriCache = new Map();
-  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
-
-  async function fetchAsDataUri(url) {
-    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
-    let dataUri = null;
-    try {
-      const response = await fetch(url, { mode: "cors", credentials: "omit" });
-      if (response.ok) {
-        const blob = await response.blob();
-        if (blob.size <= MAX_FONT_BYTES) {
-          dataUri = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () =>
-              resolve(typeof reader.result === "string" ? reader.result : null);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-          });
-        }
-      }
-    } catch (_error) {
-      dataUri = null;
-    }
-    fontDataUriCache.set(url, dataUri);
-    return dataUri;
-  }
-
-  function collectFontFaceRuleTexts() {
-    const rules = [];
-    for (const sheet of document.styleSheets) {
-      let cssRules;
-      try {
-        cssRules = sheet.cssRules;
-      } catch (_error) {
-        continue;
-      }
-      if (!cssRules) continue;
-      for (const rule of cssRules) {
-        const cssText = rule.cssText || "";
-        if (cssText.startsWith("@font-face")) rules.push(cssText);
-      }
-    }
-    return rules;
-  }
-
-  async function buildInlinedFontCss() {
-    const ruleTexts = collectFontFaceRuleTexts();
-    if (ruleTexts.length === 0) return null;
-
-    const resolved = ruleTexts.map((cssText) => {
-      if (!SRC_DECLARATION_RE.test(cssText)) return null;
-      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
-      if (!srcMatch) return null;
-      const url = extractFontUrl(srcMatch[1]);
-      if (!url) return null;
-      try {
-        return { cssText, url: new URL(url, document.baseURI).href };
-      } catch (_error) {
-        return null;
-      }
-    });
-
-    const dataUris = await Promise.all(
-      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
-    );
-
-    const inlined = [];
-    let totalBytes = 0;
-    for (let index = 0; index < resolved.length; index += 1) {
-      const entry = resolved[index];
-      const dataUri = dataUris[index];
-      if (!entry || !dataUri) continue;
-      const approxBytes = dataUri.length * 0.75;
-      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
-      totalBytes += approxBytes;
-      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
-    }
-    return inlined.length > 0 ? inlined.join("\n") : null;
-  }
-
-  function stripExternal(clone) {
-    const images = clone.querySelectorAll("img");
-    for (let index = 0; index < images.length; index += 1) {
-      const src = images[index].getAttribute("src");
-      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
-    }
-
-    const elements = clone.querySelectorAll("*");
-    for (let index = 0; index < elements.length; index += 1) {
-      const style = elements[index].style.cssText;
-      if (style && style.includes("url(")) {
-        elements[index].style.cssText = style.replace(
-          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
-          "none",
-        );
-      }
-    }
-  }
-
-  function emitScroll() {
-    scrollRaf = 0;
-    if (!scrollForwarding) return;
-    postToTrustedTop({
-      type: "INLINE_EDIT_SCROLL",
-      scrollX: window.scrollX,
-      scrollY: window.scrollY,
-    });
-  }
-
-  window.addEventListener(
-    "scroll",
-    function () {
-      if (!scrollForwarding || scrollRaf) return;
-      scrollRaf = requestAnimationFrame(emitScroll);
-    },
-    { passive: true, capture: true },
-  );
-
-  async function handleCaptureRequest(event) {
-    const requestId = event.data.requestId;
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    function postResult(dataUrl) {
-      postToTrustedTop({
-        type: "INLINE_EDIT_SCREENSHOT_RESULT",
-        requestId,
-        dataUrl,
-        scrollX,
-        scrollY,
-      });
-    }
-
-    try {
-      // Wait for any pending web fonts to resolve so both inline metrics and
-      // the @font-face inlining below see the same loaded faces.
-      if (document.fonts && document.fonts.ready) {
-        try {
-          await document.fonts.ready;
-        } catch (_error) {}
-      }
-
-      const clone = document.documentElement.cloneNode(true);
-      inlineAll(document.documentElement, clone);
-
-      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
-      for (let index = 0; index < removedNodes.length; index += 1) {
-        removedNodes[index].remove();
-      }
-
-      stripExternal(clone);
-
-      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
-      // can resolve them — external font URLs aren't fetched during
-      // foreignObject rendering, which would otherwise force a fallback face
-      // and change text metrics.
-      const inlinedFontCss = await buildInlinedFontCss();
-      if (inlinedFontCss) {
-        const styleEl = document.createElement("style");
-        styleEl.textContent = inlinedFontCss;
-        const head = clone.querySelector("head");
-        if (head) head.appendChild(styleEl);
-        else clone.insertBefore(styleEl, clone.firstChild);
-      }
-
-      const html = new XMLSerializer().serializeToString(clone);
-      const svg =
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
-        '<foreignObject width="100%" height="100%">' +
-        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
-        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
-        html +
-        "</div></div></foreignObject></svg>";
-      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-      const image = new Image();
-      image.onload = function () {
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(image, 0, 0);
-        postResult(canvas.toDataURL("image/png"));
-      };
-      image.onerror = function () {
-        postResult(null);
-      };
-      image.src = svgUrl;
-    } catch (_error) {
-      postResult(null);
-    }
-  }
-
-  window.addEventListener("message", function (event) {
-    if (!event.data) return;
-    // Only accept messages from the direct parent frame. Blocks sibling /
-    // unrelated-window postMessage senders that could otherwise reach us.
-    if (event.source !== window.parent) return;
-
-    const trustedParentOrigin = getTrustedParentOrigin(event);
-    if (!trustedParentOrigin) return;
-    trustedTopOrigin = trustedParentOrigin;
-
-    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
-      scrollForwarding = true;
-      emitScroll();
-      return;
-    }
-
-    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
-      scrollForwarding = false;
-      if (scrollRaf) cancelAnimationFrame(scrollRaf);
-      scrollRaf = 0;
-      return;
-    }
-
-    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
-
-    handleCaptureRequest(event);
-  });
-})();
-
-
-</script></body>
+</body>
 </html>
